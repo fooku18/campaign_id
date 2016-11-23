@@ -1,0 +1,73 @@
+<div ng-controller="mainCtrl" db="channelid_db">
+	<form name="userForm" ng-submit="validation(userForm,{'channelID':c.ChannelID,'channel':c.Channel})" novalidate>
+		<div class="row padding-top-10 padding-bottom-10">
+			<div class="col-md-8 col-sm-8 block form-group" ng-class="{'has-error': userForm.cChannelID.$invalid && !userForm.cChannelID.$pristine}">
+				<div class="padding-bottom-5">
+					<span class="label label-default">Kanal-ID</span>
+				</div>
+				<input name="cChannelID" class="inputField form-control" ng-model="c.ChannelID" type="text" placeholder="ID..." ng-maxlength="1" required />
+				<div class="absolute top-60 z-index-10" ng-show="userForm.cChannelID.$invalid && !userForm.cChannelID.$pristine">
+					<div class="padding-left-5">
+						<div class="my-arrow-up"></div>
+					</div>
+					<p class="help-block my-info-box" ng-show="userForm.cChannelID.$error.required">Die Kanal-ID muss mindestens ein Zeichen enthalten.</p>
+					<p class="help-block my-info-box" ng-show="userForm.cChannelID.$error.maxlength">Die Kanal-ID darf nur ein Zeichen enthalten.</p>
+				</div>
+			</div>
+			<div class="col-md-8 col-sm-8 block form-group" ng-class="{'has-error': userForm.cChannel.$invalid && !userForm.cChannel.$pristine}">
+				<div class="padding-bottom-5">
+					<span class="label label-default">Kanal</span>
+				</div>
+				<input name="cChannel" class="inputField form-control" ng-model="c.Channel" type="text" placeholder="Kanalname..." ng-minlength="1" required />
+				<div class="absolute top-60 z-index-10" ng-show="userForm.cChannel.$invalid && !userForm.cChannel.$pristine">
+					<div class="padding-left-5">
+						<div class="my-arrow-up"></div>
+					</div>
+					<p class="help-block my-info-box">Der Kanalname muss mindestens ein Zeichen enthalten.</p>
+				</div>
+			</div>
+			<div class="col-md-4 col-sm-4 padding-top-25">
+				<button type="submit" class="btn btn-default" id="btn-input">Kanal-ID anlegen</button>
+			</div>
+		</div>
+	</form>
+	<div class="row">
+		<div id="context-0-0" class="col-md-12 col-sm-12">
+			<div class="main-table" context-menu>
+				<div class="main-table-th">
+					<div class="col-sm-2 cursor-pointer" ng-click="changeSortType('channelid')">
+						Kanal-ID
+						<span class="padding-left-5">
+							<i class="main-sort-arrow" ng-class="{'main-sort-arrow-up':!sortDescending, 'main-sort-arrow-down':sortDescending}" ng-show="sortType === 'channelid'">
+							</i>
+						</span>
+					</div>
+					<div class="col-sm-9 cursor-pointer" ng-click="changeSortType('channel')">
+						Kanal
+						<span class="padding-left-5">
+							<i class="main-sort-arrow" ng-class="{'main-sort-arrow-up':!sortDescending, 'main-sort-arrow-down':sortDescending}" ng-show="sortType === 'channel'">
+							</i>
+						</span>
+					</div>
+					<div class="col-sm-1 main-center">Aktionen</div>
+				</div>
+				<div class="main-table-tr-wrapper">
+					<div class="main-table-tr animate" ng-repeat="value in items | orderBy:doc.creationdate:true track by $index" data-context-info="{{value.doc}}">
+						<form name="userFormChange" ng-submit="validation(this.userFormChange,{_id:value.doc._id,_rev:value.doc._rev,channelID:value.doc.channelID,channel:value.doc.channel})" novalidate>
+							<div class="col-sm-2"><input type="text" class="main-borderless-input" ng-model="value.doc.channelID" ng-minlength="1" ng-maxlength="1" required /></div>
+							<div class="col-sm-9"><input type="text" class="main-borderless-input" ng-model="value.doc.channel" required /></div>
+							<div class="col-sm-1 main-center">
+								<button type="submit" class="btn btn-default" ng-disabled="!userFormChange.$valid" style="padding: 1px 1px;">
+									<span class="glyphicon glyphicon-repeat" aria-hidden="true"></span>
+								</button>
+								<button ng-click="deleteItem({id:value.doc._id,rev:value.doc._rev,info:'Kanal: &quot;' + value.doc.channel + '&quot;'})" type="button" class="btn btn-default" style="padding: 1px 1px;">
+									<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

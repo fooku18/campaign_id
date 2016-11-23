@@ -1,0 +1,28 @@
+{
+	"_comments_": {
+		
+	},
+	"databaseConfig": {
+		"databases": ["campaign_db","intelliad_db","channelid_db","cid_db"],
+		"autoSync": true,
+		"dbMode": "couchDB",
+		"remoteUrl": "http://couchmin:YFYeEwNTDEYJvaMMV101@127.0.0.1:5984/"
+	},
+	"routingConfig": {
+		"htmlPath": ["templates/kampagnen.html","templates/intelliad.html","templates/channelID.html","templates/create.html"],
+		"hashTag": ["/","/intelliad","/channelid","/create"],
+		"pageNames": ["Kampagnen-Konfiguration","IntelliAd-Konfiguration","ChannelID-Konfiguration","ID Erstellen"]
+	},
+	"cidConfig": {
+		"domainToken": "dhlmp",
+		"organizationToken": "dpcom"
+	},
+	"analyticsConfig": {
+		"username": "j.schlonsok:Deutsche Post AG",
+		"secret": "3d7362c4d626c3de0997addc9d5c949c",
+		"reportSuite": "deutschepostwpmdhlmpdev2",
+		"endpoint": "api.omniture.com",
+		"notification_email_address": "jakob.schlonsok@deutschepost.de",
+		"classification_element": "trackingcode"
+	}
+}
