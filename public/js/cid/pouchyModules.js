@@ -3,7 +3,7 @@
 //
 angular.module("pouchy.multiPurpose",[])
 .constant("DATALAYER",(function() {
-	return JSON.parse(document.getElementById("dataConfig").textContent);
+	//return JSON.parse(document.getElementById("dataConfig").textContent);
 })())
 .factory("$msgBusService",["$rootScope",function($rootScope) {
 	var msgBus = {};
@@ -510,7 +510,7 @@ angular.module("pouchy.FileReader",["pouchy.import_export"])
 //###PouchDB Module###START
 //
 angular.module("pouchy.pouchDB",[])
-.service("$pouchDB",["$rootScope","$q","$msgBusService","DATALAYER",function($rootScope,$q,$msgBusService,DATALAYER) {
+.service("$pouchDB",["$rootScope","$q","$msgBusService",function($rootScope,$q,$msgBusService) {
 	/*var database = {};
 	var changeHandler;
 	var syncClosure;
@@ -608,7 +608,7 @@ angular.module("pouchy.pouchDB",[])
 		return database[db].remove(id,rev);
 	}*/
 }])
-.controller("switchCtrl",["$scope","$pouchDB","DATALAYER","$msgBusService","$modalService","$pouchyModel", function switchController($scope,$pouchDB,DATALAYER,$msgBusService,$modalService,$pouchyModel) {
+.controller("switchCtrl",["$scope","$pouchDB","$msgBusService","$modalService","$pouchyModel", function switchController($scope,$pouchDB,$msgBusService,$modalService,$pouchyModel) {
 	$scope.switchChange = function() {
 		($scope.switchStatus) ? $pouchyModel.startSyncing() : $pouchyModel.stopSyncing();
 	}
@@ -618,7 +618,7 @@ angular.module("pouchy.pouchDB",[])
 	$msgBusService.get("remoteconnection:lost",$scope,function() {
 		$scope.$apply(function() {
 			$scope.switchStatus = false;
-			$modalService.open({template:"connectionError",barColor:"red",remote:DATALAYER.databaseConfig.remoteUrl}).
+			$modalService.open({template:"connectionError",barColor:"red",remote:routing.databaseConfig.remoteUrl}).
 			then(function() {
 				console.log("resolved");
 			},function() {
@@ -627,10 +627,9 @@ angular.module("pouchy.pouchDB",[])
 		})
 	});
 }])
-.directive("switch",["DATALAYER",function switchDirective(DATALAYER) {
-	var _global = DATALAYER;
-	var couchMode = _global.databaseConfig.dbMode === "couchDB";
-	var remote = _global.databaseConfig.autoSync === true;
+.directive("switch",function switchDirective() {
+	var couchMode = routing.databaseConfig.dbMode === "couchDB";
+	var remote = routing.databaseConfig.autoSync === true;
 	
 	var tmpConfig = 	"<div class='absolute slider-remote-config-dropdown'>" +
 							"<div class='slider-remote-config-framer'>" +
@@ -695,7 +694,7 @@ angular.module("pouchy.pouchDB",[])
 			(remote === true) ? scope.switchStatus = true : scope.switchStatus = false;
 		}
 	}
-}]);
+});
 //
 //###PouchDB Module###END
 //
@@ -718,7 +717,7 @@ angular.module("pouchy.model",[])
 }])
 //pouchy model is the heart of the application. it initializes the pouchdb databases on app launch and keeps the container
 //up to date on any UI change. the model changes are saved in the above factory which serves as a data distributor
-.service("$pouchyModel",["$q","DATALAYER","$msgBusService","$pouchyModelDatabase",function pouchyModelService($q,DATALAYER,$msgBusService,$pouchyModelDatabase) {
+.service("$pouchyModel",["$q","$msgBusService","$pouchyModelDatabase",function pouchyModelService($q,$msgBusService,$pouchyModelDatabase) {
 	var self = this;
 	this.dbCount = 0;
 	this.syncHandlerCount = [];
@@ -737,8 +736,8 @@ angular.module("pouchy.model",[])
 	}
 	//the service catches all databases and sync them
 	this.startSyncing = function() {
-		var remote = DATALAYER.databaseConfig.remoteUrl || "";
-		if(self.dbCount === DATALAYER.databaseConfig.databases.length) {
+		var remote = routing.databaseConfig.remoteUrl || "";
+		if(self.dbCount === routing.databaseConfig.databases.length) {
 			for(var key in self.databaseContainer) {
 				if(self.databaseContainer[key].db._events.destroyed.length > 4) {
 					self.databaseContainer[key].db._events.destroyed = self.databaseContainer[key].db._events.destroyed.slice(0,4);
@@ -828,7 +827,7 @@ angular.module("pouchy.model",[])
 }])
 //mainCtrl is initilized on every new tab - this is to prevent too much scope overhead for non relevant data as 
 //all database data is present in the background service
-.controller("mainCtrl",["$scope","$pouchyWorker","$hashService","$msgBusService","$attrs","$modalService","$pouchyModel","$pouchyModelDatabase","$filter","$pouchyDesignViews","DATALAYER","$pouchyLoader","$pouchySAINTAPI",function mainController($scope,$pouchyWorker,$hashService,$msgBusService,$attrs,$modalService,$pouchyModel,$pouchyModelDatabase,$filter,$pouchyDesignViews,DATALAYER,$pouchyLoader,$pouchySAINTAPI) {
+.controller("mainCtrl",["$scope","$pouchyWorker","$hashService","$msgBusService","$attrs","$modalService","$pouchyModel","$pouchyModelDatabase","$filter","$pouchyDesignViews","$pouchyLoader","$pouchySAINTAPI",function mainController($scope,$pouchyWorker,$hashService,$msgBusService,$attrs,$modalService,$pouchyModel,$pouchyModelDatabase,$filter,$pouchyDesignViews,$pouchyLoader,$pouchySAINTAPI) {
 	//fetch database name from template attribute - this is important to seperate the data from the model service
 	var db = $attrs.db;
 	$scope.changeSortType = function(val) {
@@ -947,8 +946,8 @@ angular.module("pouchy.model",[])
 						var conf = {
 							"encoding":"utf-8"
 						}
-						conf.rsid_list = [DATALAYER.analyticsConfig.reportSuite];
-						conf.element = DATALAYER.analyticsConfig.classification_element;
+						conf.rsid_list = [routing.analyticsConfig.reportSuite];
+						conf.element = routing.analyticsConfig.classification_element;
 						$pouchySAINTAPI.requestSAINT("Classifications.GetTemplate",conf)
 						.then(function(res) {
 							var s = res.data[0].template.split("\r\n");
@@ -959,8 +958,8 @@ angular.module("pouchy.model",[])
 								"export_results":"0",
 								"overwrite_conflicts":"1",
 							}
-							conf.element = DATALAYER.analyticsConfig.classification_element;
-							conf.email_address = DATALAYER.analyticsConfig.notification_email_address;
+							conf.element = routing.analyticsConfig.classification_element;
+							conf.email_address = routing.analyticsConfig.notification_email_address;
 							conf.header = sn;
 							conf.rsid_list = [DATALAYER.analyticsConfig.reportSuite];
 							return $pouchySAINTAPI.requestSAINT("Classifications.CreateImport",conf);
@@ -1111,7 +1110,7 @@ angular.module("pouchy.model",[])
 	   }
 	}
 })
-.directive("onOffSwitch",["$pouchySAINTAPI","DATALAYER","$pouchyModel","$pouchyLoader",function($pouchySAINTAPI,DATALAYER,$pouchyModel,$pouchyLoader) {
+.directive("onOffSwitch",["$pouchySAINTAPI","$pouchyModel","$pouchyLoader",function($pouchySAINTAPI,$pouchyModel,$pouchyLoader) {
 	var tmp = 	"<div class='main-center relative'>" +
 					"<button type='button' class='btn btn-circle btn-circle-lg btn-outline-none rotate-360' ng-class='getClass()'>" +
 						"<span class='glyphicon' ng-class='getIcon()'></span>" +
@@ -1238,7 +1237,7 @@ angular.module("pouchy.model",[])
 		}
 	}
 })
-.factory("$pouchySAINTAPI",["$http","DATALAYER",function pouchySAINTFactory($http,DATALAYER) {
+.factory("$pouchySAINTAPI",["$http",function pouchySAINTFactory($http) {
 	//WSSE is a hash library provided by Adobe
 	var wsse = new Wsse();
 	/**
@@ -1434,7 +1433,7 @@ angular.module("pouchy.cidLogic",[])
 }])
 //this factory serves as the cid generator logic. the services receives all necessary information
 //about the data input and creates a unique cid and if desired an intelliad link wrapper.
-.factory("$pouchyCIDLogic",["DATALAYER","$pouchyModelDatabase","$msgBusService",function pouchyCIDLogicFactory(DATALAYER,$pouchyModelDatabase,$msgBusService) {
+.factory("$pouchyCIDLogic",["$pouchyModelDatabase","$msgBusService",function pouchyCIDLogicFactory($pouchyModelDatabase,$msgBusService) {
 	function createCID(data,intelliAdCampaigns,extCampaigns,intCampaigns,creativeChannel) {
 		if(data.campaign_intext === "Extern") {
 			//add intelliadCamp to new Dataset

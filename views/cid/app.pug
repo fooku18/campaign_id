@@ -1,0 +1,51 @@
+html(ng-app="myApp")
+head
+	-console.log(routing);
+	meta(charset="utf-8")
+	meta(name="viewport" content="width=device-width, initial-scale=1")
+	link(rel="icon" type="image/vnd.microsoft.icon" href="/img/favicon/favicon.ico")
+	link(rel="stylesheet" href="/css/libs/bootstrap.css")
+	link(rel="stylesheet" href="/css/libs/bootstrap-datepicker.css")
+	link(rel="stylesheet" href="/css/main.css")
+	link(rel="stylesheet" href="/css/preloader.css")
+	link(rel="stylesheet" href="/css/modal.css")
+	link(rel="stylesheet" href="/css/slider.css")
+	link(rel="stylesheet" href="/css/clipboard.css")
+	link(rel="stylesheet" href="/css/searchbar.css")
+	link(rel="stylesheet" href="/css/importexport.css")
+	link(rel="stylesheet" href="/css/context.css")
+	link(rel="stylesheet" href="/css/contextmenu.css")
+	link(rel="stylesheet" href="/css/onoffswitch.css")
+	script(type="text/javascript" src="/js/libs/wsse.js")
+	script(type="text/javascript" src="/js/libs/jquery-3.1.0.min.js")
+	script(type="text/javascript" src="/js/libs/bootstrap-datepicker.js")
+	script(type="text/javascript" src="/js/libs/bootstrap.min.js")
+	script(type="text/javascript" src="/js/libs/pouchdb-6.0.6.js")
+	script(type="text/javascript" src="/js/libs/angular.min.js")
+	script(type="text/javascript" src="/js/libs/angular-route.js")
+	script(type="text/javascript" src="/js/libs/angular-animate.min.js")
+	script(type="text/javascript" src="/js/cid/pouchyModules.js")
+	script(type="text/javascript").
+		var routing = !{JSON.stringify(routing)}
+	script(type="text/javascript" src="/js/cid/app.js")
+	//script(type="text/javascript" src="/js/track/AppMeasurement.js")
+body
+	//script(type="text/javascript" src="/js/track/s_config.js")
+	<!--PreLoader-->
+	div#loader-wrapper
+		div#loader
+		div.loader-section.section-left
+		div.loader-section.section-right
+	<!--###-->
+	modal-on-demand
+	div.bar
+		div.padding-10.full
+			switch
+			img(src="img/ayn.png" height="30px" align="left" draggable="false")
+			div.pull-right.padding-right-25.relative(importexport="" download-pop="")
+	div.banner.relative
+		sitetitle
+	div.frame
+		div.container
+			navi
+			div.navi(ng-view="")

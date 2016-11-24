@@ -12,6 +12,7 @@ exports.select = function(rows,where,table,callback) {
 		if(err) throw err;
 		callback(err,rows);
 	})
+	connection.end();
 }
 
 exports.insert = function(rows,values,table,callback) {
@@ -21,4 +22,5 @@ exports.insert = function(rows,values,table,callback) {
 		if(err) throw err;
 		callback(err,rows);
 	})
+	connection.end();
 }

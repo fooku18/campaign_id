@@ -1,0 +1,25 @@
+{
+	"_comments_": {
+		
+	},
+	"databaseConfig": {
+		"databases": ["campaign_db","intelliad_db","channelid_db","cid_db"]
+	},
+	"routingConfig": {
+		"htmlPath": ["templates/kampagnen.html","templates/intelliad.html","templates/channelID.html","templates/create.html"],
+		"hashTag": ["/","/intelliad","/channelid","/create"],
+		"pageNames": ["Kampagnen-Konfiguration","IntelliAd-Konfiguration","ChannelID-Konfiguration","ID Erstellen"]
+	},
+	"cidConfig": {
+		"domainToken": "dhlmp",
+		"organizationToken": "dpcom"
+	},
+	"analyticsConfig": {
+		"username": "xxx",
+		"secret": "xxx",
+		"reportSuite": "xxx",
+		"endpoint": "xxx",
+		"notification_email_address": "xxx",
+		"classification_element": "trackingcode"
+	}
+}
