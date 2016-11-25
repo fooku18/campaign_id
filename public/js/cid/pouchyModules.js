@@ -510,105 +510,7 @@ angular.module("pouchy.FileReader",["pouchy.import_export"])
 //###PouchDB Module###START
 //
 angular.module("pouchy.pouchDB",[])
-.service("$pouchDB",["$rootScope","$q","$msgBusService",function($rootScope,$q,$msgBusService) {
-	/*var database = {};
-	var changeHandler;
-	var syncClosure;
-	var remote = DATALAYER.databaseConfig.remoteUrl || "";
-	var remoteOff;
-	
-	this.getDatabases = function(dbName) {
-		return database[dbName];
-	}
-	
-	this.setDatabase = function(databaseName) {
-		database[databaseName] = new PouchDB(databaseName);
-	}
-	
-	this.addItem = function(db,doc) {
-		var defer = $q.defer();
-		database[db].put(doc).then(function() {
-			defer.resolve(doc);
-		},function() {
-			defer.reject(doc);
-		});
-		return defer.promise;
-	}
-	
-	this.startListening = function(val) {
-		if(changeHandler) changeHandler.cancel();
-		changeHandler = database[val].changes(
-		{
-			since: "now",
-			live: true
-		}
-		).on("change", function(change) {
-			if(!change.deleted) {
-				$msgBusService.emit(val + ":change",change);
-			} else {
-				$msgBusService.emit(val + ":delete",change);
-			}
-		}).on("error", function(err) {
-			console.log("Listener failure: " + err);
-		});
-		if(DATALAYER.databaseConfig.autoSync && !remoteOff) {
-			this.startSyncing(val,remote)
-		}
-	}
-	
-	this.startSyncing = function(db,remoteDatabase) {
-		if(database[db]._events.destroyed.length > 4) {
-			database[db]._events.destroyed = database[db]._events.destroyed.slice(0,4);
-		}
-		remoteOff = false;
-		if(syncClosure) syncClosure.cancel();
-		console.log(remoteDatabase + db);
-        syncClosure = database[db].sync(remoteDatabase + db,
-			{
-				live: true,
-				retry: false
-			}
-		).on("change",function(change) {
-			console.log(change);
-		}).on('active', function () {
-			console.log("active");
-		}).on('denied', function (err) {
-			console.log(err);
-		}).on('complete', function (info) {
-			console.log(info);
-		}).on('error', function (err) {
-			console.log("connection error");
-			console.log(err);
-			remoteOff = true;
-			$msgBusService.emit("remoteconnection:lost");
-		});
-    }
-	
-	this.stopSyncing = function() {
-		var defer = $q.defer();
-		if(syncClosure) {
-			syncClosure.cancel();
-		}
-		remoteOff = true;
-		defer.resolve();
-		return defer.promise;
-	}
-	
-	this.fetchAllDocs = function(db) {
-		var defer = $q.defer();
-		database[db].allDocs({include_docs: true, descending: true}).then(function(docs) {
-			defer.resolve(docs);
-		},function() {
-			defer.reject();
-		});
-		return defer.promise;
-	}
-	
-	this.deleteDoc = function(db,id,rev) {
-		return database[db].remove(id,rev);
-	}*/
-}])
-.controller("switchCtrl",["$scope","$pouchDB","$msgBusService","$modalService","$pouchyModel", function switchController($scope,$pouchDB,$msgBusService,$modalService,$pouchyModel) {
+.controller("switchCtrl",["$scope","$msgBusService","$modalService","$pouchyModel", function switchController($scope,$msgBusService,$modalService,$pouchyModel) {
 	$scope.switchChange = function() {
 		($scope.switchStatus) ? $pouchyModel.startSyncing() : $pouchyModel.stopSyncing();
 	}
@@ -715,302 +617,120 @@ angular.module("pouchy.model",[])
 		dataBaseFn: dataBaseFn
 	}
 }])
+//restAPI
+.factory("$pouchyHTTP",["$http",function pouchyRequestService($http) {
+	function get(target){
+		return $http({
+			method: "GET",
+			url: "/cid/api/get/" + target
+		})
+	}
+	function post(target,data) {
+		return $http({
+			method: "POST",
+			url: "/cid/api/post/" + target,
+			headers: {
+				"Content-Type": "application/json"
+			},
+			data: data
+		})
+	}
+	function del(target,data) {
+		return $http({
+			method: "POST",
+			url: "/cid/api/delete/" + target,
+			headers: {
+				"Content-Type": "application/json"
+			},
+			data: data
+		})
+	}
+	function poll(target) {
+		function loop() {
+			
+		}
+	}
+	
+	return {
+		get: get,
+		post: post,
+		del: del
+	}
+}])
 //pouchy model is the heart of the application. it initializes the pouchdb databases on app launch and keeps the container
 //up to date on any UI change. the model changes are saved in the above factory which serves as a data distributor
 .service("$pouchyModel",["$q","$msgBusService","$pouchyModelDatabase",function pouchyModelService($q,$msgBusService,$pouchyModelDatabase) {
-	var self = this;
-	this.dbCount = 0;
-	this.syncHandlerCount = [];
-	this.databaseContainer = {};
-	this.query = function(dbase,data,includeDocs,key) {
-		var defer = $q.defer();
-		var options = {};
-		if(includeDocs) options.include_docs = true;
-		if(key) options.key = key;
-		this.databaseContainer[dbase].db.query(data,options).then(function(doc) {
-			defer.resolve(doc);
-		}, function() {
-			defer.reject();
-		});
-		return defer.promise;
-	}
-	//the service catches all databases and sync them
-	this.startSyncing = function() {
-		var remote = routing.databaseConfig.remoteUrl || "";
-		if(self.dbCount === routing.databaseConfig.databases.length) {
-			for(var key in self.databaseContainer) {
-				if(self.databaseContainer[key].db._events.destroyed.length > 4) {
-					self.databaseContainer[key].db._events.destroyed = self.databaseContainer[key].db._events.destroyed.slice(0,4);
-				}
-				syncHandler = self.databaseContainer[key].db.sync(remote + key,{
-					live: true,
-					retry: false
-				}).on("error",function(err) {
-					console.log(err);
-					self.syncHandlerCount = [];
-					$msgBusService.emit("remoteconnection:lost");
-				}).on("complete",function(info) {
-					console.log(info);
-					$msgBusService.emit("remoteconnection:lost");
-				});
-				self.syncHandlerCount.push(syncHandler);
-			}
-		}
-	}
-	this.stopSyncing = function() {
-		if(self.syncHandlerCount) {
-			angular.forEach(self.syncHandlerCount,function(key) {
-				key.cancel();
-			});
-		}
-	}
-	this.initDatabase = function(databaseName) {
-		function updateViewModel() {
-			db.allDocs({
-				descending: true,
-				include_docs: true
-			}).then(function(docs) {
-				var model = [];
-				for(var i=0;i<docs.rows.length;i++) {
-					model.push(docs.rows[i]);
-				}
-				$pouchyModelDatabase.dataBaseFn(dbName,model);
-				$msgBusService.emit(dbName + ":change", $pouchyModelDatabase.database[dbName]);
-			},function(err) {
-				console.log(err);
-			});
-		}
-		function addItem(data) {
-			var defer = $q.defer();			
-			db.put(data).then(function() {
-				defer.resolve(data);
-			}, function() {
-				defer.reject();
-			});
-			return defer.promise;			
-		}
-		function deleteItem(id,rev) {
-			var defer = $q.defer();
-			db.remove(id,rev).then(function(data) {
-				console.log("deleted");
-				defer.resolve(data);
-			}, function() {
-				defer.reject();
-			});
-			return defer.promise;
-		}
-		var dbName;
-		var db = new PouchDB(databaseName);
-		//dbCount counts up to the max number of databases - this is necessary so that the syncing process only starts when
-		//all databases are set up
-		self.dbCount++;
-		dbName = databaseName;
-		//this method kicks in the auto sync mode for pouchdb
-		db.changes({
-			since: "now",
-			live: true,
-			include_docs: true
-		}).on("change",updateViewModel);
-		//the databaseContainer contains all databases and relevant methods for adding, updating, deleting and 
-		//auto-updating datasets in its enclosed database scope
-		self.databaseContainer[dbName] = {
-			db: db,
-			addItem: addItem,
-			deleteItem: deleteItem
-		}
-		//initial view model update - this kicks in the scope for the current UI tab
-		updateViewModel();
-		//auto syncing attempt - if unsuccessful app will work in offline mode
-		//although the user has the choice to retry syncing in UI - there is an option to change the standart remote options in UI
-		self.startSyncing();
-	}
+	
 }])
 //mainCtrl is initilized on every new tab - this is to prevent too much scope overhead for non relevant data as 
 //all database data is present in the background service
-.controller("mainCtrl",["$scope","$pouchyWorker","$hashService","$msgBusService","$attrs","$modalService","$pouchyModel","$pouchyModelDatabase","$filter","$pouchyDesignViews","$pouchyLoader","$pouchySAINTAPI",function mainController($scope,$pouchyWorker,$hashService,$msgBusService,$attrs,$modalService,$pouchyModel,$pouchyModelDatabase,$filter,$pouchyDesignViews,$pouchyLoader,$pouchySAINTAPI) {
+.controller("mainCtrl",["$scope","$pouchyWorker","$hashService","$msgBusService","$attrs","$modalService","$pouchyModel","$pouchyModelDatabase","$filter","$pouchyDesignViews","$pouchyLoader","$pouchySAINTAPI","$pouchyHTTP",function mainController($scope,$pouchyWorker,$hashService,$msgBusService,$attrs,$modalService,$pouchyModel,$pouchyModelDatabase,$filter,$pouchyDesignViews,$pouchyLoader,$pouchySAINTAPI,$pouchyHTTP) {
 	//fetch database name from template attribute - this is important to seperate the data from the model service
 	var db = $attrs.db;
 	$scope.changeSortType = function(val) {
 		if($scope.sortType === val) $scope.sortDescending = !$scope.sortDescending;
 		$scope.sortType = val;
 	};
+	
 	//initial on scope creation in case model already exists
 	(function() {
 		//initial filter -> orderBy descending creationdate
 		$scope.sortType = "doc.creationdate";
 		$scope.sortDescending = true;
-		$scope.items = angular.copy($pouchyModelDatabase.database[db]);
-		//filter by creationdate
-		//$scope.items = $filter("orderBy")($scope.items,"doc.creationdate");
-		console.log($pouchyModelDatabase.database[db]); // <-----------------------------------DELETE
+		$pouchyHTTP.get(db).then(function(res) {
+			$scope.items = res.data;
+		},function(err) {
+			console.log("Unable to get data from API: " + err);
+		})
 	})();
-	//update scope if model changes due UI-input
-	$msgBusService.get(db + ":change",$scope,function(event,data) {
-		$scope.$apply(function() {
-			$scope.items = angular.copy(data);
-			//filter by creationdate
-			$scope.items = $filter("orderBy")($scope.items,"doc.creationdate");
-		});
-	});
+	//update scope if model changes - subscribe to node event - request bound
+	//
+	//xxx
+	//
 	//UI input data need to be validated before pouch/couch is updated. Validation is defined on the relevant userforms
 	$scope.validation = function(val,data) {
-		if(val.$valid) {
+		if(val.$valid)
 			$scope.addItem(val,data);
-			$modalService.open({template:"success",barColor:"green"}).
-			then(function() {
-				console.log("resolved");
-			},function() {
-				console.log("rejected");
-			});
-		} else {
-			$modalService.open({template:"invalid",barColor:"red"}).
-			then(function() {
-				console.log("resolved");
-			},function() {
-				console.log("rejected");
-			});
-		}
 		//clean input fields from validation errors after button fired and submitted from new value input form
 		if(val.$name !== "userFormChange") {
 			$scope.c = {};
 			$scope.userForm.$setPristine();
 		}
 	}
+	function formatDateMYSQL(obj) {
+		let RegExp = /^(0?[1-9]|[12][0-9]|3[01])\.(0?[1-9]|1[012])\.\d{4}$/;
+		for(let key in obj) {
+			if(RegExp.test(obj[key])) obj[key] = obj[key].substr(6,4) + "-" + obj[key].substr(3,2) + "-" + obj[key].substr(0,2);
+		}
+		return obj;
+	}
 	//if validation succeeds UI data is beeing added
 	$scope.addItem = function(val,data) {
-		//if this submission is not an update then create new id as hash
-		if(!data._id) {
-			//concatenate and hash input -> use as couchdb _id
-			var hashVal = (function(data) {
-				var conc = "";
-				for(var key in data) {
-					if(data.hasOwnProperty(key)) {
-						conc += data[key];
-					}
-				}
-				return Math.abs($hashService.hash(conc)).toString();
-			})(data);
-			//add the hash value to the datasets _id property - this be the unique
-			//identifier for the dataset. in case someone creates a dataset with exactly
-			//the same properties (except start and end dates) the _ids are equal and the
-			//dataset only gets updated. this is to prevent duplicates
-			data["_id"] = hashVal;
-			//add creation date do dataset - this is handy for sorting issues
-			data["creationdate"] = new Date().toISOString();
-		//if _id already exists the dataset only needs to get updated - pouch/couch will
-		//will take care of this automatically and will add a new revision to the dataset
-		} else {
-			//extra behaviour due campaign data changes - if several properties get changed the 
-			//main cid pool of datasets needs to get updated too. these datasets also need to be 
-			//flagged as not up to date relating to SAINT classification
-			var a = [],
-				changedData = {},
-				identifier,idx,
-				targetDB = "cid_db";
-							
-			identifier = db.substr(0,db.indexOf("_"));
-			idx = $pouchyDesignViews.design(identifier);
-			console.log(data);
-			console.log("CHANGED: " + data._id);
-			/**	
-			*	query cid_db for the changed data from campaigns_db
-			*
-			*	@param {String,String,Boolean,String} (DatabaseName,IndexName,IncludeDocs,SearchKey)
-			*   @param {string} idx
-			*   @param {boolean} includeDocs
-			*	@return {Promise} returned promise contains matching data
-			*/
-			$pouchyModel.query(targetDB,idx,true,data._id).then(function(doc) {
-				if(doc.rows.length) {
-					console.log(doc);
-					//copy changed values into new object which later changes all matching cid datasets
-					var changedData = {};
-					angular.forEach(data,function(val,key) {
-						if(key !== "_id" && key !== "_rev" && key !== "type" && key !== "intext") {
-							changedData[key] = val;
-						}
-					});
-					var a = [];
-					for(var i=0;i<doc.rows.length;i++) {
-						angular.forEach(changedData,function(val,key) {
-							doc.rows[i].doc[identifier + "_" + key] = val;
-							//add time stamp of last modification
-							doc.rows[i].doc.modified = new Date().toISOString();
-						});
-						a.push(doc.rows[i].doc);
-					}
-					$pouchyModel.databaseContainer.cid_db.db.bulkDocs(a).then(function(res) {
-						//**********************************************
-						$pouchyLoader.loaderToggle();
-						var _id;
-						var conf = {
-							"encoding":"utf-8"
-						}
-						conf.rsid_list = [routing.analyticsConfig.reportSuite];
-						conf.element = routing.analyticsConfig.classification_element;
-						$pouchySAINTAPI.requestSAINT("Classifications.GetTemplate",conf)
-						.then(function(res) {
-							var s = res.data[0].template.split("\r\n");
-							var sn = s[3].split("\t");
-							var conf = {
-								"check_divisions":"1",
-								"description":"Classification Upload API",
-								"export_results":"0",
-								"overwrite_conflicts":"1",
-							}
-							conf.element = routing.analyticsConfig.classification_element;
-							conf.email_address = routing.analyticsConfig.notification_email_address;
-							conf.header = sn;
-							conf.rsid_list = [DATALAYER.analyticsConfig.reportSuite];
-							return $pouchySAINTAPI.requestSAINT("Classifications.CreateImport",conf);
-						}).then(function(res) {
-							if(res) {
-								_id = res.data["job_id"];
-								var conf = {
-									"page":"1",
-									"rows":[]
-								}
-								conf["job_id"] = _id;
-								for(var k=0;k<a.length;k++) {
-									conf.rows.push({
-										"row": [
-											a[k].cid,a[k].campaign_type,a[k].creative_channel,a[k].campaign_id,
-											a[k].campaign_name,a[k].campaign_start,a[k].campaign_end,a[k].placement,
-											a[k].adtype,a[k].ad,DATALAYER.cidConfig.domainToken
-										]
-									})
-								};
-								return $pouchySAINTAPI.requestSAINT("Classifications.PopulateImport",conf);
-							}
-						}).then(function(res) {
-							if(res) {
-								var conf = {};
-								conf["job_id"] = _id;
-								return $pouchySAINTAPI.requestSAINT("Classifications.CommitImport",conf);
-							}
-						}).then(function(res) {
-							$pouchyLoader.loaderToggle();
-							console.log(res);
-						}).catch(function(err) {
-							$pouchyLoader.loaderToggle();
-							console.log(err);
-						});
-						//**********************************************
-					},function(err) {
-						console.log(err)
-					});
-				}
-			},function(err) {
-				console.log(err);
+		let dataP = formatDateMYSQL(data);
+		$pouchyHTTP.post(db,dataP).then(function() {
+			$modalService.open({template:"success",barColor:"green"}).
+			then(function() {
+				console.log("resolved");
+			},function() {
+				console.log("rejected");
 			});
-		}
-		$pouchyModel.databaseContainer[db].addItem(data);
+		},function() {
+			$modalService.open({template:"invalid",barColor:"red"}).
+			then(function() {
+				console.log("resolved");
+			},function() {
+				console.log("rejected");
+			});
+		})
 	}
 	//UI delete data
-	$scope.deleteItem = function(doc) {
-		$modalService.open({template:"delete",barColor:"red",data:doc.info}).then(function() {
-			$pouchyModel.databaseContainer[db].deleteItem(doc.id,doc.rev);
-			console.log(doc.id + " deleted");
+	$scope.deleteItem = function(data) {
+		$modalService.open({template:"delete",barColor:"red",data:data.info}).then(function() {
+			$pouchyHTTP.del(db,data).then(function() {
+				console.log(doc.id + " deleted");
+			}, function() {
+				console.log("deletion failed");
+			})
 		},function() {
 			console.log("Aborted");
 		});
