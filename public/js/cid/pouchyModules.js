@@ -646,14 +646,17 @@ angular.module("pouchy.model",[])
 		})
 	}
 	function poll(target) {
-		function loop() {
-			
-		}
+		return $http({
+			method: "GET",
+			url: "/cid/api/p/" + target,
+			timeout: 0
+		})
 	}
 	
 	return {
 		get: get,
 		post: post,
+		poll: poll,
 		del: del
 	}
 }])
@@ -664,7 +667,7 @@ angular.module("pouchy.model",[])
 }])
 //mainCtrl is initilized on every new tab - this is to prevent too much scope overhead for non relevant data as 
 //all database data is present in the background service
-.controller("mainCtrl",["$scope","$pouchyWorker","$hashService","$msgBusService","$attrs","$modalService","$pouchyModel","$pouchyModelDatabase","$filter","$pouchyDesignViews","$pouchyLoader","$pouchySAINTAPI","$pouchyHTTP",function mainController($scope,$pouchyWorker,$hashService,$msgBusService,$attrs,$modalService,$pouchyModel,$pouchyModelDatabase,$filter,$pouchyDesignViews,$pouchyLoader,$pouchySAINTAPI,$pouchyHTTP) {
+.controller("mainCtrl",["$scope","$pouchyWorker","$hashService","$msgBusService","$attrs","$modalService","$pouchyModel","$pouchyModelDatabase","$filter","$pouchyLoader","$pouchySAINTAPI","$pouchyHTTP",function mainController($scope,$pouchyWorker,$hashService,$msgBusService,$attrs,$modalService,$pouchyModel,$pouchyModelDatabase,$filter,$pouchyLoader,$pouchySAINTAPI,$pouchyHTTP) {
 	//fetch database name from template attribute - this is important to seperate the data from the model service
 	var db = $attrs.db;
 	$scope.changeSortType = function(val) {
@@ -675,13 +678,21 @@ angular.module("pouchy.model",[])
 	//initial on scope creation in case model already exists
 	(function() {
 		//initial filter -> orderBy descending creationdate
-		$scope.sortType = "doc.creationdate";
-		$scope.sortDescending = true;
+		//$scope.sortType = "doc.creationdate";
+		//$scope.sortDescending = true;
 		$pouchyHTTP.get(db).then(function(res) {
 			$scope.items = res.data;
-		},function(err) {
-			console.log("Unable to get data from API: " + err);
-		})
+		},function() {
+			console.log("Unable to get data from api");
+		});
+		(function poll() {
+			$pouchyHTTP.poll(db).then(function(res) {
+				$scope.items = res.data;
+				poll();
+			},function(err) {
+				poll();
+			})
+		})()
 	})();
 	//update scope if model changes - subscribe to node event - request bound
 	//
@@ -699,10 +710,13 @@ angular.module("pouchy.model",[])
 	}
 	function formatDateMYSQL(obj) {
 		let RegExp = /^(0?[1-9]|[12][0-9]|3[01])\.(0?[1-9]|1[012])\.\d{4}$/;
+		let arr = [[],[]];
 		for(let key in obj) {
 			if(RegExp.test(obj[key])) obj[key] = obj[key].substr(6,4) + "-" + obj[key].substr(3,2) + "-" + obj[key].substr(0,2);
+			arr[0].push(key);
+			arr[1].push(obj[key]);
 		}
-		return obj;
+		return {data: arr};
 	}
 	//if validation succeeds UI data is beeing added
 	$scope.addItem = function(val,data) {
@@ -748,40 +762,6 @@ angular.module("pouchy.model",[])
 		});
 	}
 }])
-.service("$pouchyDesignViews",["$pouchyModel",function($pouchyModel) {
-	function createDesignView(indexName) {
-		var idx = "index_" + indexName;
-		var mapStr = "function(doc) {emit(doc." + indexName + "_id)}";
-		var ddoc = {};
-		ddoc._id = "_design/" + idx;
-		ddoc.views = {};
-		ddoc.views[idx] = {};
-		ddoc.views[idx].map = mapStr;
-		
-		$pouchyModel.databaseContainer["cid_db"].addItem(ddoc).then(function() {
-			return $pouchyModel.query("cid_db",idx,false,false);
-		}).then(function() {
-			console.log("_designView created");
-		});
-		
-		return idx
-	}
-	
-	return {
-		design: createDesignView
-	}
-}])
-//this filter removes the _design views from the view representation in UI
-//views are couch/pouch'es way to index datasets and query secondary indexes
-.filter("removeDesigns",function() {
-	return function(data) {
-		var newSet = [];
-		angular.forEach(data,function(val,key) {
-			if((val.id).substr(0,7) !== "_design") newSet.push(val);
-		});
-		return newSet;
-	}
-})
 .filter("dateFormatDE",function() {
 	return function(val) {
 		return val.substr(8,2) + "." + val.substr(5,2) + "." + val.substr(0,4);

@@ -1,9 +1,9 @@
 (function() {
 	var mysql_config = {
 		host: "localhost",
-		user: "standard",
+		user: "root",
 		database: "cid",
-		password: "horst",
+		password: "",
 		dateStrings: "date"
 	}
 

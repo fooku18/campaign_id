@@ -118,7 +118,7 @@
 					<div class="col-sm-1 main-center">Aktionen</div>
 				</div>
 				<div class="main-table-tr-wrapper">
-					<div class="main-table-tr animate" ng-repeat="value in items | orderBy:sortType:sortDescending track by $index" data-context-info="{{value}}">
+					<div class="main-table-tr animate" ng-repeat="value in items | orderBy:'-id' track by $index" data-context-info="{{value}}">
 						<div class="col-sm-3"><span>{{value.name}}</span></div>
 						<div class="col-sm-2"><span>{{value.type}}</span></div>
 						<div class="col-sm-2"><span>{{value.intext}}</span></div>
