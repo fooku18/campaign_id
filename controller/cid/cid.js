@@ -51,16 +51,14 @@ router.get("/api/p/:destination",function(req,res,next) {
 			res.status(200).send([srows,rows.length]);
 		});
 	};
-	message.once(db + ":update",function(page,rows) {
-		update(page,rows);
-	})
+	message.once(db + ":update",update);
 	req.on("close",function() {
 		message.removeListener(db + ":update",update);
-	})
+	});
 })
 
-var val = setInterval(function() {
-	console.log(message._events["campaign_db:update"]);
-},2000);
+/*var val = setInterval(function() {
+	console.log(message);
+},5000);*/
 
 module.exports = router;

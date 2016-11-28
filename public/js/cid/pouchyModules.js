@@ -167,6 +167,7 @@ angular.module("pouchy.modal",[])
 			};
 			scope.modalTemplate = "";
 			$msgBusService.get("modal:init",scope,function(event,options) {
+				document.getElementsByTagName("modal-on-demand")[0].firstChild.firstChild.style.height = document.documentElement.clientHeight + "px";
 				scope.values = {};
 				scope.barColor = "custom-modal-bar-" + options.barColor;
 				scope.modalTemplate = "templates/modal/" + options.template + ".html";
@@ -203,7 +204,7 @@ angular.module("pouchy.pagination",[])
 		templateUrl: "templates/pagination/pagination.html",
 		link: function(scope,elemt,attr,ctrlMain,transcludeFn) {
 			$msgBusService.get("pagination:change",scope,function(evt,data) {
-				scope.paginationArray = Array.apply(null,{length: Math.ceil(data / ctrlMain.maxRows)}).map(Number.call,Number).splice(1,Math.ceil(data / ctrlMain.maxRows));
+				scope.paginationArray = Array.apply(null,{length: Math.ceil(data / ctrlMain.maxRows)+1}).map(Number.call,Number).splice(1,Math.ceil(data / ctrlMain.maxRows));
 			})
 			scope.currentPage = ctrlMain.currentPage = 1;
 			scope.changePage = function(val) {
@@ -622,7 +623,7 @@ angular.module("pouchy.model",[])
 		});
 		var cancel = $q.defer();
 		$scope.$on("$destroy",function() {
-			cancel.resolve();
+			cancel.resolve("reload");
 		});
 		(function poll(c) {
 			$pouchyHTTP.poll(db,c).then(function(res) {
@@ -630,6 +631,7 @@ angular.module("pouchy.model",[])
 				$msgBusService.emit("pagination:change",res.data[1]);
 				poll(c);
 			},function(err) {
+				if(c.promise.$$state.value = "reload") return;
 				if(c.promise.$$state.status === 1) return;
 				poll(c);
 			})
