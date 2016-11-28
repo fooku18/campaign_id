@@ -2,6 +2,7 @@ const express = require("express")
 const request = require("request")
 const app = express()
 //express config
+app.disable("x-powered-by");
 app.use(express.static(__dirname + "/public"))
 app.set("view engine","pug")
 app.set("views","./views")

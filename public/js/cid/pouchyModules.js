@@ -195,111 +195,31 @@ angular.module("pouchy.modal",[])
 //###Pagination Module###START
 //
 angular.module("pouchy.pagination",[])
-.controller("paginationDelegate",["$scope",function paginationDelegateController($scope) {
-	$scope.currentPage = 1;
-	this.setCurrentPage = function(val) {
-		$scope.currentPage = val;
-	}
-}])
-.controller("paginationController",["$scope","$filter","paginationConfig",function paginationController($scope,$filter,paginationConfig) {
-	function calculate() {
-		var base = $filter("included")($scope.items,$scope.searchKey) / $scope.showRows;
-		if(base <= 1) {
-			$scope.paginationSpan = 1;
-		} else {
-			var mod = (($filter("included")($scope.items,$scope.searchKey)) % $scope.showRows > 0) ? 1 : 0;
-			$scope.paginationSpan = base + mod;
-		}
-		$scope.paginationSpan = ($scope.paginationSpan > paginationConfig.maxSpan) ? 5 : $scope.paginationSpan;
-		$scope.paginationArray = [];
-		for(var i=1;i<=$scope.paginationSpan;i++) {
-			$scope.paginationArray.push(i);
-		}
-	}
-	$scope.$watch("items + showRows",function() {
-		calculate();
-	});
-	$scope.$watch("searchKey",function() {
-		calculate();
-	});
-	$scope.changePageFn = function(val) {
-		if(typeof(val) === "string") {
-			($scope.currentPage + parseInt(val,10)) === 0 ? $scope.currentPage = 1 : ($scope.currentPage + parseInt(val,10)) < $scope.paginationSpan ? $scope.currentPage += parseInt(val,10) : $scope.currentPage = $scope.paginationSpan;			
-		} else {
-			$scope.currentPage = val
-		}
-		if($scope.currentPage > $scope.paginationArray[$scope.paginationArray.length-1]) {
-			$scope.paginationArray = $scope.paginationArray.slice(1);
-			$scope.paginationArray.push($scope.currentPage);
-		}
-		if($scope.currentPage < $scope.paginationArray[0]) {
-			$scope.paginationArray.pop(1);
-			$scope.paginationArray.unshift($scope.currentPage);
-		}
-		return $scope.currentPage;
-	}
-	$scope.currentPage = 1;
-}])
-.constant("paginationConfig", 
-	{
-		maxSpan: 5
-	}
-)
-.directive("paginationShowFilter",function paginationShowFilterDirective() {
-	var tmp = "<select ng-model='showFilter' class='form-control inputField' ng-options='i.name for i in filterItems'></select>";
+.directive("pagination",["$msgBusService","paginationConfig",function paginationDirective($msgBusService,paginationConfig) {
 	return {
 		restrict: "E",
-		scope: false,
-		template: tmp,
-		controller: function($scope) {
-			$scope.filterItems = [{id:'targeturl',name:'Ziel-URL'},{id:'ad',name:'Werbemittel'},{id:'intext',name:'Typ'},{id:'cid',name:'CID'}];
-			$scope.showFilter = $scope.filterItems[0];
-		}
-	}
-})
-.directive("paginationShowRows",function paginationShowRowsDirective() {
-	var tmp = "<select ng-model='showRows' class='form-control inputField' ng-options='i for i in filterRows'></select>";
-	return {
-		restrict: "E",
-		scope: false,
-		template: tmp,
-		controller: function($scope) {
-			$scope.filterRows = [10,20,30,40,50];
-			$scope.showRows = 10;
-		}
-	}
-})
-.directive("paginationParent",function paginationParentDirective() {
-	return {
-		restrict: "E",
-		transclude: true,
-		scope: false,
-		controller: "paginationDelegate",
-		link: function(scope,element,attr,ctrl,transclude) {
-			transclude(scope,function(clone) {
-				element.append(clone);
-			});
-		}
-	}
-})
-.directive("pagination",function paginationDirective() {
-	return {
-		restrict: "E",
-		require: "^paginationParent",
-		scope: {
-			items: "=",
-			showRows: "@",
-			searchKey: "@",
-			searchFilter: "@"
-		},
-		controller: "paginationController",
+		scope: {},
+		require: "^dbTab",
 		templateUrl: "templates/pagination/pagination.html",
-		link: function(scope,elemt,attr,ctrl,transcludeFn) {
+		link: function(scope,elemt,attr,ctrlMain,transcludeFn) {
+			$msgBusService.get("pagination:change",scope,function(evt,data) {
+				scope.paginationArray = Array.apply(null,{length: Math.ceil(data / ctrlMain.maxRows)}).map(Number.call,Number).splice(1,Math.ceil(data / ctrlMain.maxRows));
+			})
+			scope.currentPage = ctrlMain.currentPage = 1;
 			scope.changePage = function(val) {
-				var current = scope.changePageFn(val);
-				ctrl.setCurrentPage(current);
+				if(typeof(val) === "string") {
+					(ctrlMain.currentPage === 1 || ctrlMain.currentPage === ctrlMain.paginationArray[-1]) ? scope.currentPage = ctrlMain.currentPage += val : scope.currentPage = ctrlMain.CurrentPage = ctrlMain.CurrentPage;
+				} else {
+					scope.currentPage = ctrlMain.currentPage = val;
+				}
+				ctrlMain.changePage(ctrlMain.currentPage);
 			}
 		}
+	}
+}])
+.constant("paginationConfig",function() {
+	{
+		colWidth = 5
 	}
 })
 .filter("pages",function pagesFilter() {
@@ -609,7 +529,6 @@ angular.module("pouchy.model",[])
 .factory("$pouchyModelDatabase",["$msgBusService",function pouchyModelDatabaseFactory($msgBusService) {
 	function dataBaseFn(name,val) {
 		database[name] = val;
-		console.log(database);           // <---------------------------------------------DELETE
 	};
 	var database = {};
 	return {
@@ -619,37 +538,45 @@ angular.module("pouchy.model",[])
 }])
 //restAPI
 .factory("$pouchyHTTP",["$http",function pouchyRequestService($http) {
-	function get(target){
+	function get(target,page,rows){
 		return $http({
 			method: "GET",
-			url: "/cid/api/get/" + target
+			url: "/cid/api/get/" + target + "?p=" + page + "&r=" + rows
 		})
 	}
-	function post(target,data) {
+	function post(target,data,currentPage,maxRows) {
 		return $http({
 			method: "POST",
 			url: "/cid/api/post/" + target,
 			headers: {
 				"Content-Type": "application/json"
 			},
-			data: data
+			data: {
+				"data": data,
+				"currentPage": currentPage,
+				"maxRows": maxRows
+			}
 		})
 	}
-	function del(target,data) {
+	function del(target,data,currentPage,maxRows) {
 		return $http({
 			method: "POST",
 			url: "/cid/api/delete/" + target,
 			headers: {
 				"Content-Type": "application/json"
 			},
-			data: data
+			data: {
+				"data": data,
+				"currentPage": currentPage,
+				"maxRows": maxRows
+			}
 		})
 	}
-	function poll(target) {
+	function poll(target,cancel) {
 		return $http({
 			method: "GET",
 			url: "/cid/api/p/" + target,
-			timeout: 0
+			timeout: cancel.promise
 		})
 	}
 	
@@ -663,41 +590,53 @@ angular.module("pouchy.model",[])
 //pouchy model is the heart of the application. it initializes the pouchdb databases on app launch and keeps the container
 //up to date on any UI change. the model changes are saved in the above factory which serves as a data distributor
 .service("$pouchyModel",["$q","$msgBusService","$pouchyModelDatabase",function pouchyModelService($q,$msgBusService,$pouchyModelDatabase) {
-	
+	//##############DELETE#######################
 }])
+.directive("dbTab",function() {
+	return {
+		restrict: "A",
+		controller: "mainCtrl"
+	}
+})
 //mainCtrl is initilized on every new tab - this is to prevent too much scope overhead for non relevant data as 
-//all database data is present in the background service
-.controller("mainCtrl",["$scope","$pouchyWorker","$hashService","$msgBusService","$attrs","$modalService","$pouchyModel","$pouchyModelDatabase","$filter","$pouchyLoader","$pouchySAINTAPI","$pouchyHTTP",function mainController($scope,$pouchyWorker,$hashService,$msgBusService,$attrs,$modalService,$pouchyModel,$pouchyModelDatabase,$filter,$pouchyLoader,$pouchySAINTAPI,$pouchyHTTP) {
+.controller("mainCtrl",["$scope","$pouchyWorker","$hashService","$msgBusService","$attrs","$modalService","$pouchyModel","$filter","$pouchyLoader","$pouchySAINTAPI","$pouchyHTTP","$q",function mainController($scope,$pouchyWorker,$hashService,$msgBusService,$attrs,$modalService,$pouchyModel,$filter,$pouchyLoader,$pouchySAINTAPI,$pouchyHTTP,$q) {
 	//fetch database name from template attribute - this is important to seperate the data from the model service
+	//config
+	_t = this;
 	var db = $attrs.db;
-	$scope.changeSortType = function(val) {
-		if($scope.sortType === val) $scope.sortDescending = !$scope.sortDescending;
-		$scope.sortType = val;
+	//shared properties between directives
+	_t.maxRows = 10;
+	_t.currentPage;
+	//shared methods between directives
+	_t.changePage = function(page) {
+		$scope.init.resolve();
+		$scope.init = init(page);
 	};
-	
-	//initial on scope creation in case model already exists
-	(function() {
-		//initial filter -> orderBy descending creationdate
-		//$scope.sortType = "doc.creationdate";
-		//$scope.sortDescending = true;
-		$pouchyHTTP.get(db).then(function(res) {
-			$scope.items = res.data;
+	//initialization
+	function init(page) {
+		$pouchyHTTP.get(db,page,_t.maxRows).then(function(res) {
+			$scope.items = res.data[0];
+			$msgBusService.emit("pagination:change",res.data[1]);
 		},function() {
 			console.log("Unable to get data from api");
 		});
-		(function poll() {
-			$pouchyHTTP.poll(db).then(function(res) {
-				$scope.items = res.data;
-				poll();
+		var cancel = $q.defer();
+		$scope.$on("$destroy",function() {
+			cancel.resolve();
+		});
+		(function poll(c) {
+			$pouchyHTTP.poll(db,c).then(function(res) {
+				$scope.items = res.data[0];
+				$msgBusService.emit("pagination:change",res.data[1]);
+				poll(c);
 			},function(err) {
-				poll();
+				if(c.promise.$$state.status === 1) return;
+				poll(c);
 			})
-		})()
-	})();
-	//update scope if model changes - subscribe to node event - request bound
-	//
-	//xxx
-	//
+		})(cancel)
+		return cancel;
+	}
+	$scope.init = init(1);
 	//UI input data need to be validated before pouch/couch is updated. Validation is defined on the relevant userforms
 	$scope.validation = function(val,data) {
 		if(val.$valid)
@@ -720,8 +659,8 @@ angular.module("pouchy.model",[])
 	}
 	//if validation succeeds UI data is beeing added
 	$scope.addItem = function(val,data) {
-		let dataP = formatDateMYSQL(data);
-		$pouchyHTTP.post(db,dataP).then(function() {
+		var dataP = formatDateMYSQL(data);
+		$pouchyHTTP.post(db,dataP,_t.currentPage,_t.maxRows).then(function() {
 			$modalService.open({template:"success",barColor:"green"}).
 			then(function() {
 				console.log("resolved");
@@ -740,8 +679,8 @@ angular.module("pouchy.model",[])
 	//UI delete data
 	$scope.deleteItem = function(data) {
 		$modalService.open({template:"delete",barColor:"red",data:data.info}).then(function() {
-			$pouchyHTTP.del(db,data).then(function() {
-				console.log(doc.id + " deleted");
+			$pouchyHTTP.del(db,data,_t.currentPage,_t.maxRows).then(function() {
+				console.log(data.id + " deleted");
 			}, function() {
 				console.log("deletion failed");
 			})
@@ -1021,8 +960,8 @@ angular.module("pouchy.model",[])
 							var O_O_top = $("#context-0-0").position().top;
 							var O_O_left = $("#context-0-0").position().left;
 							contextMenu.css({
-								top: (e.clientY - O_O_top + 20) + "px",
-								left: (e.clientX - O_O_left - widthCorrection) + "px"
+								top: (e.pageY - O_O_top + 20) + "px",
+								left: (e.pageX - O_O_left - widthCorrection) + "px"
 							});
 						});
 					});

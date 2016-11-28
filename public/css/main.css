@@ -431,3 +431,7 @@ select {
 .btn-outline-none {
 	outline: none !important;
 }
+
+.main-word-wrap {
+	word-wrap: break-word;
+}

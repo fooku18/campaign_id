@@ -2,7 +2,7 @@ const mysql = require("mysql");
 const mysqlDB = require("../../db/db.js");
 
 exports.get = function(db,callback) {
-	mysqlDB.select(["*"],"",db,callback);
+	mysqlDB.select(["*"],"","","",db,callback);
 }
 
 exports.post = function(rows,vals,db,callback) {

@@ -17,41 +17,50 @@ router.get("/",function(req,res,next) {
 
 router.get("/api/get/:destination",function(req,res,next) {
 	let db = req.params.destination;
+	let p = req.query.p;
+	let r = req.query.r;
 	model.get(db,function(err,rows) {
-		res.status(200).send(rows);
+		let srows = rows.slice((p-1)*r,p*r);
+		res.status(200).send([srows,rows.length]);
 	});
 })
 
 router.post("/api/post/:destination",jsonParser,function(req,res,next) {
 	if(!req.body) res.status(400).send();
 	let db = req.params.destination;
-	model.post(req.body.data[0],req.body.data[1],db,function(err,rows) {
-		message.emit(db + ":update");
+	model.post(req.body.data.data[0],req.body.data.data[1],db,function(err,rows) {
+		message.emit(db + ":update",req.body.currentPage,req.body.maxRows);
 		res.status(201).send({action: "insert",status: "success"});
 	});
 })
 
 router.post("/api/delete/:destination",jsonParser,function(req,res,next) {
 	if(!req.body) res.status(400).send();
-	console.log(req.body);
 	let db = req.params.destination;
-	model.del(req.body.id,db,function(err,rows) {
-		message.emit(db + ":update");
+	model.del(req.body.data.id,db,function(err,rows) {
+		message.emit(db + ":update",req.body.currentPage,req.body.maxRows);
 		res.status(201).send({action: "delete",status: "success"});
 	})
 })
 
 router.get("/api/p/:destination",function(req,res,next) {
 	let db = req.params.destination;
-	let update = function() {
+	let update = function(p,r) {
 		model.get(db,function(err,rows) {
-			res.status(200).send(rows);
+			let srows = rows.slice((p-1)*r,p*r);
+			res.status(200).send([srows,rows.length]);
 		});
-	}
-	message.once(db + ":update",update);
+	};
+	message.once(db + ":update",function(page,rows) {
+		update(page,rows);
+	})
 	req.on("close",function() {
 		message.removeListener(db + ":update",update);
 	})
 })
+
+var val = setInterval(function() {
+	console.log(message._events["campaign_db:update"]);
+},2000);
 
 module.exports = router;
