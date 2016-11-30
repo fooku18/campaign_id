@@ -1,0 +1,15 @@
+<div class="row custom-modal-modal-format">
+	<div class="col-md-12 col-sm-12 block form-group" ng-repeat="(key,val) in values">
+		<div class="padding-bottom-5" ng-if="key !== 'id'">
+			<span class="label label-default">{{key}}</span>
+		</div>
+		<div ng-switch on="key">
+			<input ng-model="values[key]" ng-switch-when="id" class="inputField form-control" type="hidden" required/>
+			<input ng-model="values[key]" ng-switch-when="start|end" ng-switch-when-separator="|" class="inputField form-control" type="text" datepicker="" required/>
+			<input ng-model="values[key]" ng-switch-default class="inputField form-control" type="text" required/>
+		</div>
+	</div>
+	<div class="col-md-1 col-sm-1 padding-top-25">
+		<button ng-click="confirm()" class="btn btn-default" type="submit" id="btn-input">speichern</button>
+	</div>
+</div>

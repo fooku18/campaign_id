@@ -18,8 +18,8 @@ exports.select = function(rows,where,limit,order,table,callback) {
 }
 
 exports.insert = function(rows,values,table,callback) {
-	//if(!Array.isArray(rows) || !Array.isArray(values)) return console.log("Rows and Values must be of type Array");
 	var sql = "INSERT INTO ?? (??) VALUES (?)";
+	console.log(mysql.format(sql,[table,rows,values]));
 	connection.query(sql,[table,rows,values],function(err,rows) {
 		if(err) return console.log(err);
 		callback(err,rows);
@@ -29,6 +29,15 @@ exports.insert = function(rows,values,table,callback) {
 exports.del = function(id,table,callback) {
 	var sql = "DELETE FROM ?? WHERE id=?";
 	connection.query(sql,[table,id],function(err,rows) {
+		if(err) return console.log(err);
+		callback(err,rows);
+	})
+}
+
+exports.update = function(id,hash,table,callback) {
+	var sql = "UPDATE `" + table + "` SET ? WHERE id=" + id;
+	sql = mysql.format(sql,hash);
+	connection.query(sql,function(err,rows) {
 		if(err) return console.log(err);
 		callback(err,rows);
 	})

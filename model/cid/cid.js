@@ -12,3 +12,7 @@ exports.post = function(rows,vals,db,callback) {
 exports.del = function(id,db,callback) {
 	mysqlDB.del(id,db,callback);
 }
+
+exports.update = function(id,hash,table,callback) {
+	mysqlDB.update(id,hash,table,callback);
+}

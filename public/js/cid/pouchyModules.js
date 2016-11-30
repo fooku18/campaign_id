@@ -129,13 +129,13 @@ angular.module("pouchy.modal",[])
 		reject: reject
 	}
 }])
-.directive("modalOnDemand",["$rootScope","$window","$msgBusService","$modalService",function modalOnDemandDirective($rootScope,$window,$msgBusService,$modalService) {
+.directive("modalOnDemand",["$rootScope","$window","$msgBusService","$modalService","$pouchyHTTP",function modalOnDemandDirective($rootScope,$window,$msgBusService,$modalService,$pouchyHTTP) {
 	return {
 		restrict: "E",
 		scope: {},
 		template: 	"<div ng-show='modalShow'>" +
 						"<div class='custom-modal-overlay'></div>" +
-						"<div class='custom-modal-dialog' ng-class='{\"custom-modal-stretch\":modalStretch}'>" + 
+						"<div class='custom-modal-dialog' ng-class='{\"custom-modal-stretch\":modalStretch}'>" +
 							"<div class='custom-modal-bar {{barColor}}'>&nbsp;</div>" +
 							"<div class='custom-modal-icon'><span ></span></div>" +
 							"<button ng-click='modalHide()' type='button' class='btn btn-default custom-modal-close' style='padding: 3px 3px;'>" +
@@ -155,33 +155,51 @@ angular.module("pouchy.modal",[])
 			}
 		}],
 		link: function(scope,elem,attr) {
+			function prepare(obj) {
+				var id,
+					nObj = {};
+				for(key in obj) {
+					if(key === "id") id = obj[key]
+						else nObj[key] = obj[key];
+				}
+				return {id:id,data:nObj};
+			}
+			
 			scope.modalShow = null;
 			scope.modalHide = function() {
 				$modalService.reject();
+				document.body.style.overflow = "";
 				scope.modalShow = null;
-				scope.modalTemplate = "templates/modal/success.html";
 			};
 			scope.confirm = function() {
 				$modalService.resolve();
+				document.body.style.overflow = "";
 				scope.modalShow = null;
+				var p = prepare(scope.values);
+				$pouchyHTTP.update(scope.options.db,p,scope.options.p,scope.options.r).then(function() {
+					console.log("update successful");
+				},function(err) {
+					console.log("update failed");
+				})
 			};
 			scope.modalTemplate = "";
 			$msgBusService.get("modal:init",scope,function(event,options) {
+				scope.options = options;
 				document.getElementsByTagName("modal-on-demand")[0].firstChild.firstChild.style.height = document.documentElement.clientHeight + "px";
-				scope.values = {};
+				document.body.style.overflow = "hidden";
+				if(options.data) scope.values = options.data
+					else scope.values = {};
 				scope.barColor = "custom-modal-bar-" + options.barColor;
+				//scope.modalStretch = (options.template === "modify") ? true : false;
 				scope.modalTemplate = "templates/modal/" + options.template + ".html";
-				if(options.template === "create") {
-					scope.modalStretch = true;
-				} else {
-					scope.modalStretch = false;
-				}
-				scope.remote = options.remote;
-				if(options.data) scope.values = options.data;
+				//scope.remote = options.remote;
 				scope.modalShow = true;
 				if(document.getElementById("btn-focus-on")) {
 					$window.setTimeout(function() {
-						document.getElementById("btn-focus-on").focus();
+						try{
+							document.getElementById("btn-focus-on").focus();
+						}
+						catch(e){};
 					},0);
 				}
 			});
@@ -559,6 +577,20 @@ angular.module("pouchy.model",[])
 			}
 		})
 	}
+	function update(target,data,currentPage,maxRows) {
+		return $http({
+			method: "POST",
+			url: "/cid/api/update/" + target,
+			headers: {
+				"Content-Type": "application/json"
+			},
+			data: {
+				"data": data,
+				"currentPage": currentPage,
+				"maxRows": maxRows
+			}
+		})
+	}
 	function del(target,data,currentPage,maxRows) {
 		return $http({
 			method: "POST",
@@ -585,6 +617,7 @@ angular.module("pouchy.model",[])
 		get: get,
 		post: post,
 		poll: poll,
+		update: update,
 		del: del
 	}
 }])
@@ -631,7 +664,7 @@ angular.module("pouchy.model",[])
 				$msgBusService.emit("pagination:change",res.data[1]);
 				poll(c);
 			},function(err) {
-				if(c.promise.$$state.value = "reload") return;
+				if(c.promise.$$state.value === "reload") return;
 				if(c.promise.$$state.status === 1) return;
 				poll(c);
 			})
@@ -643,6 +676,14 @@ angular.module("pouchy.model",[])
 	$scope.validation = function(val,data) {
 		if(val.$valid)
 			$scope.addItem(val,data);
+		else {
+			$modalService.open({template:"invalid",barColor:"red"}).
+			then(function() {
+				console.log("resolved");
+			},function() {
+				console.log("rejected");
+			});
+		}
 		//clean input fields from validation errors after button fired and submitted from new value input form
 		if(val.$name !== "userFormChange") {
 			$scope.c = {};
@@ -669,14 +710,7 @@ angular.module("pouchy.model",[])
 			},function() {
 				console.log("rejected");
 			});
-		},function() {
-			$modalService.open({template:"invalid",barColor:"red"}).
-			then(function() {
-				console.log("resolved");
-			},function() {
-				console.log("rejected");
-			});
-		})
+		},function() {});
 	}
 	//UI delete data
 	$scope.deleteItem = function(data) {
@@ -692,10 +726,8 @@ angular.module("pouchy.model",[])
 	}
 	//Call the cid modal window for creating new cid or updating existing one
 	$scope.cidModal = function(data) {
-		//deep copy of values as we dont want to pass the reference
-		var copyData = (!data) ? data : angular.copy(data);
 		//send data to cidModal window for creation/update
-		$modalService.open({template:"create",barColor:"white",data:copyData}).
+		$modalService.open({template:"modify",barColor:"white",data:data,db:db,p:_t.currentPage,r:_t.maxRows}).
 		then(function() {
 			console.log("resolved");
 		},function() {

@@ -17,6 +17,6 @@ app.use("/cid",cidController);
 app.use(function(req,res) {
 	res.status(404).render("notFound");
 })
-app.listen(1337,"0.0.0.0",function() {
+app.listen(8080,"0.0.0.0",function() {
 	console.log("Server listening on 1337...")
 })
