@@ -600,13 +600,16 @@ angular.module("pouchy.model",[])
 		})
 	}
 	function upload(target,data) {
+		console.log(data.data);
 		return $http({
 			method: "POST",
 			url: "/cid/api/u/" + target,
 			headers: {
-				"Content-Type": "text/csv"
+				"Content-Type": "application/json"
 			},
-			data: data.data
+			data: {
+				data: data.data
+			}
 		})
 	}
 	

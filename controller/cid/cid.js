@@ -66,8 +66,8 @@ router.get("/api/p/:destination",function(req,res,next) {
 	});
 })
 
-router.post("/api/u/:type",function(req,res,next) {
-	console.log(req);
+router.post("/api/u/:type",jsonParser,function(req,res,next) {
+	console.log(req.body.data);
 	res.status(200);
 })
 
