@@ -66,4 +66,9 @@ router.get("/api/p/:destination",function(req,res,next) {
 	});
 })
 
+router.post("/api/u/:type",function(req,res,next) {
+	console.log(req);
+	res.status(200);
+})
+
 module.exports = router;

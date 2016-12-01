@@ -373,11 +373,6 @@ angular.module("pouchy.import_export",["pouchy.multiPurpose","pouchy.FileReader"
 		scope: {},
 		template: tmp,
 		link: function(scope,element,attr) {
-			scope.getFile = function(format) {
-				var date = new Date().toISOString();
-				if(format === "json") exportFactory.exportjson("export_json.json",$pouchyModelDatabase.database);
-				if(format === "csv") exportFactory.exportcsv("export_csv.csv",$pouchyModelDatabase.database,true);
-			};
 			element.on("click",function(e) {
 				if(!e.target.attributes["data-id"]) return;
 				if(e.target.attributes["data-id"].value === "import") {
@@ -409,32 +404,24 @@ angular.module("pouchy.import_export",["pouchy.multiPurpose","pouchy.FileReader"
 //###FileReader Module###START
 //
 angular.module("pouchy.FileReader",["pouchy.import_export"])
-.directive("fileReader",["$modalService",function($modalService) {
+.directive("fileReader",["$pouchyHTTP",function($pouchyHTTP) {
 	return {
 		restrict: "A",
-		scope: {
-			
-		},
+		scope: {},
 		link: function(scope,element,attr,ctrl) {
 			element.on("change",function(changeEvent) {
 				var file = changeEvent.target.files[0];
 				var reader = new FileReader();
 				reader.onload = function (loadEvent) {
-					scope.$apply(function () {
-						scope.ngFileModel = {
-							lastModified: changeEvent.target.files[0].lastModified,
-							lastModifiedDate: changeEvent.target.files[0].lastModifiedDate,
-							name: changeEvent.target.files[0].name,
-							size: changeEvent.target.files[0].size,
-							type: changeEvent.target.files[0].type,
-							data: loadEvent.target.result
-						};
-						console.log(scope);
-					});
-				}
-				reader.onprogress = function(event) {
-					console.log(event);
-					scope.$apply();
+					var upFile = {
+						lastModified: changeEvent.target.files[0].lastModified,
+						lastModifiedDate: changeEvent.target.files[0].lastModifiedDate,
+						name: changeEvent.target.files[0].name,
+						size: changeEvent.target.files[0].size,
+						type: changeEvent.target.files[0].type,
+						data: loadEvent.target.result
+					};
+					$pouchyHTTP.upload("campaign_db",upFile);
 				}
 				reader.readAsText(changeEvent.target.files[0]);
 			});
@@ -555,7 +542,7 @@ angular.module("pouchy.model",[])
 		dataBaseFn: dataBaseFn
 	}
 }])
-//restAPI
+//API
 .factory("$pouchyHTTP",["$http",function pouchyRequestService($http) {
 	function get(target,page,rows){
 		return $http({
@@ -612,12 +599,23 @@ angular.module("pouchy.model",[])
 			timeout: cancel.promise
 		})
 	}
+	function upload(target,data) {
+		return $http({
+			method: "POST",
+			url: "/cid/api/u/" + target,
+			headers: {
+				"Content-Type": "text/csv"
+			},
+			data: data.data
+		})
+	}
 	
 	return {
 		get: get,
 		post: post,
 		poll: poll,
 		update: update,
+		upload: upload,
 		del: del
 	}
 }])
