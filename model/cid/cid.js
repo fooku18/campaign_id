@@ -5,6 +5,10 @@ exports.get = function(db,callback) {
 	mysqlDB.select(["*"],"","","",db,callback);
 }
 
+exports.getCID = function(db,callback) {
+	mysqlDB.select()
+}
+
 exports.post = function(rows,vals,db,callback) {
 	mysqlDB.insert(rows,vals,db,callback);
 }

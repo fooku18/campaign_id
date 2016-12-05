@@ -188,13 +188,11 @@ angular.module("pouchy.modal",[])
 			$msgBusService.get("modal:init",scope,function(event,options) {
 				scope.options = options;
 				document.getElementsByTagName("modal-on-demand")[0].firstChild.firstChild.style.height = document.documentElement.clientHeight + "px";
-				document.body.style.overflow = "hidden";
+				scope.modalStretch = (options.stretch) ? true : false;
 				if(options.data) scope.values = options.data
 					else scope.values = {};
 				scope.barColor = "custom-modal-bar-" + options.barColor;
-				//scope.modalStretch = (options.template === "modify") ? true : false;
 				scope.modalTemplate = "templates/modal/" + options.template + ".html";
-				//scope.remote = options.remote;
 				scope.modalShow = true;
 				if(document.getElementById("btn-focus-on")) {
 					$window.setTimeout(function() {
@@ -451,7 +449,12 @@ angular.module("pouchy.FileReader",["pouchy.import_export"])
 						$pouchyHTTP.upload(d,r).then(function(ret) {
 							if(ret.data.status === "success") {
 								$modalService.open({
-									template: "s"
+									template: "success",
+									barColor: "green"
+								}).then(function() {
+									console.log("resolved");
+								},function() {
+									console.log("rejected");
 								})
 							}
 						});
@@ -745,10 +748,16 @@ angular.module("pouchy.model",[])
 		}
 		return {data: arr};
 	}
+	function scrollTop(delay) {
+		$("body").animate({
+			scrollTop: 0
+		},delay)
+	}
 	//if validation succeeds UI data is beeing added
 	$scope.addItem = function(val,data) {
 		var dataP = formatDateMYSQL(data);
 		$pouchyHTTP.post(db,dataP,_t.currentPage,_t.maxRows).then(function() {
+			scrollTop(400);
 			$modalService.open({template:"success",barColor:"green"}).
 			then(function() {
 				console.log("resolved");
@@ -759,6 +768,7 @@ angular.module("pouchy.model",[])
 	}
 	//UI delete data
 	$scope.deleteItem = function(data) {
+		scrollTop(400);
 		$modalService.open({template:"delete",barColor:"red",data:data.info}).then(function() {
 			$pouchyHTTP.del(db,data,_t.currentPage,_t.maxRows).then(function() {
 				console.log(data.id + " deleted");
@@ -772,7 +782,17 @@ angular.module("pouchy.model",[])
 	//Call the cid modal window for creating new cid or updating existing one
 	$scope.cidModal = function(data) {
 		//send data to cidModal window for creation/update
-		$modalService.open({template:"modify",barColor:"white",data:data,db:db,p:_t.currentPage,r:_t.maxRows}).
+		scrollTop(400);
+		var template = {
+			template:"modify",
+			barColor:"white",
+			data:data,
+			db:db,
+			p:_t.currentPage,
+			r:_t.maxRows
+		}
+		if(db == "cid_db") template.stretch = 1;
+		$modalService.open(template).
 		then(function() {
 			console.log("resolved");
 		},function() {
@@ -844,6 +864,9 @@ angular.module("pouchy.model",[])
 				"</div>";
 	return {
 		template: tmp,
+		scope: {
+			item: "&"
+		},
 		link: function(scope,element,attr) {
 			(function() {
 				var fn = function(el) {
@@ -863,14 +886,14 @@ angular.module("pouchy.model",[])
 				});
 			}());
 			scope.getClass = function() {
-				if(scope.item.doc.saintstatus) {
+				if(scope.item.saintstatus) {
 					return "btn-success";
 				} else {
 					return "btn-danger";
 				}
 			}
 			scope.getIcon = function() {
-				if(scope.item.doc.saintstatus) {
+				if(scope.item.saintstatus) {
 					return "glyphicon-ok";
 				} else {
 					return "glyphicon-remove";
@@ -887,7 +910,7 @@ angular.module("pouchy.model",[])
 				*
 				*	Get Template -> Create Import -> Retrieve Job ID -> Populate Import -> Commit Import (Insert Job ID) -> Success/Failure
 				*/
-				if(!scope.item.doc.saintstatus) {
+				if(!scope.item.saintstatus) {
 					$pouchyLoader.loaderToggle();
 					var _id;
 					var conf = {

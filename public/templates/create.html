@@ -33,13 +33,6 @@
 							</i>
 						</span>
 					</div>
-					<div class="col-sm-1 cursor-pointer" ng-click="changeSortType('intext')">
-						Typ
-						<span class="padding-left-5">
-							<i class="main-sort-arrow" ng-class="{'main-sort-arrow-up':!sortDescending, 'main-sort-arrow-down':sortDescending}" ng-show="sortType === 'intext'">
-							</i>
-						</span>
-					</div>
 					<div class="col-sm-4 cursor-pointer" ng-click="changeSortType('cid')">
 						CID
 						<span class="padding-left-5">
@@ -51,11 +44,10 @@
 				</div>
 				<div class="main-table-tr-wrapper">
 					<div class="main-table-tr animate" ng-repeat="value in items | orderBy:'-id' track by $index" data-context-info="{{value}}">
-						<div class="col-sm-1" on-off-switch></div>
+						<div class="col-sm-1" on-off-switch="value"></div>
 						<div class="col-sm-1"><span class="main-word-wrap">{{value.modified | dateFormatDE}}</span></div>
 						<div class="col-sm-3"><span class="main-word-wrap">{{value.targeturl}}</span></div>
 						<div class="col-sm-1"><span class="main-word-wrap">{{value.ad}}</span></div>
-						<div class="col-sm-1"><span class="main-word-wrap">{{value.campaign_intext}}</span></div>
 						<div class="col-sm-4"><span class="main-word-wrap">{{value.cid}}</span></div>
 						<div class="col-sm-1 main-center">
 							<button ng-click="cidModal(value)" type="button" class="btn btn-default" style="padding: 1px 1px;" title="Datensatz bearbeiten">

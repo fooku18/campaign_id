@@ -19,6 +19,12 @@ router.get("/api/get/:destination",function(req,res,next) {
 	let db = req.params.destination;
 	let p = req.query.p;
 	let r = req.query.r;
+	if(db == "cid_db") {
+		model.getCID(db,function(err,rows) {
+			let srows = rows.slice((p-1)*r,p*r);
+			res.status(200).send([srows,rows.length]);
+		})
+	};
 	model.get(db,function(err,rows) {
 		let srows = rows.slice((p-1)*r,p*r);
 		res.status(200).send([srows,rows.length]);

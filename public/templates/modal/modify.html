@@ -1,5 +1,5 @@
 <div class="row custom-modal-modal-format">
-	<div class="col-md-12 col-sm-12 block form-group" ng-repeat="(key,val) in values">
+	<div class="col-md-12 col-sm-12 block form-group" ng-repeat="(key,val) in values track by $index">
 		<div class="padding-bottom-5" ng-if="key !== 'id'">
 			<span class="label label-default">{{key}}</span>
 		</div>
