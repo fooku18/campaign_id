@@ -3,6 +3,13 @@ const mysql = require("mysql");
 //mysql settings
 const connection = mysql.createConnection(mysql_config);
 
+exports.showCols = function(table,callback) {
+	connection.query("SHOW COLUMNS FROM ??",table,function(err,rows) {
+		if(err) return console.log(err);
+		callback(null,rows);
+	})
+}
+
 exports.select = function(rows,where,limit,order,table,callback) {
 	if(!Array.isArray(rows)) return console.log("Rows must be of type Array");
 	var sql = (rows[0] === "*") ? "SELECT * FROM ??" : "SELECT ?? FROM ??";
@@ -13,16 +20,27 @@ exports.select = function(rows,where,limit,order,table,callback) {
 	sql += " ORDER BY id " + order;
 	connection.query(sql,rq,function(err,rows) {
 		if(err) return console.log(err);
-		callback(err,rows);
+		callback(null,rows);
 	})
 }
 
 exports.insert = function(rows,values,table,callback) {
 	var sql = "INSERT INTO ?? (??) VALUES (?)";
-	console.log(mysql.format(sql,[table,rows,values]));
 	connection.query(sql,[table,rows,values],function(err,rows) {
 		if(err) return console.log(err);
-		callback(err,rows);
+		callback(null,rows);
+	})
+}
+
+exports.insertMultiple = function(rows,table,callback) {
+	var sql = mysql.format("INSERT INTO ?? (??) VALUES ",[table,rows[0]]);
+	for(let i = 1;i<rows.length;i++) {
+		sql += "('" + rows[i].join("','") + "'),";
+	}
+	sql = sql.substr(0,sql.length-1);
+	connection.query(sql,function(err,rows) {
+		if(err) return console.log(err);
+		callback(null,rows);
 	})
 }
 
@@ -30,7 +48,15 @@ exports.del = function(id,table,callback) {
 	var sql = "DELETE FROM ?? WHERE id=?";
 	connection.query(sql,[table,id],function(err,rows) {
 		if(err) return console.log(err);
-		callback(err,rows);
+		callback(null,rows);
+	})
+}
+
+exports.delAll = function(table,callback) {
+	var sql = mysql.format("DELETE FROM ??",table);
+	connection.query(sql,function(err,rows) {
+		if(err) return console.log(err);
+		callback(null,rows);
 	})
 }
 
@@ -39,6 +65,6 @@ exports.update = function(id,hash,table,callback) {
 	sql = mysql.format(sql,hash);
 	connection.query(sql,function(err,rows) {
 		if(err) return console.log(err);
-		callback(err,rows);
+		callback(null,rows);
 	})
 }

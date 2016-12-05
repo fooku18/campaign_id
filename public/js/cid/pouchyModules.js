@@ -175,12 +175,14 @@ angular.module("pouchy.modal",[])
 				$modalService.resolve();
 				document.body.style.overflow = "";
 				scope.modalShow = null;
-				var p = prepare(scope.values);
-				$pouchyHTTP.update(scope.options.db,p,scope.options.p,scope.options.r).then(function() {
-					console.log("update successful");
-				},function(err) {
-					console.log("update failed");
-				})
+				if(scope.options.template === "modify") {
+					var p = prepare(scope.values);
+					$pouchyHTTP.update(scope.options.db,p,scope.options.p,scope.options.r).then(function() {
+						console.log("update successful");
+					},function(err) {
+						console.log("update failed");
+					})
+				}
 			};
 			scope.modalTemplate = "";
 			$msgBusService.get("modal:init",scope,function(event,options) {
@@ -404,26 +406,59 @@ angular.module("pouchy.import_export",["pouchy.multiPurpose","pouchy.FileReader"
 //###FileReader Module###START
 //
 angular.module("pouchy.FileReader",["pouchy.import_export"])
-.directive("fileReader",["$pouchyHTTP",function($pouchyHTTP) {
+.directive("fileReader",["$pouchyHTTP","activeDB","$modalService",function($pouchyHTTP,activeDB,$modalService) {
+	function* cIt(it) {
+		let i = 0;
+		for (let n of it) {
+			yield [i,n];
+			i++;
+		}
+	}
+	
+	function parser(data) {
+		var n = data.type.substr(data.type.indexOf("/") + 1,data.type.length);
+		if(n === "csv" || n === "plain" || n === "vnd.ms-excel") {
+			var a = data.data.split("\r\n");
+			var s = (a[0].indexOf(";")>0) ? ";" : a[0].indexOf(",")>0 ? "," : a[0].indexOf("-")>0 ? "-" : a[0].indexOf(" ")>0 ? " " : a[0].indexOf("\t")>0 ? "\t" : undefined;
+			if(!s) return;
+			var b = [];
+			for(var i of cIt(a)) {
+				(i[1] !== "") ? b[i[0]] = i[1].split(s) : null;
+			}
+			return b;
+		}
+	}
+	
 	return {
 		restrict: "A",
 		scope: {},
 		link: function(scope,element,attr,ctrl) {
 			element.on("change",function(changeEvent) {
-				var file = changeEvent.target.files[0];
-				var reader = new FileReader();
-				reader.onload = function (loadEvent) {
-					var upFile = {
-						lastModified: changeEvent.target.files[0].lastModified,
-						lastModifiedDate: changeEvent.target.files[0].lastModifiedDate,
-						name: changeEvent.target.files[0].name,
-						size: changeEvent.target.files[0].size,
-						type: changeEvent.target.files[0].type,
-						data: loadEvent.target.result
-					};
-					$pouchyHTTP.upload("campaign_db",upFile);
+				if(changeEvent.target.files) {
+					var file = changeEvent.target.files[0];
+					var reader = new FileReader();
+					reader.onload = function (loadEvent) {
+						var upFile = {
+							lastModified: changeEvent.target.files[0].lastModified,
+							lastModifiedDate: changeEvent.target.files[0].lastModifiedDate,
+							name: changeEvent.target.files[0].name,
+							size: changeEvent.target.files[0].size,
+							type: changeEvent.target.files[0].type,
+							data: loadEvent.target.result
+						};
+						var r = parser(upFile);
+						var d = activeDB.getDB();
+						$pouchyHTTP.upload(d,r).then(function(ret) {
+							if(ret.data.status === "success") {
+								$modalService.open({
+									template: "s"
+								})
+							}
+						});
+						element[0].children[0].value = "";
+					}
+					reader.readAsText(changeEvent.target.files[0]);
 				}
-				reader.readAsText(changeEvent.target.files[0]);
 			});
 		}
 	}
@@ -600,7 +635,6 @@ angular.module("pouchy.model",[])
 		})
 	}
 	function upload(target,data) {
-		console.log(data.data);
 		return $http({
 			method: "POST",
 			url: "/cid/api/u/" + target,
@@ -608,7 +642,7 @@ angular.module("pouchy.model",[])
 				"Content-Type": "application/json"
 			},
 			data: {
-				data: data.data
+				data: data
 			}
 		})
 	}
@@ -633,12 +667,22 @@ angular.module("pouchy.model",[])
 		controller: "mainCtrl"
 	}
 })
+.service("activeDB",function() {
+	var activeDB;
+	this.changeDB = function(d) {
+		activeDB = d;
+	}
+	this.getDB = function() {
+		return activeDB;
+	}
+})
 //mainCtrl is initilized on every new tab - this is to prevent too much scope overhead for non relevant data as 
-.controller("mainCtrl",["$scope","$pouchyWorker","$hashService","$msgBusService","$attrs","$modalService","$pouchyModel","$filter","$pouchyLoader","$pouchySAINTAPI","$pouchyHTTP","$q",function mainController($scope,$pouchyWorker,$hashService,$msgBusService,$attrs,$modalService,$pouchyModel,$filter,$pouchyLoader,$pouchySAINTAPI,$pouchyHTTP,$q) {
+.controller("mainCtrl",["$scope","$pouchyWorker","$hashService","$msgBusService","$attrs","$modalService","$pouchyModel","$filter","$pouchyLoader","$pouchySAINTAPI","$pouchyHTTP","$q","activeDB",function mainController($scope,$pouchyWorker,$hashService,$msgBusService,$attrs,$modalService,$pouchyModel,$filter,$pouchyLoader,$pouchySAINTAPI,$pouchyHTTP,$q,activeDB) {
 	//fetch database name from template attribute - this is important to seperate the data from the model service
 	//config
 	_t = this;
 	var db = $attrs.db;
+	activeDB.changeDB(db);
 	//shared properties between directives
 	_t.maxRows = 10;
 	_t.currentPage;

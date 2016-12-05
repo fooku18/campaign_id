@@ -56,6 +56,7 @@ router.get("/api/p/:destination",function(req,res,next) {
 	let db = req.params.destination;
 	let update = function(p,r) {
 		model.get(db,function(err,rows) {
+			if(err) res.status(401).send();
 			let srows = rows.slice((p-1)*r,p*r);
 			res.status(200).send([srows,rows.length]);
 		});
@@ -66,9 +67,14 @@ router.get("/api/p/:destination",function(req,res,next) {
 	});
 })
 
-router.post("/api/u/:type",jsonParser,function(req,res,next) {
-	console.log(req.body.data);
-	res.status(200);
+router.post("/api/u/:destination",jsonParser,function(req,res,next) {
+	let db = req.params.destination;
+	let data = req.body.data;
+	model.insertMultiple(data,db,function(err,r) {
+		if(err) res.status(401).send({action: "list input", status: "failure"});
+		message.emit(db + ":update",1,10);
+		res.status(201).send({action: "list input", status: "success"});
+	});
 })
 
 module.exports = router;
