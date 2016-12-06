@@ -5,7 +5,7 @@ const connection = mysql.createConnection(mysql_config);
 
 exports.showCols = function(table,callback) {
 	connection.query("SHOW COLUMNS FROM ??",table,function(err,rows) {
-		if(err) return console.log(err);
+		if(err) callback(err);
 		callback(null,rows);
 	})
 }

@@ -588,6 +588,12 @@ angular.module("pouchy.model",[])
 			url: "/cid/api/get/" + target + "?p=" + page + "&r=" + rows
 		})
 	}
+	function cols(target) {
+		return $http({
+			method: "GET",
+			url: "/cid/api/c/" + target
+		})
+	}
 	function post(target,data,currentPage,maxRows) {
 		return $http({
 			method: "POST",
@@ -656,6 +662,7 @@ angular.module("pouchy.model",[])
 		poll: poll,
 		update: update,
 		upload: upload,
+		cols: cols,
 		del: del
 	}
 }])
@@ -779,9 +786,8 @@ angular.module("pouchy.model",[])
 			console.log("Aborted");
 		});
 	}
-	//Call the cid modal window for creating new cid or updating existing one
+	//Call the cid modal window for updating existing datasets
 	$scope.cidModal = function(data) {
-		//send data to cidModal window for creation/update
 		scrollTop(400);
 		var template = {
 			template:"modify",
@@ -798,6 +804,17 @@ angular.module("pouchy.model",[])
 		},function() {
 			console.log("rejected");
 		});
+	}
+	function colHead(d) {
+		var nd 
+		for(i of d) {
+			
+		}
+	}
+	$scope.cidNew = function() {
+		$pouchyHTTP.cols(db).then(function(data) {
+			console.log(data);
+		})
 	}
 }])
 .filter("dateFormatDE",function() {

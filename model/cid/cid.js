@@ -13,6 +13,10 @@ exports.post = function(rows,vals,db,callback) {
 	mysqlDB.insert(rows,vals,db,callback);
 }
 
+exports.showCols = function(db,callback) {
+	mysqlDB.showCols(db,callback);
+}
+
 exports.insertMultiple = function(data,db,callback) {
 	let d = data;
 	let _db = db;

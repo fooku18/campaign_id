@@ -31,6 +31,14 @@ router.get("/api/get/:destination",function(req,res,next) {
 	});
 })
 
+router.get("/api/c/:destination",function(req,res,next) {
+	let db = req.params.destination;
+	model.showCols(db,function(err,r) {
+		if(err) console.log(err);
+		res.status(200).send(r);
+	})
+})
+
 router.post("/api/post/:destination",jsonParser,function(req,res,next) {
 	if(!req.body) res.status(400).send();
 	let db = req.params.destination;
