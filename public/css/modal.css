@@ -1,3 +1,14 @@
+@keyframes modal-fade-in {
+	from {
+		opacity: 0;
+		width: 0%;
+	}
+	to {
+		opacity: 1;
+		width: 50%;
+	}
+}
+
 .custom-modal-overlay {
 	position:absolute;
 	z-index:998;
@@ -21,6 +32,7 @@
 	background-color: #fff;
 	box-shadow: 4px 4px 80px #000;
 	border-radius: 8px;
+	animation: modal-fade-in .5s;
 }
 
 .custom-modal-bar {

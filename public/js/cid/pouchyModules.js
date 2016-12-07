@@ -185,14 +185,9 @@ angular.module("pouchy.modal",[])
 				}
 			};
 			scope.modalTemplate = "";
-			$msgBusService.get("modal:init",scope,function(event,options) {
-				scope.options = options;
-				document.getElementsByTagName("modal-on-demand")[0].firstChild.firstChild.style.height = document.documentElement.clientHeight + "px";
-				scope.modalStretch = (options.stretch) ? true : false;
-				if(options.data) scope.values = options.data
+			function pM(options) {
+				if(options.data) scope.values = angular.copy(options.data)
 					else scope.values = {};
-				scope.barColor = "custom-modal-bar-" + options.barColor;
-				scope.modalTemplate = "templates/modal/" + options.template + ".html";
 				scope.modalShow = true;
 				if(document.getElementById("btn-focus-on")) {
 					$window.setTimeout(function() {
@@ -202,10 +197,47 @@ angular.module("pouchy.modal",[])
 						catch(e){};
 					},0);
 				}
+			}
+			$msgBusService.get("modal:init",scope,function(event,options) {
+				scope.options = options;
+				document.getElementsByTagName("modal-on-demand")[0].firstChild.firstChild.style.height = document.documentElement.clientHeight + "px";
+				scope.modalStretch = (options.stretch) ? true : false;
+				scope.barColor = "custom-modal-bar-" + options.barColor;
+				scope.modalTemplate = "templates/modal/" + options.template + ".html";
+				if(/\/([^\/]*)\./.exec(scope.modalTemplate)[1] === options.template) pM(options);
+				scope.$on("$includeContentLoaded",function() {
+					pM(options);
+				})
 			});
 		}
 	}
-}]);
+}])
+.filter("keyNames", function filterKeyNames() {
+	var translation = {
+		targeturl: "Ziel-URL",
+		ad: "Werbung",
+		placement: "Platzierung",
+		adtype: "Werbetyp",
+		adid: "Werbe-ID",
+		FQ: "Vollqualifizierter Link",
+		cid: "Kampagnen-ID",
+		modified: "Bearbeitungsdatum",
+		type: "Typ",
+		intext: "Intern/Extern",
+		start: "Startdatum",
+		end: "Enddatum",
+		name: "Titel",
+		root: "Root-URL",
+		ext: "Zusatz-URL",
+		channel: "Kanal",
+		channelID: "Kanal-ID"
+	}
+	return function(input) {
+		for(key in translation) {
+			if(input == key) return translation[key];
+		}
+	}
+});
 //
 //###Modal Module###END
 //

@@ -5,7 +5,7 @@ const connection = mysql.createConnection(mysql_config);
 
 exports.showCols = function(table,callback) {
 	connection.query("SHOW COLUMNS FROM ??",table,function(err,rows) {
-		if(err) callback(err);
+		if(err) return callback(err);
 		callback(null,rows);
 	})
 }
@@ -19,7 +19,7 @@ exports.select = function(rows,where,limit,order,table,callback) {
 	(order === "") ? order = "DESC" :  order = "ASC";
 	sql += " ORDER BY id " + order;
 	connection.query(sql,rq,function(err,rows) {
-		if(err) return console.log(err);
+		if(err) return callback(err);
 		callback(null,rows);
 	})
 }
@@ -27,7 +27,7 @@ exports.select = function(rows,where,limit,order,table,callback) {
 exports.insert = function(rows,values,table,callback) {
 	var sql = "INSERT INTO ?? (??) VALUES (?)";
 	connection.query(sql,[table,rows,values],function(err,rows) {
-		if(err) return console.log(err);
+		if(err) return callback(err);
 		callback(null,rows);
 	})
 }
@@ -39,7 +39,7 @@ exports.insertMultiple = function(rows,table,callback) {
 	}
 	sql = sql.substr(0,sql.length-1);
 	connection.query(sql,function(err,rows) {
-		if(err) return console.log(err);
+		if(err) return callback(err);
 		callback(null,rows);
 	})
 }
@@ -47,7 +47,7 @@ exports.insertMultiple = function(rows,table,callback) {
 exports.del = function(id,table,callback) {
 	var sql = "DELETE FROM ?? WHERE id=?";
 	connection.query(sql,[table,id],function(err,rows) {
-		if(err) return console.log(err);
+		if(err) return callback(err);
 		callback(null,rows);
 	})
 }
@@ -55,7 +55,7 @@ exports.del = function(id,table,callback) {
 exports.delAll = function(table,callback) {
 	var sql = mysql.format("DELETE FROM ??",table);
 	connection.query(sql,function(err,rows) {
-		if(err) return console.log(err);
+		if(err) return callback(err);
 		callback(null,rows);
 	})
 }
@@ -64,7 +64,7 @@ exports.update = function(id,hash,table,callback) {
 	var sql = "UPDATE `" + table + "` SET ? WHERE id=" + id;
 	sql = mysql.format(sql,hash);
 	connection.query(sql,function(err,rows) {
-		if(err) return console.log(err);
+		if(err) return callback(err);
 		callback(null,rows);
 	})
 }
