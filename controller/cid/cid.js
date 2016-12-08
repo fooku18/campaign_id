@@ -73,6 +73,7 @@ router.get("/api/p/:destination",function(req,res,next) {
 		model.get(db,function(err,rows) {
 			if(err) res.status(401).send();
 			let srows = rows.slice((p-1)*r,p*r);
+			//res.write([srows,rows.length]);
 			res.status(200).send([srows,rows.length]);
 		});
 	};

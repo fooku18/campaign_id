@@ -601,6 +601,18 @@ angular.module("pouchy.pouchDB",[])
 //###PouchyModel Module###START
 //
 angular.module("pouchy.model",[])
+.run(function() {
+	(function() {
+		if("Notification" in window) {
+			if(window.Notification.permisson === "granted") {
+				return new Notification("Uhuuu Uhuuu",{icon:"/img/owl.jpg"});
+			}
+			window.Notification.requestPermission().then(function() {
+				var n = new Notification("Uhuuu Uhuuu",{icon:"/img/owl.jpg"});
+			})
+		}
+	}())
+})
 //this factory serves as a model distributor for interested parties. the factory gets updated with every UI change
 .factory("$pouchyModelDatabase",["$msgBusService",function pouchyModelDatabaseFactory($msgBusService) {
 	function dataBaseFn(name,val) {
