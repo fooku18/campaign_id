@@ -67,6 +67,7 @@ router.post("/api/update/:destination",jsonParser,function(req,res,next) {
 })
 
 router.get("/api/p/:destination",function(req,res,next) {
+	req.setTimeout(0);
 	let db = req.params.destination;
 	let update = function(p,r) {
 		model.get(db,function(err,rows) {
