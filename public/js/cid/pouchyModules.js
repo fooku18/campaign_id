@@ -889,6 +889,9 @@ angular.module("pouchy.model",[])
 		}
 		return a;
 	}
+	$scope.$watch("values.campaign_name",function(n,o) {
+		//$pouchyHTTP.get("cid_db",)
+	})
 	$scope.values = dataExchange.getData();
 	$scope.isActive = function(val) {
 		var a = (val === "Extern") ? true : false;
