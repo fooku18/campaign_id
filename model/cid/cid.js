@@ -1,12 +1,12 @@
 const mysql = require("mysql");
 const mysqlDB = require("../../db/db.js");
 
-exports.get = function(db,callback) {
-	mysqlDB.select(["*"],"","","",db,callback);
+exports.get = function(db,q,callback) {
+	mysqlDB.select(["*"],q,"","",db,callback);
 }
 
-exports.getCID = function(db,callback) {
-	mysqlDB.select()
+exports.getCID = function(db,q,callback) {
+	mysqlDB.select(["*"],q,"","",db,callback)
 }
 
 exports.post = function(rows,vals,db,callback) {

@@ -17,16 +17,11 @@ router.get("/",function(req,res,next) {
 
 router.get("/api/get/:destination",function(req,res,next) {
 	let db = req.params.destination;
-	let p = req.query.p;
-	let r = req.query.r;
-	if(db == "cid_db") {
-		model.getCID(db,function(err,rows) {
-			let srows = rows.slice((p-1)*r,p*r);
-			res.status(200).send([srows,rows.length]);
-		})
-	};
-	model.get(db,function(err,rows) {
-		let srows = rows.slice((p-1)*r,p*r);
+	let p = (req.query.p) ? req.query.p : null;
+	let r = (req.query.r) ? req.query.r : null;
+	let q = (req.query.q) ? req.query.q : "";
+	model.get(db,q,function(err,rows) {
+		let srows = (p==null) ? rows : rows.slice((p-1)*r,p*r);
 		res.status(200).send([srows,rows.length]);
 	});
 })

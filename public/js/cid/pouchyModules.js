@@ -148,12 +148,6 @@ angular.module("pouchy.modal",[])
 							"</div>" +
 						"</div>" +
 					"</div>",
-		controller: ["$scope",function($scope) {
-			this.modalHideCtrl = function() {
-				$scope.modalShow = false;
-				$scope.modalTemplate = "templates/modal/success.html";
-			}
-		}],
 		link: function(scope,elem,attr) {
 			function prepare(obj) {
 				var id,
@@ -605,10 +599,10 @@ angular.module("pouchy.model",[])
 	(function() {
 		if("Notification" in window) {
 			if(window.Notification.permisson === "granted") {
-				return new Notification("Uhuuu Uhuuu",{icon:"/img/owl.jpg"});
+				return new Notification("Holy Owly, heute machen wir fette cid's. YEAH!",{icon:"/img/owl.jpg"});
 			}
 			window.Notification.requestPermission().then(function() {
-				var n = new Notification("Uhuuu Uhuuu",{icon:"/img/owl.jpg"});
+				var n = new Notification("Holy Owly, heute machen wir fette cid's. YEAH!",{icon:"/img/owl.jpg"});
 			})
 		}
 	}())
@@ -626,10 +620,13 @@ angular.module("pouchy.model",[])
 }])
 //API
 .factory("$pouchyHTTP",["$http",function pouchyRequestService($http) {
-	function get(target,page,rows){
+	function get(target,page,rows,query){
+		var url = "/cid/api/get/" + target;
+		page? url += "?p=" + page + "&r=" + rows : url;
+		query ? page ? url += "&q=" + query : url += "?q=" + query : null;
 		return $http({
 			method: "GET",
-			url: "/cid/api/get/" + target + "?p=" + page + "&r=" + rows
+			url: url
 		})
 	}
 	function cols(target) {
@@ -731,7 +728,7 @@ angular.module("pouchy.model",[])
 	}
 })
 //mainCtrl is initilized on every new tab - this is to prevent too much scope overhead for non relevant data as 
-.controller("mainCtrl",["$scope","$pouchyWorker","$hashService","$msgBusService","$attrs","$modalService","$pouchyModel","$filter","$pouchyLoader","$pouchySAINTAPI","$pouchyHTTP","$q","activeDB",function mainController($scope,$pouchyWorker,$hashService,$msgBusService,$attrs,$modalService,$pouchyModel,$filter,$pouchyLoader,$pouchySAINTAPI,$pouchyHTTP,$q,activeDB) {
+.controller("mainCtrl",["$scope","$pouchyWorker","$hashService","$msgBusService","$attrs","$modalService","$pouchyModel","$filter","$pouchyLoader","$pouchySAINTAPI","$pouchyHTTP","$q","activeDB","dataExchange",function mainController($scope,$pouchyWorker,$hashService,$msgBusService,$attrs,$modalService,$pouchyModel,$filter,$pouchyLoader,$pouchySAINTAPI,$pouchyHTTP,$q,activeDB,dataExchange) {
 	//fetch database name from template attribute - this is important to seperate the data from the model service
 	//config
 	_t = this;
@@ -842,24 +839,73 @@ angular.module("pouchy.model",[])
 			r:_t.maxRows
 		}
 		if(db == "cid_db") template.stretch = 1;
-		$modalService.open(template).
-		then(function() {
+		$modalService.open(template)
+		.then(function() {
 			console.log("resolved");
 		},function() {
 			console.log("rejected");
 		});
 	}
 	function colHead(d) {
-		var nd 
-		for(i of d) {
-			
+		var nd = {};
+		for(i in d) {
+			nd[d[i].Field] = ""
 		}
+		return nd
 	}
 	$scope.cidNew = function() {
 		$pouchyHTTP.cols(db).then(function(data) {
-			console.log(data);
+			dataExchange.setData(colHead(data.data));
+			$modalService.open({
+				template: "create",
+				barColor: "white"
+			})
+			.then(function() {
+				console.log("resolved");
+			},function() {
+				console.log("rejected");
+			});
+		});
+	}
+}])
+.factory("dataExchange",function dataExchangeFactory() {
+	var data;
+	function setData(d) {
+		data = d;
+	}
+	function getData() {
+		return data;
+	}
+	return {
+		getData: getData,
+		setData: setData
+	}
+})
+.controller("cid-create",["$scope","dataExchange","$pouchyHTTP",function($scope,dataExchange,$pouchyHTTP) {
+	function filterResponse(r,field) {
+		var a = [];
+		for(o of r) {
+			a.push(o[field]);
+		}
+		return a;
+	}
+	$scope.values = dataExchange.getData();
+	$scope.isActive = function(val) {
+		var a = (val === "Extern") ? true : false;
+		return a;
+	}
+	$scope.intextChanger = function(s) {
+		if(s.toLowerCase() === "intern") {
+			delete $scope.values.intelliad_name;
+		}
+		$pouchyHTTP.get("campaign_db",null,null,"intext='" + s.toLowerCase() + "'").then(function(data) {
+			(s.toLowerCase() === "intern") ? $scope.intCampaigns = filterResponse(data.data[0],"name") : $scope.extCampaigns = filterResponse(data.data[0],"name");
+			$pouchyHTTP.get("intelliad_db",null,null,null).then(function(data) {
+				$scope.intelliAdCampaigns = filterResponse(data.data[0],"name");
+			})
 		})
 	}
+	
 }])
 .filter("dateFormatDE",function() {
 	return function(val) {
@@ -1311,19 +1357,7 @@ angular.module("pouchy.cidLogic",[])
 	return {
 		createCID: createCID
 	}
-}])
-.directive("cidModal",function() {
-	return {
-		restrict: "A",
-		controller: "cidCtrl",
-		require: "^^modalOnDemand",
-		link: function(scope,element,attr,ctrl) {
-			scope.hide = function() {
-				ctrl.modalHideCtrl();
-			}
-		}
-	}
-});
+}]);
 //
 //###CID-Logic Module###END
 //

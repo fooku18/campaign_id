@@ -1,26 +1,12 @@
-<div class="row custom-modal-modal-format" cid-modal>
-	<h3>Bearbeitung</h3>
-	<form name="userForm" ng-submit="validation(userForm,{
-			'_id':values._id, 
-			'_rev':values._rev, 
-			'targeturl':values.targeturl, 
-			'campaign_intext':values.campaign_intext, 
-			'campaign_name':values.campaign_name, 
-			'intelliad_name':values.intelliad_name, 
-			'ad':values.ad, 
-			'placement':values.placement, 
-			'adtype':values.adtype, 
-			'creative_channel':values.creative_channel, 
-			'adid':values.adid, 
-			'randomid':values.randomid 
-		})" novalidate>
-		<input type="hidden" ng-model="values._id" />
-		<input type="hidden" ng-model="values._rev" />
+<div ng-controller="cid-create" class="row custom-modal-modal-format">
+	<h3>Neue Kampagnen-ID erstellen</h3>
+	<form name="userForm" ng-submit="validation()" novalidate>
+		<input type="hidden" ng-model="values.id" />
 		<div class="col-md-12 col-sm-12 block form-group" ng-class="{'has-error': userForm.cTargeturl.$invalid && userForm.cTargeturl.$touched, 'has-success': userForm.cTargeturl.$valid}">
 			<div class="padding-bottom-5">
 				<span class="label label-default">Ziel-Url</span>
 			</div>
-			<input name="cTargeturl" ng-model="values.targeturl" class="inputField form-control"  type="text" placeholder="" ng-pattern="/^https?:\/\/.*\..*/" required/>
+			<input name="cTargeturl" ng-model="values.targeturl" class="inputField form-control" type="text" placeholder="" ng-pattern="/^https?:\/\/.*\..*/" required/>
 			<div class="absolute top-60 z-index-10" ng-show="userForm.cTargeturl.$invalid && userForm.cTargeturl.$touched">
 				<div class="padding-left-5">
 					<div class="my-arrow-up"></div>
@@ -28,11 +14,11 @@
 				<p class="help-block my-info-box">Die Zieladresse muss eine gültige URL sein <br /> <i>http[s]://...</i> </p>
 			</div>
 		</div>
-		<div class="col-md-12 col-sm-12 block form-group" ng-class="{'has-error': userForm.ccampaign_intext.$invalid && userForm.ccampaign_intext.$touched, 'has-success': userForm.ccampaign_intext.$valid}" >
+		<div class="col-md-12 col-sm-12 block form-group" ng-class="{'has-error': userForm.campaign_intext.$invalid && userForm.campaign_intext.$touched, 'has-success': userForm.campaign_intext.$valid}" >
 			<div class="padding-bottom-5">
-				<span class="label label-default" ng-click="show()">Intern/Extern</span>
+				<span class="label label-default">Intern/Extern</span>
 			</div>
-			<select name="ccampaign_intext" ng-change="campaign_intextChanger(values.campaign_intext)" ng-model="values.campaign_intext" class="form-control" ng-select="values.campaign_intext" ng-pattern="/.*/" required ng-options="v for v in ['Intern','Extern']">
+			<select name="campaign_intext" ng-change="intextChanger(values.campaign_intext)" ng-model="values.campaign_intext" class="form-control" ng-pattern="/.*/" required ng-options="v for v in ['Intern','Extern']">
 			</select>
 		</div>
 		<div class="col-md-12 col-sm-12 block form-group" ng-show="isActive(values.campaign_intext)" ng-class="{'has-error': userForm.cExtcampaign.$invalid && userForm.cExtcampaign.$touched, 'has-success': userForm.cExtcampaign.$valid}" >
@@ -40,15 +26,15 @@
 				<span class="label label-default">Externe Kampagne</span>
 			</div>
 			<select name="cExtcampaign" ng-model="values.campaign_name" class="form-control" ng-select="values.campaign_name" ng-change="counter('campaign_name',values.campaign_name)" ng-required="isActive(values.campaign_intext)" ng-pattern="/.*/">
-				<option ng-repeat="i in extCampaigns">{{i.name}}</option>
+				<option ng-repeat="i in extCampaigns">{{i}}</option>
 			</select>
 		</div>
-		<div class="col-md-12 col-sm-12 block form-group" ng-show="isActive(values.campaign_intext)" ng-class="{'has-error': userForm.cExtintellicampaign.$invalid && userForm.cExtintellicampaign.$touched, 'has-success': userForm.cExtintellicampaign.$valid}" >
+		<div class="col-md-12 col-sm-12 block form-group" ng-show="isActive(values.campaign_intext)" ng-class="{'popin':isActive(values.campaign_intext),'popout':!isActive(values.campaign_intext),'has-error': userForm.cExtintellicampaign.$invalid && userForm.cExtintellicampaign.$touched, 'has-success': userForm.cExtintellicampaign.$valid}" >
 			<div class="padding-bottom-5">
 				<span class="label label-default">IntelliAd Kampagne</span>
 			</div>
 			<select name="cExtintellicampaign" ng-model="values.intelliad_name" class="form-control" ng-select="values.intelliad_name" ng-required="isActive(values.campaign_intext)" ng-pattern="/.*/">
-				<option ng-repeat="i in intelliAdCampaigns">{{i.name}}</option>
+				<option ng-repeat="i in intelliAdCampaigns">{{i}}</option>
 			</select>
 		</div>
 		<div class="col-md-12 col-sm-12 block form-group" ng-show="!isActive(values.campaign_intext)" ng-class="{'has-error': userForm.cIntcampaign.$invalid && userForm.cIntcampaign.$touched, 'has-success': userForm.cIntcampaign.$valid}">
@@ -56,7 +42,7 @@
 				<span class="label label-default">Interne Kampagne</span>
 			</div>
 			<select name="cIntcampaign" ng-model="values.campaign_name" class="form-control" ng-select="values.campaign_name" ng-change="counter('campaign_name',values.campaign_name)" ng-required="!isActive(values.campaign_intext)" ng-pattern="/.*/">
-				<option ng-repeat="i in intCampaigns">{{i.name}}</option>
+				<option ng-repeat="i in intCampaigns">{{i}}</option>
 			</select>
 		</div>
 		<div class="col-md-12 col-sm-12 block form-group" ng-class="{'has-error': userForm.cAd.$invalid && userForm.cAd.$touched, 'has-success': userForm.cAd.$valid}">

@@ -1,12 +1,11 @@
 <div class="row custom-modal-modal-format">
-	{{f}}
 	<div class="col-md-12 col-sm-12 block form-group" ng-repeat="(key,val) in values track by $index">
 		<div class="padding-bottom-5" ng-if="key !== 'id'">
 			<span class="label label-default">{{key | keyNames:key}}</span>
 		</div>
 		<div ng-switch on="key">
 			<input ng-model="values[key]" ng-switch-when="id" class="inputField form-control" type="hidden" required/>
-			<!--<select ng-model="f.values[key]" ng-init="f.values[key] = values[key]" ng-switch-when="intext" class="form-control inputField" ng-options="v for v in ['Intern','Extern']"></select>-->
+			<select ng-model="values[key]" ng-switch-when="intext" class="form-control inputField" ng-options="v for v in ['Intern','Extern']"></select>
 			<input ng-model="values[key]" ng-switch-when="start" class="inputField form-control" type="text" datepicker="" required />
 			<input ng-model="values[key]" ng-switch-when="end" class="inputField form-control" type="text" datepicker="" required />
 			<input ng-model="values[key]" ng-switch-default class="inputField form-control" type="text" required />
