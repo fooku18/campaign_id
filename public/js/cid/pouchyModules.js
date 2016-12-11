@@ -635,6 +635,17 @@ angular.module("pouchy.model",[])
 			url: "/cid/api/c/" + target
 		})
 	}
+	function rowCount(target,q) {
+		console.log(q);
+		return $http({
+			method: "POST",
+			url: "/cid/api/get/col/" + target,
+			headers: {
+				"Content-Type": "application/json"
+			},
+			data: q
+		})
+	}
 	function post(target,data,currentPage,maxRows) {
 		return $http({
 			method: "POST",
@@ -704,6 +715,7 @@ angular.module("pouchy.model",[])
 		update: update,
 		upload: upload,
 		cols: cols,
+		rowCount: rowCount,
 		del: del
 	}
 }])
@@ -882,16 +894,20 @@ angular.module("pouchy.model",[])
 	}
 })
 .controller("cid-create",["$scope","dataExchange","$pouchyHTTP",function($scope,dataExchange,$pouchyHTTP) {
-	function filterResponse(r,field) {
+	function filterResponse(r) {
+		var args = Array.prototype.slice.call(arguments,1);
 		var a = [];
+		var j = 0;
 		for(o of r) {
-			a.push(o[field]);
+			a.push({});
+			for(var i=0;i<args.length;i++) {
+				a[i][args[i]] = r[args[i]];
+			}
+			i++;
 		}
+		console.log(a)
 		return a;
 	}
-	$scope.$watch("values.campaign_name",function(n,o) {
-		//$pouchyHTTP.get("cid_db",)
-	})
 	$scope.values = dataExchange.getData();
 	$scope.isActive = function(val) {
 		var a = (val === "Extern") ? true : false;
@@ -902,10 +918,16 @@ angular.module("pouchy.model",[])
 			delete $scope.values.intelliad_name;
 		}
 		$pouchyHTTP.get("campaign_db",null,null,"intext='" + s.toLowerCase() + "'").then(function(data) {
-			(s.toLowerCase() === "intern") ? $scope.intCampaigns = filterResponse(data.data[0],"name") : $scope.extCampaigns = filterResponse(data.data[0],"name");
+			console.log(data);
+			(s.toLowerCase() === "intern") ? $scope.intCampaigns = filterResponse(data.data[0],"name","id") : $scope.extCampaigns = filterResponse(data.data[0],"name","id");
 			$pouchyHTTP.get("intelliad_db",null,null,null).then(function(data) {
 				$scope.intelliAdCampaigns = filterResponse(data.data[0],"name");
 			})
+		})
+	}
+	$scope.counter = function() {
+		$pouchyHTTP.rowCount("campaign_db",{name:$scope.values.campaign_name}).then(function(data) {
+			$scope.values.adid = data.data[0].c;
 		})
 	}
 	

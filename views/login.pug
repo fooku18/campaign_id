@@ -1,0 +1,14 @@
+html
+	head
+		script(type="text/javascript",src="/js/libs/jquery-3.1.0.min.js")
+		link(rel="stylesheet",href="/css/libs/bootstrap.css")
+		link(rel="stylesheet",href="/css/login.css")
+	body
+		div.full-rel-100.cover-img
+			div.center-box
+				form(action="/auth",method="post")
+					label Passwort
+						input.form-control(type="password" name="password")
+					input(type="submit",value="einloggen",class="btn btn-default btn-block")
+				if locals.wrongpw
+					h4.alert-box Passwort falsch

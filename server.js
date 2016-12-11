@@ -1,22 +1,46 @@
-const express = require("express")
-const request = require("request")
-const app = express()
+const express = require("express");
+const session = require("express-session");
+const mysqlStorage = require("express-mysql-session")(session);
+const request = require("request");
+const mysql_config = require("./db/mysql_config.js");
+const cidController = require("./controller/cid/cid.js");
+const loginController = require("./controller/login.js");
+const app = express();
 //express config
+var sessionStorage = new mysqlStorage(mysql_config.mysqlStorage_config);
 app.disable("x-powered-by");
-app.use(express.static(__dirname + "/public"))
-app.set("view engine","pug")
-app.set("views","./views")
+app.use(session({
+	name: "CPM_session",
+	resave: false,
+	saveUninitialized: false,
+	store: sessionStorage,
+	secret: "r2d2",
+	cookie: {
+		maxAge: 1000 * 60 * 60 * 24 * 7
+	}
+}));
+app.use(express.static(__dirname + "/public"));
+app.set("view engine","pug");
+app.set("views","./views");
 //routes
-const cidController = require("./controller/cid/cid.js")
+//login
+app.use(loginController);
+//main
 app.get("/",function(req,res) {
-	res.status(200).render("index")
-})
+	res.status(200).render("index");
+});
+
+//cid
 app.use("/cid",cidController);
 
-//404
+//ccdb
+
+//error
 app.use(function(req,res) {
 	res.status(404).render("notFound");
-})
-app.listen(8080,"0.0.0.0",function() {
-	console.log("Server listening on 1337...")
-})
+});
+let port = 8080;
+let ip = "0.0.0.0";
+app.listen(port,ip,function() {
+	console.log("Server listening on %s...",port)
+});

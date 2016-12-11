@@ -1,10 +1,28 @@
 const mysql_config = require("./mysql_config.js");
 const mysql = require("mysql");
 //mysql settings
-const connection = mysql.createConnection(mysql_config);
+const connection = mysql.createConnection(mysql_config.mysql_config);
 
 exports.showCols = function(table,callback) {
 	connection.query("SHOW COLUMNS FROM ??",table,function(err,rows) {
+		if(err) return callback(err);
+		callback(null,rows);
+	})
+}
+
+exports.countRows = function(table,where,callback) {
+	function prepend(w,s) {
+		s += " WHERE ";
+		for(let i in w) {
+			s += i + "='" + w[i] + "'";
+		}
+		return s;
+	}
+	var sql = "SELECT COUNT(*) AS c FROM " + table;
+	sql = !where
+	? sql
+	: prepend(where,sql);
+	connection.query(sql,function(err,rows) {
 		if(err) return callback(err);
 		callback(null,rows);
 	})

@@ -5,6 +5,10 @@ exports.get = function(db,q,callback) {
 	mysqlDB.select(["*"],q,"","",db,callback);
 }
 
+exports.countRows = function(db,q,callback) {
+	mysqlDB.countRows(db,q,callback);
+}
+
 exports.getCID = function(db,q,callback) {
 	mysqlDB.select(["*"],q,"","",db,callback)
 }

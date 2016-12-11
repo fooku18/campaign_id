@@ -25,7 +25,7 @@
 			<div class="padding-bottom-5">
 				<span class="label label-default">Externe Kampagne</span>
 			</div>
-			<select name="cExtcampaign" ng-model="values.campaign_name" class="form-control" ng-select="values.campaign_name" ng-change="counter('campaign_name',values.campaign_name)" ng-required="isActive(values.campaign_intext)" ng-pattern="/.*/">
+			<select name="cExtcampaign" ng-model="values.campaign_name" class="form-control" ng-select="values.campaign_name" ng-change="counter()" ng-required="isActive(values.campaign_intext)" ng-pattern="/.*/">
 				<option ng-repeat="i in extCampaigns">{{i}}</option>
 			</select>
 		</div>
@@ -41,7 +41,7 @@
 			<div class="padding-bottom-5">
 				<span class="label label-default">Interne Kampagne</span>
 			</div>
-			<select name="cIntcampaign" ng-model="values.campaign_name" class="form-control" ng-select="values.campaign_name" ng-change="counter('campaign_name',values.campaign_name)" ng-required="!isActive(values.campaign_intext)" ng-pattern="/.*/">
+			<select name="cIntcampaign" ng-model="values.campaign_name" class="form-control" ng-select="values.campaign_name" ng-change="counter()" ng-required="!isActive(values.campaign_intext)" ng-pattern="/.*/">
 				<option ng-repeat="i in intCampaigns">{{i}}</option>
 			</select>
 		</div>
