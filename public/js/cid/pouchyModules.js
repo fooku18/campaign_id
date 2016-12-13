@@ -636,7 +636,6 @@ angular.module("pouchy.model",[])
 		})
 	}
 	function rowCount(target,q) {
-		console.log(q);
 		return $http({
 			method: "POST",
 			url: "/cid/api/get/col/" + target,
@@ -676,7 +675,7 @@ angular.module("pouchy.model",[])
 	}
 	function del(target,data,currentPage,maxRows) {
 		return $http({
-			method: "POST",
+			method: "DELETE",
 			url: "/cid/api/delete/" + target,
 			headers: {
 				"Content-Type": "application/json"
@@ -697,7 +696,7 @@ angular.module("pouchy.model",[])
 	}
 	function upload(target,data) {
 		return $http({
-			method: "POST",
+			method: "PUT",
 			url: "/cid/api/u/" + target,
 			headers: {
 				"Content-Type": "application/json"
@@ -901,11 +900,10 @@ angular.module("pouchy.model",[])
 		for(o of r) {
 			a.push({});
 			for(var i=0;i<args.length;i++) {
-				a[i][args[i]] = r[args[i]];
+				a[j][args[i]] = r[j][args[i]];
 			}
-			i++;
+			j++;
 		}
-		console.log(a)
 		return a;
 	}
 	$scope.values = dataExchange.getData();
@@ -918,11 +916,12 @@ angular.module("pouchy.model",[])
 			delete $scope.values.intelliad_name;
 		}
 		$pouchyHTTP.get("campaign_db",null,null,"intext='" + s.toLowerCase() + "'").then(function(data) {
-			console.log(data);
 			(s.toLowerCase() === "intern") ? $scope.intCampaigns = filterResponse(data.data[0],"name","id") : $scope.extCampaigns = filterResponse(data.data[0],"name","id");
-			$pouchyHTTP.get("intelliad_db",null,null,null).then(function(data) {
-				$scope.intelliAdCampaigns = filterResponse(data.data[0],"name");
-			})
+			if(s.toLowerCase() === "extern") {
+				$pouchyHTTP.get("intelliad_db",null,null,null).then(function(data) {
+					$scope.intelliAdCampaigns = filterResponse(data.data[0],"name");
+				})
+			}
 		})
 	}
 	$scope.counter = function() {
@@ -930,7 +929,6 @@ angular.module("pouchy.model",[])
 			$scope.values.adid = data.data[0].c;
 		})
 	}
-	
 }])
 .filter("dateFormatDE",function() {
 	return function(val) {

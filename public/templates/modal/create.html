@@ -26,7 +26,7 @@
 				<span class="label label-default">Externe Kampagne</span>
 			</div>
 			<select name="cExtcampaign" ng-model="values.campaign_name" class="form-control" ng-select="values.campaign_name" ng-change="counter()" ng-required="isActive(values.campaign_intext)" ng-pattern="/.*/">
-				<option ng-repeat="i in extCampaigns">{{i}}</option>
+				<option ng-repeat="i in extCampaigns" data-id="{{i.id}}">{{i.name}}</option>
 			</select>
 		</div>
 		<div class="col-md-12 col-sm-12 block form-group" ng-show="isActive(values.campaign_intext)" ng-class="{'popin':isActive(values.campaign_intext),'popout':!isActive(values.campaign_intext),'has-error': userForm.cExtintellicampaign.$invalid && userForm.cExtintellicampaign.$touched, 'has-success': userForm.cExtintellicampaign.$valid}" >
@@ -34,7 +34,7 @@
 				<span class="label label-default">IntelliAd Kampagne</span>
 			</div>
 			<select name="cExtintellicampaign" ng-model="values.intelliad_name" class="form-control" ng-select="values.intelliad_name" ng-required="isActive(values.campaign_intext)" ng-pattern="/.*/">
-				<option ng-repeat="i in intelliAdCampaigns">{{i}}</option>
+				<option ng-repeat="i in intelliAdCampaigns">{{i.name}}</option>
 			</select>
 		</div>
 		<div class="col-md-12 col-sm-12 block form-group" ng-show="!isActive(values.campaign_intext)" ng-class="{'has-error': userForm.cIntcampaign.$invalid && userForm.cIntcampaign.$touched, 'has-success': userForm.cIntcampaign.$valid}">
@@ -42,7 +42,7 @@
 				<span class="label label-default">Interne Kampagne</span>
 			</div>
 			<select name="cIntcampaign" ng-model="values.campaign_name" class="form-control" ng-select="values.campaign_name" ng-change="counter()" ng-required="!isActive(values.campaign_intext)" ng-pattern="/.*/">
-				<option ng-repeat="i in intCampaigns">{{i}}</option>
+				<option ng-repeat="i in intCampaigns" data-id="{{i.id}}">{{i.name}}</option>
 			</select>
 		</div>
 		<div class="col-md-12 col-sm-12 block form-group" ng-class="{'has-error': userForm.cAd.$invalid && userForm.cAd.$touched, 'has-success': userForm.cAd.$valid}">

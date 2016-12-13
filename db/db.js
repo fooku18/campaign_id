@@ -1,7 +1,7 @@
 const mysql_config = require("./mysql_config.js");
 const mysql = require("mysql");
 //mysql settings
-const connection = mysql.createConnection(mysql_config.mysql_config);
+const connection = mysql.createConnection(mysql_config);
 
 exports.showCols = function(table,callback) {
 	connection.query("SHOW COLUMNS FROM ??",table,function(err,rows) {

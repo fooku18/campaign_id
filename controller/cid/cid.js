@@ -1,15 +1,40 @@
 const express = require("express");
+const jwt = require("jsonwebtoken");
 const Evt = require("events").EventEmitter;
 const router = express.Router();
 const bodyParser = require("body-parser");
 const jsonParser = bodyParser.json();
 const model = require("../../model/cid/cid.js");
+const config = require("../../private/config.json");
 const appConfig = require("../../private/cid/config.json");
 const publicData = {
 	databaseConfig: appConfig.databaseConfig,
 	routingConfig: appConfig.routingConfig
 }
 let message = new Evt();
+
+function getJWT(cookie) {
+	let c = cookie.split(";");
+	for(let i of c) {
+		if(i.indexOf("JWT") >= 0) return i.split("JWT=")[1];
+	}
+}
+
+//check token
+router.use("/",function(req,res,next) {
+	let token = (req.headers.cookie)? getJWT(req.headers.cookie) : (req.headers["x-jwt-token"])? req.headers["x-jwt-token"] : null;
+	if(!token) {
+		res.status(403).send({status: "Access denied"});
+		return;
+	}
+	jwt.verify(token,config.secret.join(","),function(err,decoded) {
+		if(err) {
+			res.status(403).send({status: "Token mismatch"});
+			return;
+		}
+		next();
+	})
+})
 
 router.get("/",function(req,res,next) {
 	res.status(200).render("./cid/app",{routing:publicData});
@@ -54,7 +79,7 @@ router.post("/api/post/:destination",jsonParser,function(req,res,next) {
 	});
 })
 
-router.post("/api/delete/:destination",jsonParser,function(req,res,next) {
+router.delete("/api/delete/:destination",jsonParser,function(req,res,next) {
 	if(!req.body) res.status(400).send();
 	let db = req.params.destination;
 	model.del(req.body.data.id,db, function(err,rows) {
@@ -64,7 +89,7 @@ router.post("/api/delete/:destination",jsonParser,function(req,res,next) {
 	})
 })
 
-router.post("/api/update/:destination",jsonParser,function(req,res,next) {
+router.put("/api/update/:destination",jsonParser,function(req,res,next) {
 	if(!req.body) res.status(400).send();
 	let db = req.params.destination;
 	model.update(req.body.data.id,req.body.data.data,db, function(err,rows) {
@@ -78,7 +103,7 @@ router.get("/api/p/:destination",function(req,res,next) {
 	req.setTimeout(0);
 	let db = req.params.destination;
 	let update = function(p,r) {
-		model.get(db,function(err,rows) {
+		model.get(db,"",function(err,rows) {
 			if(err) return res.status(401).send();
 			let srows = rows.slice((p-1)*r,p*r);
 			res.status(200).send([srows,rows.length]);
