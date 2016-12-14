@@ -6,11 +6,16 @@ html
 		link(rel="stylesheet",href="/css/libs/bootstrap.css")
 		link(rel="stylesheet",href="/css/login.css")
 	body
-		div.full-rel-100.cover-img
+		div.full-rel-100
 			div.center-box
 				form(action="/auth",method="post")
+					input(type="hidden",name="ch",value=ch)
 					label Passwort
-						input(type="hidden",name="ch",value=ch)
 						input.form-control(type="password" name="password")
 					input(type="submit",value="einloggen",class="btn btn-default btn-block")
 					h4.alert-box#alert.hide
+		div.video-fullscreen
+			video.video-fullscreen-vid(autoplay="true",loop="true",muted="true",poster="/vid/wg/wg.jpg")
+				source(src="/vid/wg/wg.webm",type="video/webm")
+				source(src="/vid/wg/wg.mp4",type="video/mp4")
+				source(src="/vid/wg/wg.ogv",type="video/ogv")

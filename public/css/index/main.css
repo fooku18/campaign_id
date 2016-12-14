@@ -47,7 +47,7 @@ h4 {
 }
 
 .main-column > .main-container {
-	padding: 10px;
+	padding: 2%;
 	width: 100%;
 }
 
@@ -65,9 +65,19 @@ h4 {
 	box-shadow: 0px 0px 61px -1px rgba(133,128,128,0.43);
 }
 
+@media screen and (max-width: 450px) {
+	.text  {
+		display: none;
+	}
+}
+
 @media screen and (min-width: 700px) {
 	body {
 		font-size: 130%;
+	}
+	h4 {
+		margin-top: 2% !important;
+		margin-bottom: 2% !important;
 	}
 	.main-center {
 		position: absolute;
