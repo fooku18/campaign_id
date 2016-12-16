@@ -1,5 +1,7 @@
 const mysql = require("mysql");
 const mysqlDB = require("../../db/db.js");
+const wsse = require("../../public/js/libs/wsse.js");
+const appConfig = require("../../private/cid/config.json");
 
 exports.get = function(db,q,callback) {
 	mysqlDB.select(["*"],q,"","",db,callback);
@@ -44,4 +46,10 @@ exports.del = function(id,db,callback) {
 
 exports.update = function(id,hash,table,callback) {
 	mysqlDB.update(id,hash,table,callback);
+}
+
+exports.getToken = function(callback) {
+	console.log(wsse);
+	//var token = wsse.getToken(appConfig.analyticsConfig.username,appConfig.analyticsConfig.secret);
+	//callback(null,token);
 }

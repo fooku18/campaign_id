@@ -125,4 +125,11 @@ router.post("/api/u/:destination",jsonParser,function(req,res,next) {
 	});
 })
 
+router.get("/api/token",function(req,res,next) {
+	model.getToken(function(err,data) {
+		if(err) return res.status(401).send();
+		res.status(200).send({token: data});
+	})
+})
+
 module.exports = router;

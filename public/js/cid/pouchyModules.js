@@ -706,6 +706,12 @@ angular.module("pouchy.model",[])
 			}
 		})
 	}
+	function getToken() {
+		return $http({
+			method: "GET",
+			url: "/cid/api/token",
+		})
+	}
 	
 	return {
 		get: get,
@@ -715,7 +721,8 @@ angular.module("pouchy.model",[])
 		upload: upload,
 		cols: cols,
 		rowCount: rowCount,
-		del: del
+		del: del,
+		getToken: getToken
 	}
 }])
 //pouchy model is the heart of the application. it initializes the pouchdb databases on app launch and keeps the container
@@ -892,6 +899,31 @@ angular.module("pouchy.model",[])
 		setData: setData
 	}
 })
+.factory("cidGenerator",function cidGeneratorFactory() {
+	function generate() {
+		//generate CID 
+		var domainToken = DATALAYER.cidConfig.domainToken;
+		var organizationToken = DATALAYER.cidConfig.organizationToken;
+		//if question mark does exist then add ampersand and concatenate
+		var cid = data.campaign_type.charAt(0).toLowerCase() + "_" + domainToken + "_" + data.creative_channelid + data.campaign_suffix + "_" + organizationToken + "_" + data.campaign_id + "_" + data.adid + "_" + data.randomid;
+		if(data.targeturl.indexOf("?") > -1) {
+			var FQ = data.targeturl + "&" + cid;
+		} else {
+		//if no question mark in string then add ampersand + cid
+			var FQ = data.targeturl + "?" + cid;
+		}
+		data.FQ = FQ;
+		data.cid = cid;
+		if(data.intelliad_id !== "") {
+			data.intelliad_encoded = data.intelliad_root + encodeURIComponent(data.FQ) + data.intelliad_ext;
+		} else {
+			data.intelliad_encoded = "";
+		}
+		data.saintstatus = false;
+		//time stamp of last modification
+		data.modified = new Date().toISOString();
+	}
+})
 .controller("cid-create",["$scope","dataExchange","$pouchyHTTP",function($scope,dataExchange,$pouchyHTTP) {
 	function filterResponse(r) {
 		var args = Array.prototype.slice.call(arguments,1);
@@ -907,6 +939,9 @@ angular.module("pouchy.model",[])
 		return a;
 	}
 	$scope.values = dataExchange.getData();
+	$pouchyHTTP.get("channelid_db",null,null,null).then(function(data) {
+		$scope.creativeChannel = filterResponse(data.data[0],"channel","id");
+	});
 	$scope.isActive = function(val) {
 		var a = (val === "Extern") ? true : false;
 		return a;
@@ -919,15 +954,26 @@ angular.module("pouchy.model",[])
 			(s.toLowerCase() === "intern") ? $scope.intCampaigns = filterResponse(data.data[0],"name","id") : $scope.extCampaigns = filterResponse(data.data[0],"name","id");
 			if(s.toLowerCase() === "extern") {
 				$pouchyHTTP.get("intelliad_db",null,null,null).then(function(data) {
-					$scope.intelliAdCampaigns = filterResponse(data.data[0],"name");
+					$scope.intelliAdCampaigns = filterResponse(data.data[0],"name","id");
 				})
 			}
 		})
 	}
 	$scope.counter = function() {
-		$pouchyHTTP.rowCount("campaign_db",{name:$scope.values.campaign_name}).then(function(data) {
-			$scope.values.adid = data.data[0].c;
+		if(!$scope.values.campaignid) return;
+		$pouchyHTTP.rowCount("cid_db",{campaignid:$scope.values.campaignid}).then(function(data) {
+			var modZeros = 6; //to change leading 0's length change this number
+			var len = data.data[0].c.toString().length;
+			var zeros = Array(modZeros - parseInt(len)).join("0");
+			$scope.values.adid = zeros + (data.data[0].c + 1).toString();
 		})
+	}
+	$scope.validation = function() {
+		//if($scope.userForm.$valid) {
+			$pouchyHTTP.getToken().then(function(data) {
+				console.log(data);
+			})
+		//}
 	}
 }])
 .filter("dateFormatDE",function() {
@@ -1110,14 +1156,14 @@ angular.module("pouchy.model",[])
 })
 .factory("$pouchySAINTAPI",["$http",function pouchySAINTFactory($http) {
 	//WSSE is a hash library provided by Adobe
-	var wsse = new Wsse();
+	//var wsse = new Wsse();
 	/**
 	*	SAINT (RESTful API) implementation for Classification in Adobe Analytics
 	*	@params {string} method - method to be executed from SAINT API
 	*	@params {object} params - parameters to be passed to the method
 	*	@return {Promise}
 	*/
-	function requestSAINT(method,params) {
+	/*function requestSAINT(method,params) {
 		var x = wsse.generateAuth(DATALAYER.analyticsConfig.username,DATALAYER.analyticsConfig.secret)["X-WSSE"];
 		return $http({
 			method: "POST",
@@ -1131,7 +1177,8 @@ angular.module("pouchy.model",[])
 	
 	return {
 		requestSAINT: requestSAINT
-	}
+	}*/
+	return{}
 }])
 .directive("contextMenu",function($compile) {
 	return {

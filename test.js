@@ -1,19 +1,13 @@
-const request = require("request");
-request.post({
-	url: "http://aynu.de/?login",
-	form: {
-		private_blog_action:"login",
-		private_blog_redirect:"/",
-		private_blog_password:"S1cherheitMussSein!"
-	}
-},function(err,res,body) {
-	request({
-		uri: "http://aynu.de",
-		headers: {
-			"cookie":res.headers["set-cookie"][0],
-			"cookie":res.headers["set-cookie"][1]
-		}
-	},function(err,res,body) {
-		console.log(body);
-	})
+const fs = require("fs");
+const rl = require("readline");
+
+var rd = rl.createInterface({
+	input: fs.createReadStream("../../20161215_1356_billiger/billiger.csv",{start:0,end:10000}),
+	output: process.stdout
+});
+rd.on("line",function(line) {
+	rd.close();
+})
+rd.on("close",function() {
+	console.log("\n-------CLOSE------");
 })
