@@ -496,100 +496,6 @@ angular.module("pouchy.FileReader",["pouchy.import_export"])
 //###FileReader Module###END
 //
 
-//
-//###PouchDB Module###START
-//
-angular.module("pouchy.pouchDB",[])
-.controller("switchCtrl",["$scope","$msgBusService","$modalService","$pouchyModel", function switchController($scope,$msgBusService,$modalService,$pouchyModel) {
-	$scope.switchChange = function() {
-		($scope.switchStatus) ? $pouchyModel.startSyncing() : $pouchyModel.stopSyncing();
-	}
-	$scope.toggleConfig = function() {
-		$scope.showConfig = !$scope.showConfig;
-	}
-	$msgBusService.get("remoteconnection:lost",$scope,function() {
-		$scope.$apply(function() {
-			$scope.switchStatus = false;
-			$modalService.open({template:"connectionError",barColor:"red",remote:routing.databaseConfig.remoteUrl}).
-			then(function() {
-				console.log("resolved");
-			},function() {
-				console.log("rejected");
-			});
-		})
-	});
-}])
-.directive("switch",function switchDirective() {
-	var couchMode = routing.databaseConfig.dbMode === "couchDB";
-	var remote = routing.databaseConfig.autoSync === true;
-	
-	var tmpConfig = 	"<div class='absolute slider-remote-config-dropdown'>" +
-							"<div class='slider-remote-config-framer'>" +
-								"<h4>Remote-Einstellungen</h4>" +
-								"<div class='slider-remote-config-content'>" +
-									"<div class='slider-remote-config-content-part1'>" +
-										"Remote-Url: " +
-									"</div>" +
-									"<div class='slider-remote-config-content-part2'>" +
-										"<input type='text' class='form-control' />" +
-									"</div>" +
-								"</div>" +
-								"<div class='slider-remote-config-content'>" +
-									"<div class='slider-remote-config-content-part1'>" +
-										"Login: " +
-									"</div>" +
-									"<div class='slider-remote-config-content-part2'>" +
-										"<input type='text' class='form-control' />" +
-									"</div>" +
-								"</div>" +
-								"<div class='slider-remote-config-content'>" +
-									"<div class='slider-remote-config-content-part1'>" +
-										"Passwort: " +
-									"</div>" +
-									"<div class='slider-remote-config-content-part2'>" +
-										"<input type='password' class='form-control' />" +
-									"</div>" +
-								"</div>" +
-							"</div>" +
-							"<center class='margin-bottom-15'><button class='btn btn-default'>Log-In</button></center>" +
-						"</div>";
-	return {
-		restrict: "E",
-		scope: {},
-		replace: true,
-		controller: "switchCtrl",
-		template: 	"<div class='inline-block'>" +
-						"<div class='slider-wrapper relative' ng-class={'show-config':showConfig}>" +
-							"<div class='inline-block padding-left-25' ng-show='showSwitch'>" +
-								"<div class='small-letters white'>Sync Mode</div>" +
-								"<div>" +
-									"<label class='switch'>" +
-										"<input id='switcher' type='checkbox' ng-model='switchStatus' ng-click='switchChange()'>" +
-										"<div class='slider round'></div>" +
-									"</label>" +
-								"</div>" +
-							"</div>" + 
-							"<div class='inline-block slider-remote-message'>" +
-								"<div class='slider-remote-message-content'>" +
-									"<span ng-if='switchStatus' class='slide-remote-online'>ONLINE</span>" +
-									"<span ng-if='!switchStatus' class='slide-remote-offline'>OFFLINE</span>" +
-								"</div>" + 
-							"</div>" +
-							"<div class='inline-block slider-remote-config' ng-click='toggleConfig()' ng-init='showConfig = false'>" +
-								"<span class='glyphicon glyphicon-cloud glyphicon-30 glyphicon-a'></span>" +
-							"</div>" +
-							tmpConfig +
-						"</div>" +
-					"</div>",
-		link: function(scope,elemt,attr) {
-			(couchMode === true) ? scope.showSwitch = true : "";
-			(remote === true) ? scope.switchStatus = true : scope.switchStatus = false;
-		}
-	}
-});
-//
-//###PouchDB Module###END
-//
 
 //
 //###PouchyModel Module###START
@@ -661,7 +567,7 @@ angular.module("pouchy.model",[])
 	}
 	function update(target,data,currentPage,maxRows) {
 		return $http({
-			method: "POST",
+			method: "PUT",
 			url: "/cid/api/update/" + target,
 			headers: {
 				"Content-Type": "application/json"
@@ -745,8 +651,23 @@ angular.module("pouchy.model",[])
 		return activeDB;
 	}
 })
+.factory("formatMYSQL",function formatMYSQLFactory() {
+	function format(obj) {
+		let RegExp = /^(0?[1-9]|[12][0-9]|3[01])\.(0?[1-9]|1[012])\.\d{4}$/;
+		let arr = [[],[]];
+		for(let key in obj) {
+			if(RegExp.test(obj[key])) obj[key] = obj[key].substr(6,4) + "-" + obj[key].substr(3,2) + "-" + obj[key].substr(0,2);
+			arr[0].push(key);
+			arr[1].push(obj[key]);
+		}
+		return {data: arr};
+	}
+	return {
+		format: format
+	}
+})
 //mainCtrl is initilized on every new tab - this is to prevent too much scope overhead for non relevant data as 
-.controller("mainCtrl",["$scope","$pouchyWorker","$hashService","$msgBusService","$attrs","$modalService","$pouchyModel","$filter","$pouchyLoader","$pouchySAINTAPI","$pouchyHTTP","$q","activeDB","dataExchange",function mainController($scope,$pouchyWorker,$hashService,$msgBusService,$attrs,$modalService,$pouchyModel,$filter,$pouchyLoader,$pouchySAINTAPI,$pouchyHTTP,$q,activeDB,dataExchange) {
+.controller("mainCtrl",["$scope","$pouchyWorker","$hashService","$msgBusService","$attrs","$modalService","$pouchyModel","$filter","$pouchyLoader","$pouchySAINTAPI","$pouchyHTTP","$q","activeDB","dataExchange","formatMYSQL",function mainController($scope,$pouchyWorker,$hashService,$msgBusService,$attrs,$modalService,$pouchyModel,$filter,$pouchyLoader,$pouchySAINTAPI,$pouchyHTTP,$q,activeDB,dataExchange,formatMYSQL) {
 	//fetch database name from template attribute - this is important to seperate the data from the model service
 	//config
 	_t = this;
@@ -804,16 +725,6 @@ angular.module("pouchy.model",[])
 			$scope.userForm.$setPristine();
 		}
 	}
-	function formatDateMYSQL(obj) {
-		let RegExp = /^(0?[1-9]|[12][0-9]|3[01])\.(0?[1-9]|1[012])\.\d{4}$/;
-		let arr = [[],[]];
-		for(let key in obj) {
-			if(RegExp.test(obj[key])) obj[key] = obj[key].substr(6,4) + "-" + obj[key].substr(3,2) + "-" + obj[key].substr(0,2);
-			arr[0].push(key);
-			arr[1].push(obj[key]);
-		}
-		return {data: arr};
-	}
 	function scrollTop(delay) {
 		$("body").animate({
 			scrollTop: 0
@@ -821,7 +732,7 @@ angular.module("pouchy.model",[])
 	}
 	//if validation succeeds UI data is beeing added
 	$scope.addItem = function(val,data) {
-		var dataP = formatDateMYSQL(data);
+		var dataP = formatMYSQL.format(data);
 		$pouchyHTTP.post(db,dataP,_t.currentPage,_t.maxRows).then(function() {
 			scrollTop(400);
 			$modalService.open({template:"success",barColor:"green"}).
@@ -899,32 +810,88 @@ angular.module("pouchy.model",[])
 		setData: setData
 	}
 })
-.factory("cidGenerator",function cidGeneratorFactory() {
-	function generate() {
-		//generate CID 
-		var domainToken = DATALAYER.cidConfig.domainToken;
-		var organizationToken = DATALAYER.cidConfig.organizationToken;
+.factory("cidGenerator",["$pouchyHTTP","$q",function cidGeneratorFactory($pouchyHTTP,$q) {
+	function lZ(v) {
+		var lzeros = 6;
+		var l = v.toString().length;
+		return Array(lzeros-l).join(0) + v.toString();
+	}
+	function generate(data) {
+		var deferred = $q.defer();
+		//generate CID
+		eval(document.getElementById("Layer").innerHTML); // returns __routing object
+		var domainToken = __routing.cidConfig.domainToken;
+		var organizationToken = __routing.cidConfig.organizationToken;
 		//if question mark does exist then add ampersand and concatenate
-		var cid = data.campaign_type.charAt(0).toLowerCase() + "_" + domainToken + "_" + data.creative_channelid + data.campaign_suffix + "_" + organizationToken + "_" + data.campaign_id + "_" + data.adid + "_" + data.randomid;
+		var cid = data.campaign_intext[0].toLowerCase() + "_" + domainToken + "_" + data.channelid + data.campaign_intext[0].toLowerCase() + "_" + organizationToken + "_" + lZ(data.campaignid) + "_" + data.adid + "_" + data.randomid;
 		if(data.targeturl.indexOf("?") > -1) {
 			var FQ = data.targeturl + "&" + cid;
 		} else {
-		//if no question mark in string then add ampersand + cid
 			var FQ = data.targeturl + "?" + cid;
 		}
 		data.FQ = FQ;
 		data.cid = cid;
-		if(data.intelliad_id !== "") {
-			data.intelliad_encoded = data.intelliad_root + encodeURIComponent(data.FQ) + data.intelliad_ext;
+		if(data.intelliadid !== "") {
+			$pouchyHTTP.get("intelliad_db",null,null,"id=" + data.intelliadid).then(function(res) {
+				data.FQ = res.data[0][0].root + encodeURIComponent(data.FQ) + res.data[0][0].ext;
+				data.saintstatus = 0;
+				data.modified = new Date().toISOString();
+				deferred.resolve(data);
+			})
 		} else {
-			data.intelliad_encoded = "";
+			data.saintstatus = 0;
+			data.modified = new Date().toISOString();
+			deferred.resolve(data);
 		}
-		data.saintstatus = false;
-		//time stamp of last modification
-		data.modified = new Date().toISOString();
+		return deferred.promise;
 	}
-})
-.controller("cid-create",["$scope","dataExchange","$pouchyHTTP",function($scope,dataExchange,$pouchyHTTP) {
+	return {
+		generate: generate
+	}
+}])
+.controller("cid-create",["$scope","dataExchange","$pouchyHTTP","cidGenerator","formatMYSQL","$modalService",function($scope,dataExchange,$pouchyHTTP,cidGenerator,formatMYSQL,$modalService) {
+	//TEST//
+	testObj = {
+		FQ:"www.katzen.dehttps%3A%2F%2Fwww.vanilla-ice-tea.com%3Fe_dhlmp_1e_dpcom_00008_00002_XX-AAA?pppp=1",
+		ad:"a",
+		adid:"00002",
+		adtype:"a",
+		campaign_intext:"Extern",
+		campaignid:8,
+		channelid:1,
+		cid:"e_dhlmp_1e_dpcom_00008_00002_XX-AAA",
+		intelliadid:2,
+		modified:"2016-12-18T17:32:35.889Z",
+		placement:"a",
+		randomid:"XX-AAA",
+		saintstatus:0,
+		targeturl:"https://www.vanilla-ice-tea.com",
+		id:""
+	}
+	
+	testvalidation = function(val) {	
+		cidGenerator.generate(val).then(function(res) {
+			if(!res.id) {
+				delete res.id;
+				$pouchyHTTP.post("cid_db",formatMYSQL.format(res),1,10).then(function() {
+					$modalService.open({template:"success",barColor:"green"}).
+					then(function() {
+						console.log("resolved");
+					},function() {
+						console.log("rejected");
+					});
+				});
+			}
+			//function post(target,data,currentPage,maxRows) {
+			/*$pouchyHTTP.getToken().then(function(data) {
+				console.log(data);
+			})*/
+		});
+	}
+	testvalidation(testObj);
+	//TEST//
+	
+	
 	function filterResponse(r) {
 		var args = Array.prototype.slice.call(arguments,1);
 		var a = [];
@@ -969,11 +936,22 @@ angular.module("pouchy.model",[])
 		})
 	}
 	$scope.validation = function() {
-		//if($scope.userForm.$valid) {
-			$pouchyHTTP.getToken().then(function(data) {
-				console.log(data);
-			})
-		//}
+		if($scope.userForm.$valid) {
+			cidGenerator.generate($scope.values).then(function(res) {
+				if(!res.id) {
+					delete res.id;
+					$pouchyHTTP.post("cid_db",formatMYSQL.format(res),1,10).then(function() {
+						$modalService.open({template:"success",barColor:"green"}).
+						then(function() {
+							console.log("resolved");
+						},function() {
+							console.log("rejected");
+						});
+					});
+				}
+				
+			});
+		}
 	}
 }])
 .filter("dateFormatDE",function() {
@@ -1024,7 +1002,7 @@ angular.module("pouchy.model",[])
 	   }
 	}
 })
-.directive("onOffSwitch",["$pouchySAINTAPI","$pouchyModel","$pouchyLoader",function($pouchySAINTAPI,$pouchyModel,$pouchyLoader) {
+.directive("onOffSwitch",["$pouchySAINTAPI","$pouchyModel","$pouchyLoader","$pouchyHTTP",function($pouchySAINTAPI,$pouchyModel,$pouchyLoader,$pouchyHTTP) {
 	var tmp = 	"<div class='main-center relative'>" +
 					"<button type='button' class='btn btn-circle btn-circle-lg btn-outline-none rotate-360' ng-class='getClass()'>" +
 						"<span class='glyphicon' ng-class='getIcon()'></span>" +
@@ -1041,7 +1019,7 @@ angular.module("pouchy.model",[])
 	return {
 		template: tmp,
 		scope: {
-			item: "&"
+			item: "<"
 		},
 		link: function(scope,element,attr) {
 			(function() {
@@ -1075,6 +1053,17 @@ angular.module("pouchy.model",[])
 					return "glyphicon-remove";
 				}
 			}
+			scope.switchSAINTa = function (val) {
+				eval(document.getElementById("Layer").innerHTML); // returns __routing object
+				var conf = {
+					"encoding":"utf-8"
+				}
+				conf.rsid_list = [__routing.analyticsConfig.reportSuite];
+				conf.element = __routing.analyticsConfig.classification_element;
+				$pouchySAINTAPI.requestSAINT("Classifications.GetTemplate",conf).then(function(){
+					console.log(scope.item);
+				});
+			}
 			scope.switchSAINT = function(val) {
 				/**
 				*	If checkbox is unchecked we will use the SAINT API to upload our new classification dataset.
@@ -1086,14 +1075,19 @@ angular.module("pouchy.model",[])
 				*
 				*	Get Template -> Create Import -> Retrieve Job ID -> Populate Import -> Commit Import (Insert Job ID) -> Success/Failure
 				*/
+				eval(document.getElementById("Layer").innerHTML); // returns __routing object
 				if(!scope.item.saintstatus) {
 					$pouchyLoader.loaderToggle();
-					var _id;
+					var _id,
+						_camp_name,
+						_camp_start,
+						_camp_end,
+						_channel;
 					var conf = {
 						"encoding":"utf-8"
 					}
-					conf.rsid_list = [DATALAYER.analyticsConfig.reportSuite];
-					conf.element = DATALAYER.analyticsConfig.classification_element;
+					conf.rsid_list = [__routing.analyticsConfig.reportSuite];
+					conf.element = __routing.analyticsConfig.classification_element;
 					$pouchySAINTAPI.requestSAINT("Classifications.GetTemplate",conf)
 					.then(function(res) {
 						var s = res.data[0].template.split("\r\n");
@@ -1102,46 +1096,51 @@ angular.module("pouchy.model",[])
 							"check_divisions":"1",
 							"description":"Classification Upload API",
 							"export_results":"0",
-							"overwrite_conflicts":"0",
+							"overwrite_conflicts":"1",
 						}
-						conf.element = DATALAYER.analyticsConfig.classification_element;
-						conf.email_address = DATALAYER.analyticsConfig.notification_email_address;
+						conf.element = __routing.analyticsConfig.classification_element;
+						conf.email_address = __routing.analyticsConfig.notification_email_address;
 						conf.header = sn;
-						conf.rsid_list = [DATALAYER.analyticsConfig.reportSuite];
+						conf.rsid_list = [__routing.analyticsConfig.reportSuite];
 						return $pouchySAINTAPI.requestSAINT("Classifications.CreateImport",conf);
+					}).then(function(res) {						
+						_id = res.data["job_id"];
+						return $pouchyHTTP.get("campaign_db",null,null,"id=" + scope.item.campaignid);
 					}).then(function(res) {
-						if(res) {
-							_id = res.data["job_id"];
-							var conf = {
-								"page":"1",
-								"rows":[]
-							}
-							conf["job_id"] = _id;
-							conf.rows.push({
-								"row": [scope.item.doc.cid,scope.item.doc.campaign_type,scope.item.doc.creative_channel,scope.item.doc.campaign_id,
-										scope.item.doc.campaign_name,scope.item.doc.campaign_start,scope.item.doc.campaign_end,scope.item.doc.placement,
-										scope.item.doc.adtype,scope.item.doc.ad,DATALAYER.cidConfig.domainToken]
-							});
-							return $pouchySAINTAPI.requestSAINT("Classifications.PopulateImport",conf);
+						_camp_name = res.data[0][0].name;
+						_camp_start = res.data[0][0].start;
+						_camp_end = res.data[0][0].end;
+						return $pouchyHTTP.get("channelid_db",null,null,"id=" + scope.item.channelid);
+					}).then(function(res) {
+						var conf = {
+							"page":"1",
+							"rows":[]
 						}
+						conf["job_id"] = _id;
+						_channel = res.data[0][0].channel;
+						conf.rows.push({
+							"row": [scope.item.cid,scope.item.campaign_intext,_channel,scope.item.campaignid,
+									_camp_name,_camp_start,_camp_end,scope.item.placement,
+									scope.item.adtype,scope.item.ad,__routing.cidConfig.domainToken]
+						});
+						return $pouchySAINTAPI.requestSAINT("Classifications.PopulateImport",conf);
 					}).then(function(res) {
-						if(res) {
-							var conf = {};
-							conf["job_id"] = _id;
-							return $pouchySAINTAPI.requestSAINT("Classifications.CommitImport",conf);
-						}
+						var conf = {};
+						conf["job_id"] = _id;
+						return $pouchySAINTAPI.requestSAINT("Classifications.CommitImport",conf);
 					}).then(function(res) {
-						scope.item.doc.saintstatus = !scope.item.doc.saintstatus;
-						return $pouchyModel.databaseContainer["cid_db"].addItem(scope.item.doc);
+						scope.item.saintstatus = 1;
+						var __id = scope.item.id;
+						delete scope.item.id;
+						return $pouchyHTTP.update("cid_db",{id:__id,data:scope.item},1,10);
 					}).then(function(res) {
 						$pouchyLoader.loaderToggle();
-						console.log(res);
 					}).catch(function(err) {
 						$pouchyLoader.loaderToggle();
 						console.log(err);
 					});
 				} else {
-					console.log(scope.item.doc);
+					console.log(scope.item);
 				}
 			}
 		}
@@ -1154,31 +1153,31 @@ angular.module("pouchy.model",[])
 		}
 	}
 })
-.factory("$pouchySAINTAPI",["$http",function pouchySAINTFactory($http) {
-	//WSSE is a hash library provided by Adobe
-	//var wsse = new Wsse();
+.factory("$pouchySAINTAPI",["$http","$pouchyHTTP",function pouchySAINTFactory($http,$pouchyHTTP) {
 	/**
 	*	SAINT (RESTful API) implementation for Classification in Adobe Analytics
 	*	@params {string} method - method to be executed from SAINT API
 	*	@params {object} params - parameters to be passed to the method
 	*	@return {Promise}
 	*/
-	/*function requestSAINT(method,params) {
-		var x = wsse.generateAuth(DATALAYER.analyticsConfig.username,DATALAYER.analyticsConfig.secret)["X-WSSE"];
-		return $http({
-			method: "POST",
-			url: "https://" + DATALAYER.analyticsConfig.endpoint + "/admin/1.4/rest/?method=" + method,
-			headers: {
-				"X-WSSE": x
-			},
-			data: params
-		});
+	function requestSAINT(method,params) {
+		eval(document.getElementById("Layer").innerHTML); // returns __routing object
+		return $pouchyHTTP.getToken().then(function(res) {
+			var token = res.data.token["X-WSSE"];
+			return $http({
+				method: "POST",
+				url: "https://" + __routing.analyticsConfig.endpoint + "/admin/1.4/rest/?method=" + method,
+				headers: {
+					"X-WSSE": token
+				},
+				data: params
+			});
+		})
 	}
 	
 	return {
 		requestSAINT: requestSAINT
-	}*/
-	return{}
+	}
 }])
 .directive("contextMenu",function($compile) {
 	return {
@@ -1259,178 +1258,6 @@ angular.module("pouchy.model",[])
 //###PouchyModel Module###END
 //
 
-//
-//###CID-Logic Module###START
-//
-angular.module("pouchy.cidLogic",[])
-//this controller is more or less a copy of the main controller with slightly changes in favor of 
-//different initial work and processes for cid creation
-.controller("cidCtrl",["$scope","$msgBusService","$pouchyModel","$modalService","$pouchyWorker","$pouchyModelDatabase","$hashService","$pouchyCIDLogic",function cidController($scope,$msgBusService,$pouchyModel,$modalService,$pouchyWorker,$pouchyModelDatabase,$hashService,$pouchyCIDLogic) {
-	$scope.intelliAdCampaigns = [];
-	$scope.extCampaigns = [];
-	$scope.intCampaigns = [];
-	$scope.creativeChannel = [];
-	//initial combobox filling for the cid create modal window
-	(function() {
-		//intelliAdCampaigns filling
-		var fn = 	"function(doc) {" + 
-						"var intellis = [];" +
-						"for(var i=0;i<doc.length;i++) {" +
-							"intellis.push(doc[i].doc);" +
-						"}" + 
-						"return intellis;" +
-					"}";
-		$pouchyWorker.callWorker("intelliad_db",fn).then(function(doc) {
-			$scope.intelliAdCampaigns = doc;
-		});
-		//int/ext campaigns filling
-		fn =	"function(doc) {" + 
-					"var intcampaigns = [];" +
-					"var extcampaigns = [];" +
-					"for(var i=0;i<doc.length;i++) {" +
-						"if(doc[i].doc.intext === 'Extern') {" +
-							"extcampaigns.push(doc[i].doc);" +
-						"} else {" +
-							"intcampaigns.push(doc[i].doc);" +
-						"}" +
-					"}" + 
-					"return [intcampaigns,extcampaigns];" +
-				"}";
-		$pouchyWorker.callWorker("campaign_db",fn).then(function(doc) {
-			$scope.intCampaigns = doc[0];
-			$scope.extCampaigns = doc[1];
-		});
-		//channel ID filling
-		fn =	"function(doc) {" +
-					"var channels = [];" +
-					"for(var i=0;i<doc.length;i++) {" +
-						"channels.push(doc[i].doc);" +
-					"}" + 
-					"return channels;" +
-				"}";
-		$pouchyWorker.callWorker("channelid_db",fn).then(function(doc) {
-			$scope.creativeChannel = doc;
-		});
-	}())
-	//this function serves as an wid checker and increases the number in case that 
-	//some other dataset already exists with given number
-	$scope.counter = function(camp,val) {
-		var counter = 0;
-		for(var i=0; i<$pouchyModelDatabase.database["cid_db"].length; i++) {
-			if($pouchyModelDatabase.database["cid_db"][i].doc[camp] === val) counter++;
-		}
-		counter++
-		var counterLength = counter.toString().length;
-		var wid = Array(6-counterLength).join("0") + counter.toString();
-		$scope.values.adid = wid;
-	}
-	//changes the cid UI in case of external or internal campaign
-	$scope.isActive = function(val) {
-		var a = (val === "Extern") ? true : false;
-		return a;
-	}
-	$scope.intextChanger = function(data) {
-		if(data === "Intern") {
-			delete $scope.values.intelliad_name;
-		}
-	}
-	$scope.validation = function(val,data) {
-		if(val.$valid) {
-			var data = $pouchyCIDLogic.createCID(data,$scope.intelliAdCampaigns,$scope.extCampaigns,$scope.intCampaigns,$scope.creativeChannel);
-			$scope.addItem(data);
-		}
-	}
-	$scope.addItem = function(data) {
-		//if new cid then assign _id as creation data otherwise the cid gets overwritten with
-		//new values from the update formular
-		if(!data["_id"]) data["_id"] = new Date().toISOString();
-		console.log(data);
-		$pouchyModel.databaseContainer["cid_db"].addItem(data);
-		$scope.hide();
-	}
-}])
-//this factory serves as the cid generator logic. the services receives all necessary information
-//about the data input and creates a unique cid and if desired an intelliad link wrapper.
-.factory("$pouchyCIDLogic",["$pouchyModelDatabase","$msgBusService",function pouchyCIDLogicFactory($pouchyModelDatabase,$msgBusService) {
-	function createCID(data,intelliAdCampaigns,extCampaigns,intCampaigns,creativeChannel) {
-		if(data.campaign_intext === "Extern") {
-			//add intelliadCamp to new Dataset
-			for(var i=0;i<=intelliAdCampaigns.length-1;i++) {
-				if(intelliAdCampaigns[i].name === data.intelliad_name) {
-					data.intelliad_id = intelliAdCampaigns[i]._id;
-					data.intelliad_root = intelliAdCampaigns[i].root;
-					data.intelliad_ext = intelliAdCampaigns[i].ext;
-					break;
-				}
-			}
-			//add EXTcampaignID to new Dataset
-			for(var i=0;i<=extCampaigns.length-1;i++) {
-				if(extCampaigns[i].name === data.campaign_name) {
-					data.campaign_id = extCampaigns[i]._id;
-					data.campaign_type = extCampaigns[i].type;
-					data.campaign_start = extCampaigns[i].start;
-					data.campaign_end = extCampaigns[i].end;
-					data.campaign_suffix = "e";
-					break;
-				}
-			}
-		} else {
-			//empty rows - necessary for optimal presentation in export csv file
-			data.intelliad_id = "";
-			data.intelliad_root = "";
-			data.intelliad_ext = "";
-			//add INTcampaignID to new Dataset
-			for(var i=0;i<=intCampaigns.length-1;i++) {
-				if(intCampaigns[i].name === data.campaign_name) {
-					data.campaign_id = intCampaigns[i]._id;
-					data.campaign_type = intCampaigns[i].type;
-					data.campaign_start = intCampaigns[i].start;
-					data.campaign_end = intCampaigns[i].end;
-					data.campaign_suffix = "i";
-					break;
-				}
-			}
-		}
-		//add ChannelID to new Dataset
-		for(var i=0;i<=creativeChannel.length-1;i++) {
-			if(creativeChannel[i].channel === data.creative_channel) {
-				data.creative_id = creativeChannel[i]._id;
-				data.creative_channelid = creativeChannel[i].channelID;
-			}
-		}
-		
-		//generate CID 
-		var domainToken = DATALAYER.cidConfig.domainToken;
-		var organizationToken = DATALAYER.cidConfig.organizationToken;
-		//if question mark does exist then add ampersand and concatenate
-		var cid = data.campaign_type.charAt(0).toLowerCase() + "_" + domainToken + "_" + data.creative_channelid + data.campaign_suffix + "_" + organizationToken + "_" + data.campaign_id + "_" + data.adid + "_" + data.randomid;
-		if(data.targeturl.indexOf("?") > -1) {
-			var FQ = data.targeturl + "&" + cid;
-		} else {
-		//if no question mark in string then add ampersand + cid
-			var FQ = data.targeturl + "?" + cid;
-		}
-		data.FQ = FQ;
-		data.cid = cid;
-		if(data.intelliad_id !== "") {
-			data.intelliad_encoded = data.intelliad_root + encodeURIComponent(data.FQ) + data.intelliad_ext;
-		} else {
-			data.intelliad_encoded = "";
-		}
-		data.saintstatus = false;
-		//time stamp of last modification
-		data.modified = new Date().toISOString();
-		
-		return data;
-	}
-	
-	return {
-		createCID: createCID
-	}
-}]);
-//
-//###CID-Logic Module###END
-//
 
 //
 //###Worker Module###START

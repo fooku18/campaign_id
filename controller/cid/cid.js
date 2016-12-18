@@ -9,8 +9,10 @@ const config = require("../../private/config.json");
 const appConfig = require("../../private/cid/config.json");
 const publicData = {
 	databaseConfig: appConfig.databaseConfig,
-	routingConfig: appConfig.routingConfig
-}
+	routingConfig: appConfig.routingConfig,
+	cidConfig: appConfig.cidConfig,
+	analyticsConfig: appConfig.analyticsConfigPublic
+};
 let message = new Evt();
 
 function getJWT(cookie) {

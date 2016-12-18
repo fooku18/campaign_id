@@ -1,6 +1,6 @@
 const mysql = require("mysql");
 const mysqlDB = require("../../db/db.js");
-const wsse = require("../../public/js/libs/wsse.js");
+const wsse = require("wsse");
 const appConfig = require("../../private/cid/config.json");
 
 exports.get = function(db,q,callback) {
@@ -49,7 +49,7 @@ exports.update = function(id,hash,table,callback) {
 }
 
 exports.getToken = function(callback) {
-	console.log(wsse);
-	//var token = wsse.getToken(appConfig.analyticsConfig.username,appConfig.analyticsConfig.secret);
-	//callback(null,token);
+	var W = new wsse();
+	var token = W.generateAuth(appConfig.analyticsConfigPrivate.username,appConfig.analyticsConfigPrivate.secret);
+	callback(null,token);
 }

@@ -12,14 +12,14 @@
 			<div class="main-table" context-menu>
 				<div class="main-table-th">
 					<div class="col-sm-1">Status</div>
-					<div class="col-sm-1 cursor-pointer" ng-click="changeSortType('modified')">
+					<div class="col-sm-2 cursor-pointer" ng-click="changeSortType('modified')">
 						Bearbeitet
 						<span class="padding-left-5">
 							<i class="main-sort-arrow" ng-class="{'main-sort-arrow-up':!sortDescending, 'main-sort-arrow-down':sortDescending}" ng-show="sortType === 'modified'">
 							</i>
 						</span>
 					</div>
-					<div class="col-sm-3 cursor-pointer" ng-click="changeSortType('targeturl')">
+					<div class="col-sm-2 cursor-pointer" ng-click="changeSortType('targeturl')">
 						Ziel-Url
 						<span class="padding-left-5">
 							<i class="main-sort-arrow" ng-class="{'main-sort-arrow-up':!sortDescending, 'main-sort-arrow-down':sortDescending}" ng-show="sortType === 'targeturl'">
@@ -44,9 +44,9 @@
 				</div>
 				<div class="main-table-tr-wrapper">
 					<div class="main-table-tr animate" ng-repeat="value in items | orderBy:'-id' track by $index" data-context-info="{{value}}">
-						<div class="col-sm-1" on-off-switch="value"></div>
-						<div class="col-sm-1"><span class="main-word-wrap">{{value.modified | dateFormatDE}}</span></div>
-						<div class="col-sm-3"><span class="main-word-wrap">{{value.targeturl}}</span></div>
+						<div class="col-sm-1" on-off-switch="" item="value"></div>
+						<div class="col-sm-2"><span class="main-word-wrap">{{value.modified | dateFormatDE}}</span></div>
+						<div class="col-sm-2"><span class="main-word-wrap">{{value.targeturl}}</span></div>
 						<div class="col-sm-1"><span class="main-word-wrap">{{value.ad}}</span></div>
 						<div class="col-sm-4"><span class="main-word-wrap">{{value.cid}}</span></div>
 						<div class="col-sm-1 main-center">

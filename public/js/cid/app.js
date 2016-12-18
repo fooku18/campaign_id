@@ -1,10 +1,6 @@
 var app = (function(routing) {
-	var app = angular.module("myApp",["pouchy.pouchDB","pouchy.cidLogic","ngRoute","pouchy.navigation","pouchy.modal","pouchy.pagination","pouchy.import_export","pouchy.multiPurpose","pouchy.worker","pouchy.model","ngAnimate"])//;
-	app.run(/*["$pouchyModel",function($pouchyModel) {
-		for(var i=0;i<=routing.databaseConfig.databases.length-1;i++) {
-			$pouchyModel.initDatabase(routing.databaseConfig.databases[i]);
-		}
-	}]*/).config(["$routeProvider",function($routeProvider) {
+	var app = angular.module("myApp",["ngRoute","pouchy.navigation","pouchy.modal","pouchy.pagination","pouchy.import_export","pouchy.multiPurpose","pouchy.worker","pouchy.model","ngAnimate"])//;
+	app.config(["$routeProvider",function($routeProvider) {
 		var exec = (function() {
 			var tmp = "$routeProvider";
 			for(var i=0;i<=routing.routingConfig.htmlPath.length-1;i++) {
@@ -15,4 +11,4 @@ var app = (function(routing) {
 		eval(exec);
 	}]);
 	return app;
-}(routing));
+}(__routing));
