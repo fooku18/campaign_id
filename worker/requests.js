@@ -64,10 +64,11 @@ function paraBuilderNovo(type,date,t) {
 function writeFileNovo(fileName,novHeaders,novBody) {
 	fs.access("../private/ccdb/Datenexport/" + fileName + ".xlsx",function(err,res) {
 		if(err) fs.writeFileSync("../private/ccdb/Datenexport/" + fileName + ".xlsx");
-		var stream = reqPipe("POST","https://allyouneed.novomind.com/iMail/selectDataExportActions.imail",novHeaders,novBody,false).pipe(fs.createWriteStream("../private/ccdb/Datenexport/" + fileName + ".xlsx"));
-		stream.on("finish",function(data) {
+		let wS = fs.createWriteStream("../private/ccdb/Datenexport/" + fileName + ".xlsx");
+		wS.on("finish",function(res) {
 			xlsx2csv("../private/ccdb/Datenexport/" + fileName + ".xlsx",fileName);
 		})
+		reqPipe("POST","https://allyouneed.novomind.com/iMail/selectDataExportActions.imail",novHeaders,novBody,false).pipe(wS);
 	})
 }
 
