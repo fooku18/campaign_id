@@ -37,7 +37,7 @@ function req(method,uri,headers,body,followRedirect,callback) {
 	})
 }
 
-function reqPipe(method,uri,headers,body,followRedirect,fileName) {
+function reqPipe(method,uri,headers,body,followRedirect) {
 	followRedirect = followRedirect || true;
 	headers = headers || {};
 	body = body || {};
@@ -48,10 +48,6 @@ function reqPipe(method,uri,headers,body,followRedirect,fileName) {
 		followRedirect: followRedirect,
 		headers: headers,
 		body: body
-	})
-	.on("response",function(res) {
-		console.log("../private/ccdb/Datenexport/" + fileName + ".xlsx");
-		xlsx2csv("../private/ccdb/Datenexport/" + fileName + ".xlsx",fileName);
 	})
 }
 
@@ -68,7 +64,10 @@ function paraBuilderNovo(type,date,t) {
 function writeFileNovo(fileName,novHeaders,novBody) {
 	fs.access("../private/ccdb/Datenexport/" + fileName + ".xlsx",function(err,res) {
 		if(err) fs.writeFileSync("../private/ccdb/Datenexport/" + fileName + ".xlsx");
-		reqPipe("POST","https://allyouneed.novomind.com/iMail/selectDataExportActions.imail",novHeaders,novBody,false,fileName).pipe(fs.createWriteStream("../private/ccdb/Datenexport/" + fileName + ".xlsx"));
+		var stream = reqPipe("POST","https://allyouneed.novomind.com/iMail/selectDataExportActions.imail",novHeaders,novBody,false).pipe(fs.createWriteStream("../private/ccdb/Datenexport/" + fileName + ".xlsx"));
+		stream.on("finish",function(data) {
+			xlsx2csv("../private/ccdb/Datenexport/" + fileName + ".xlsx",fileName);
+		})
 	})
 }
 
