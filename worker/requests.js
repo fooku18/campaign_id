@@ -20,14 +20,15 @@ function parseCookie(headers) {
 	return res;
 }
 
-function req(method,uri,headers,body,followRedirect,callback) {
+function req(method,uri,headers,body,followRedirect,proxy,callback) {
 	followRedirect = followRedirect || true;
 	headers = headers || {};
 	body = body || {};
+	let p = proxy? "http://globalproxy.goc.dhl.com:8080" : "";
 	request({
 		method: method,
 		uri: uri,
-		proxy: "http://globalproxy.goc.dhl.com:8080",
+		proxy: p,
 		followRedirect: followRedirect,
 		headers: headers,
 		body: body
@@ -37,14 +38,15 @@ function req(method,uri,headers,body,followRedirect,callback) {
 	})
 }
 
-function reqPipe(method,uri,headers,body,followRedirect) {
+function reqPipe(method,uri,headers,body,followRedirect,proxy) {
 	followRedirect = followRedirect || true;
 	headers = headers || {};
 	body = body || {};
+	let p = proxy? "http://globalproxy.goc.dhl.com:8080" : "";
 	return request({
 		method: method,
 		uri: uri,
-		proxy: "http://globalproxy.goc.dhl.com:8080",
+		proxy: p,
 		followRedirect: followRedirect,
 		headers: headers,
 		body: body
@@ -61,14 +63,14 @@ function paraBuilderNovo(type,date,t) {
 	return body;
 }
 
-function writeFileNovo(fileName,novHeaders,novBody) {
+function writeFileNovo(fileName,postHeaders,novBody) {
 	fs.access("../private/ccdb/Datenexport/" + fileName + ".xlsx",function(err,res) {
 		if(err) fs.writeFileSync("../private/ccdb/Datenexport/" + fileName + ".xlsx");
 		let wS = fs.createWriteStream("../private/ccdb/Datenexport/" + fileName + ".xlsx");
 		wS.on("finish",function(res) {
 			xlsx2csv("../private/ccdb/Datenexport/" + fileName + ".xlsx",fileName);
 		})
-		reqPipe("POST","https://allyouneed.novomind.com/iMail/selectDataExportActions.imail",novHeaders,novBody,false).pipe(wS);
+		reqPipe("POST","https://allyouneed.novomind.com/iMail/selectDataExportActions.imail",postHeaders,novBody,false,true).pipe(wS);
 	})
 }
 
@@ -85,10 +87,10 @@ function xlsx2csv(path,file) {
 	for(let k = 0;k<rows.length; k++) {
 		writeStr += rows[k].join(",") + "\n";
 	}
-	fs.access("../private/ccdb/Datenexport/" + file + ".csv",function(err,res) {
-		fs.writeFile("../private/ccdb/Datenexport/" + file + ".csv", writeStr, function(err) {
+	fs.access("../private/ccdb/Datenexport/csv/" + file + ".csv",function(err,res) {
+		fs.writeFile("../private/ccdb/Datenexport/csv/" + file + ".csv", writeStr, function(err) {
 			if(err) return console.log(err);
-			console.log("csv created");
+			console.log(file + ".csv erstellt");
 		});
 	})
 }
@@ -108,21 +110,32 @@ let rQ = {
 		cats: 1297
 	}
 }
-let novHeaders = {
+let postHeaders = {
 	"Content-Type": "application/x-www-form-urlencoded"
 },
 	novBody = "username=" + config.novomind.username + "&password=" + config.novomind.password;
-req("POST","https://allyouneed.novomind.com/iMail/index.imail",novHeaders,novBody,false,function(err,data) {
+/*req("POST","https://allyouneed.novomind.com/iMail/index.imail",postHeaders,novBody,false,true,function(err,data) {
 	if(err) return console.log(err);
 	let cookie = parseCookie(data.headers)[0];
 	let now = new Date();
 	let tM = 1000*60*60*24*90 // 90 days in ms
-	let novHeaders = {
+	let postHeaders = {
 		"Content-Type": "application/x-www-form-urlencoded",
 		"Cookie": cookie[0]
 	}
 	
 	for(let i in rQ) {
-		writeFileNovo(i,novHeaders,paraBuilderNovo(i,now,tM));
+		writeFileNovo(i,postHeaders,paraBuilderNovo(i,now,tM));
 	}
-});
+});*/
+
+//APEX
+let apexBody = "p_flow_id=110&p_flow_step_id=101&p_instance=1372326183358022&p_page_submission_id=4422196315294210&p_request" +
+			   "=P101_PASSWORD&p_arg_names=7112428763559942&p_t01=0&p_arg_names=7023846395299926&p_t02=" + config.apex.username + "&p_arg_names" +
+			   "=7023927573299928&p_t03=" + config.apex.password + "&p_md5_checksum=";
+
+req("POST","http://10.172.253.14:8080/apex/wwv_flow.accept",postHeaders,apexBody,false,false,function(err,data) {
+	if(err) return console.log(err);
+	console.log(data.headers);
+})
+
