@@ -1,6 +1,7 @@
 const request = require("request");
 const fs = require("fs");
 const xlsx = require("node-xlsx");
+const dom = require("xmldom").DOMParser;
 const config = require("../private/ccdb/config.json");
 
 function twoDigits(val) {
@@ -21,36 +22,30 @@ function parseCookie(headers) {
 }
 
 function req(method,uri,headers,body,followRedirect,proxy,callback) {
-	followRedirect = followRedirect || true;
-	headers = headers || {};
-	body = body || {};
-	let p = proxy? "http://globalproxy.goc.dhl.com:8080" : "";
-	request({
+	opt = {
 		method: method,
-		uri: uri,
-		proxy: p,
-		followRedirect: followRedirect,
-		headers: headers,
-		body: body
-	},function(err,res,b) {
+		uri: uri
+	};
+	if(followRedirect) opt.followRedirect;
+	if(headers) opt.headers = headers;
+	if(body) opt.body =body;
+	if(proxy) opt.proxy = "http://globalproxy.goc.dhl.com:8080";
+	request(opt,function(err,res,b) {
 		if(err) return callback(err);
 		callback(null,res);
 	})
 }
 
 function reqPipe(method,uri,headers,body,followRedirect,proxy) {
-	followRedirect = followRedirect || true;
-	headers = headers || {};
-	body = body || {};
-	let p = proxy? "http://globalproxy.goc.dhl.com:8080" : "";
-	return request({
+	opt = {
 		method: method,
-		uri: uri,
-		proxy: p,
-		followRedirect: followRedirect,
-		headers: headers,
-		body: body
-	})
+		uri: uri
+	};
+	if(followRedirect) opt.followRedirect;
+	if(headers) opt.headers = headers;
+	if(body) opt.body =body;
+	if(proxy) opt.proxy = "http://globalproxy.goc.dhl.com:8080";
+	return request(opt);
 }
 
 function paraBuilderNovo(type,date,t) {
@@ -95,7 +90,7 @@ function xlsx2csv(path,file) {
 	})
 }
 
-//Novomind Export
+//Novomind
 let rQ = {
 	"KS_Eingang": {
 		id: 104,
@@ -114,7 +109,7 @@ let postHeaders = {
 	"Content-Type": "application/x-www-form-urlencoded"
 },
 	novBody = "username=" + config.novomind.username + "&password=" + config.novomind.password;
-/*req("POST","https://allyouneed.novomind.com/iMail/index.imail",postHeaders,novBody,false,true,function(err,data) {
+req("POST","https://allyouneed.novomind.com/iMail/index.imail",postHeaders,novBody,false,true,function(err,data) {
 	if(err) return console.log(err);
 	let cookie = parseCookie(data.headers)[0];
 	let now = new Date();
@@ -127,15 +122,63 @@ let postHeaders = {
 	for(let i in rQ) {
 		writeFileNovo(i,postHeaders,paraBuilderNovo(i,now,tM));
 	}
-});*/
+});
 
 //APEX
+function findMyWay(path,node) {
+	path.forEach(function(l) {
+		node = l? node.firstChild : node.nextSibling;
+	})
+	return node;
+}
+
+function findAttribute(id,attr,template) {
+	let doc = new dom().parseFromString(template,"text/html");
+	return doc.getElementById(id).getAttribute(attr);
+}
+
+function download(url,type,header) {
+	req("GET",url,header,null,true,false,function(err,data) {
+		if(err) console.log(err);
+		let template = data.body;
+		let apexir_WORKSHEET_ID = findAttribute("apexir_WORKSHEET_ID","value",template);
+		let apexir_REPORT_ID = findAttribute("apexir_REPORT_ID","value",template);
+		let pFlowId = findAttribute("pFlowId","value",template);
+		let pFlowStepId = findAttribute("pFlowStepId","value",template);
+		let pInstance = findAttribute("pInstance","value",template);
+		let apexBody = "p_request=APXWGT&p_instance=" + pInstance + "&p_flow_id=" + pFlowId + "&p_flow_step_id=" + pFlowStepId + "&p_widget_name=worksheet&p_widget_mod=CONTROL&p_widget_action=SHOW_DOWNLOAD&x01=" + apexir_WORKSHEET_ID + "&x02=" +apexir_REPORT_ID;
+		headerPOST = Object.assign({},header);headerPOST["Content-Type"] = "application/x-www-form-urlencoded";
+		req("POST","http://10.172.253.14:8080/apex/wwv_flow.show",headerPOST,apexBody,true,false,function(err,data) {
+			if(err) console.log(err);
+			let url = /f\?.*:CSV:/.exec(data.body);url = "http://10.172.253.14:8080/apex/" + url;
+			reqPipe("GET",url,header,null,true,false).pipe(fs.createWriteStream("../private/ccdb/Datenexport/csv/" + type + "Bestellungen.csv"));
+		})
+	})
+}
+
 let apexBody = "p_flow_id=110&p_flow_step_id=101&p_instance=1372326183358022&p_page_submission_id=4422196315294210&p_request" +
 			   "=P101_PASSWORD&p_arg_names=7112428763559942&p_t01=0&p_arg_names=7023846395299926&p_t02=" + config.apex.username + "&p_arg_names" +
 			   "=7023927573299928&p_t03=" + config.apex.password + "&p_md5_checksum=";
 
 req("POST","http://10.172.253.14:8080/apex/wwv_flow.accept",postHeaders,apexBody,false,false,function(err,data) {
 	if(err) return console.log(err);
-	console.log(data.headers);
+	let cookie = parseCookie(data.headers)[0];
+	let location = parseCookie(data.headers)[1];
+	let headerGET = {
+		"Cookie": cookie.join(""),
+		"Connection": "keep-alive"
+	};
+	let headerPOST = {
+		"Cookie": cookie.join(""),
+		"Connection": "keep-alive",
+		"Content-Type": "application/x-www-form-urlencoded"
+	};
+	req("GET",location,headerGET,null,false,false,function(err,data) {
+		let template = data.body;
+		let doc = new dom().parseFromString(template,"text/html");
+		let ordAYNurl = findMyWay([1,0,1,0,1,1],doc.getElementById(14000).nextSibling).getAttribute("href");ordAYNurl = "http://10.172.253.14:8080/apex/" + ordAYNurl;
+		let ordPPurl = findMyWay([1,0,0,1,0,1,1],doc.getElementById(16000).nextSibling).getAttribute("href");ordPPurl = "http://10.172.253.14:8080/apex/" + ordPPurl;
+		download(ordAYNurl,"AYN",headerGET);
+		download(ordPPurl,"PP",headerGET);
+	})
 })
-
