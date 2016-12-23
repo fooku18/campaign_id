@@ -1,5 +1,6 @@
 const mysql = require("mysql");
-const mysqlDB = require("../../db/db.js");
+const mysql_config = require("../../db/mysql_config_cid.js");
+const mysqlDB = require("../../db/db.js")(mysql_config);
 const wsse = require("wsse");
 const appConfig = require("../../private/cid/config.json");
 

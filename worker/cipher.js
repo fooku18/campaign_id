@@ -57,9 +57,8 @@ if(process.argv[2] == "-r") {
 	})
 }
 
-module.exports.dec = function(file,pw) {
-	fs.readFile(file,{encoding:"utf8"},function(err,data) {
-		let decoded = dec(data,pw);
-		if(decoded[1]) return JSON.parse(decoded[0]);
-	})
+module.exports.decipher = function(file,pw) {
+	let f = fs.readFileSync(file,{encoding:"utf8"});
+	let decoded = dec(f,pw);
+	if(decoded[1]) return JSON.parse(decoded[0]);
 }

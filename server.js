@@ -2,7 +2,6 @@ const http = require("http");
 const https = require("https");
 const fs = require("fs");
 const express = require("express");
-const mysql_config = require("./db/mysql_config.js");
 const cidController = require("./controller/cid/cid.js");
 const homeController = require("./controller/home.js");
 const app = express();

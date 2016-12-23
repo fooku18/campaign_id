@@ -1,9 +1,14 @@
+if(!process.argv[2]) return console.log("Zweites Argument 'Secret' fehlt");
+process.stdout.write("\033c");
 const request = require("request");
+const mysql = require("mysql");
 const fs = require("fs");
 const xlsx = require("node-xlsx");
 const dom = require("xmldom").DOMParser;
-const config = require("../private/ccdb/config.json");
+const crypt = require("./cipher.js");
+const config = crypt.decipher("../private/ccdb/cip.file",process.argv[2]);
 
+/*
 function twoDigits(val) {
 	if(val.toString().length < 2) {
 		return "0" + val;
@@ -69,6 +74,19 @@ function writeFileNovo(fileName,postHeaders,novBody) {
 	})
 }
 
+function xlD2mysqlD(serial) {
+   let utc_days  = Math.floor(serial - 25569);
+   let utc_value = utc_days * 86400;                                        
+   let date_info = new Date(utc_value * 1000);
+   let fractional_day = serial - Math.floor(serial) + 0.0000001;
+   let total_seconds = Math.floor(86400 * fractional_day);
+   let seconds = total_seconds % 60;
+   total_seconds -= seconds;
+   let hours = Math.floor(total_seconds / (60 * 60));
+   let minutes = Math.floor(total_seconds / 60) % 60;
+   return date_info.getUTCFullYear() + "-" + twoDigits(date_info.getUTCMonth()) + "-" + twoDigits(date_info.getUTCDate()) + " " + twoDigits(hours) + ":" + twoDigits(minutes) + ":" + twoDigits(seconds);
+}
+
 function xlsx2csv(path,file) {
 	let obj = xlsx.parse(path);
 	let rows = [];
@@ -80,6 +98,11 @@ function xlsx2csv(path,file) {
 		}
 	}
 	for(let k = 0;k<rows.length; k++) {
+		for(let l=0;l<rows[k].length;l++) {
+			if(typeof(rows[k][l]) === "number") {
+				if(rows[k][l].toString().indexOf(".")>-1) rows[k][l] = xlD2mysqlD(rows[k][l]);
+			}
+		}
 		writeStr += rows[k].join(",") + "\n";
 	}
 	fs.access("../private/ccdb/Datenexport/csv/" + file + ".csv",function(err,res) {
@@ -108,7 +131,7 @@ let rQ = {
 let postHeaders = {
 	"Content-Type": "application/x-www-form-urlencoded"
 },
-	novBody = "username=" + config.novomind.username + "&password=" + config.novomind.password;
+	novBody = "username=" + config.novo.username + "&password=" + config.novo.password;
 req("POST","https://allyouneed.novomind.com/iMail/index.imail",postHeaders,novBody,false,true,function(err,data) {
 	if(err) return console.log(err);
 	let cookie = parseCookie(data.headers)[0];
@@ -151,7 +174,11 @@ function download(url,type,header) {
 		req("POST","http://10.172.253.14:8080/apex/wwv_flow.show",headerPOST,apexBody,true,false,function(err,data) {
 			if(err) console.log(err);
 			let url = /f\?.*:CSV:/.exec(data.body);url = "http://10.172.253.14:8080/apex/" + url;
-			reqPipe("GET",url,header,null,true,false).pipe(fs.createWriteStream("../private/ccdb/Datenexport/csv/" + type + "Bestellungen.csv"));
+			let wS = fs.createWriteStream("../private/ccdb/Datenexport/csv/" + type + "Bestellungen.csv");
+			wS.on("finish",function() {
+				console.log(type + "Bestellungen.csv erstellt");
+			});
+			reqPipe("GET",url,header,null,true,false).pipe(wS);
 		})
 	})
 }
@@ -182,3 +209,34 @@ req("POST","http://10.172.253.14:8080/apex/wwv_flow.accept",postHeaders,apexBody
 		download(ordPPurl,"PP",headerGET);
 	})
 })
+
+*/
+//temp tables
+let opt = {
+	host: "localhost",
+	user: "root",
+	database: "ccdb",
+	password: ""
+}
+function createTemp(table) {
+	const connection = mysql.createConnection(opt);
+	let qS = "";
+	connection.query("SHOW COLUMNS FROM " + table + ";",function(err,data) {
+		data.forEach(function(v,i){
+			qS += v.Field + " " + v.Type + ",";
+		})
+		qS = "(" + qS.substr(0,qS.length-1) + ")"; 
+		//connection.query("CREATE TABLE " + table + "_temp " + qS,function(err,data) {
+			//if(err) console.log(err);
+			let p = 'C:\\Users\\j6er8a\\Desktop\\Projekt\\node\\private\\ccdb\\Datenexport\\csv\\' + table + '.csv';console.log(p);
+			let q = mysql.format("LOAD DATA LOCAL INFILE ?? INTO TABLE ? CHARACTER SET 'utf8' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES;",[p,table]);
+			console.log(q);
+			connection.query(q,function(err,data) {
+				console.log(err);
+				console.log(data);
+			})
+		//})
+	})
+}
+
+createTemp("ks_eingang");
