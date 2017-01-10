@@ -3,6 +3,7 @@ const https = require("https");
 const fs = require("fs");
 const express = require("express");
 const cidController = require("./controller/cid/cid.js");
+const ccdbController = require("./controller/ccdb/ccdb.js");
 const homeController = require("./controller/home.js");
 const app = express();
 //https credentials
@@ -23,6 +24,7 @@ app.use("/",homeController);
 //cid
 app.use("/cid",cidController);
 //ccdb
+app.use("/ccdb",ccdbController);
 //error
 app.use(function(req,res) {
 	res.status(404).render("notFound");

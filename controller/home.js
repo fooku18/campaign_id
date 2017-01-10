@@ -30,7 +30,7 @@ router.get("/login",function(req,res,next) {
 })
 
 router.post("/auth",urlParser,function(req,res,next) {
-	if(req.body.password === config.cid) {
+	if(req.body.password === config[req.body.ch]) {
 		if(req.headers.cookie) {
 			let token = getJWT(req.headers.cookie);
 			jwt.verify(token,config.secret.join(","),function(err,decoded) {
@@ -51,7 +51,6 @@ router.post("/auth",urlParser,function(req,res,next) {
 			})
 		} else {
 			let nuToken = jwt.sign({
-				name: "test",
 				roles: [req.body.ch]
 			},config.secret.join(","));
 			res.cookie("JWT",nuToken, {
@@ -83,5 +82,21 @@ router.get("/cid",function(req,res,next) {
 		return;
 	}
 })
+
+router.get("/ccdb",function(req,res,next) {
+	if(req.headers.cookie) {
+		let token = getJWT(req.headers.cookie);
+		jwt.verify(token,config.secret.join(","),function(err,decoded) {
+			if(decoded.roles.indexOf("ccdb") == -1) {
+				res.status(403).redirect("/login?ch=ccdb");
+				return
+			} else
+				next();
+		});
+	} else {
+		res.status(403).redirect("/login?ch=ccdb");
+		return;
+	}
+});
 
 module.exports = router;

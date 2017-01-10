@@ -1,0 +1,53 @@
+html
+	head
+		title Customer Care Dashboard
+		meta(name="viewport" content="width=device-width, initial-scale=1")
+		link(rel="stylesheet",href="/css/ccdb/index.css")
+		link(rel="stylesheet",href="/css/libs/bootstrap.css")
+		link(rel="stylesheet" href="/css/libs/bootstrap-datepicker.css")
+		script(type="text/javascript" src="/js/libs/jquery-3.1.0.min.js")
+		script(type="text/javascript",src="/js/libs/highcharts.js")
+		script(type="text/javascript" src="/js/libs/bootstrap-datepicker.js")
+		script(type="text/javascript" src="/js/libs/bootstrap.min.js")
+		script(type="text/javascript",src="/js/ccdb/main.js")
+	body
+		div.heading-bar.relative
+			div.vert-center.absolute.icon-box
+				span.glyphicon.glyphicon-th.icon-lg.hor-center#menu-btn
+			div#menu.shadow.absolute.menu-up
+				div.inner-menu
+					h3.white Menu
+					ul.new-font
+						li 
+							a#kq.white(href="javascript:void(0)") Kontaktquote
+						li 
+							a#tt.white(href="javascript:void(0)") Ticket-Themen
+						li 
+							a#k.white(href="javascript:void(0)") Kosten
+		div.banner.relative
+			div.headline.absolute Customer Care Dashboard
+		div.chart-section.relative
+			div#chart-calendar.absolute
+				div.chart-calendar-content.absolute
+					div.chart-calendar-inner.cal-table
+						span.glyphicon.glyphicon-calendar.icon-md.cal-table-cell.v-align-middle
+						div.table-cell
+							div.input-group.input-daterange
+								input.form-control.input-correction.chart-calendar-elements(type="text")
+								span.input-group-addon.padding-correction bis
+								input.form-control.input-correction.chart-calendar-elements(type="text")
+			div#chart-menu.absolute
+				div#chart-menu-content.max-height
+					div.chart-menu-content-box
+						div#chart-menu-content-box-content
+							div.chart-menu-inner-content
+								h3.my-headline Einstellungen
+								div#unit-sources
+							div.chart-menu-inner-button.relative
+								div.chart-menu-inner-button-box.absolute
+									button#btn-apply.btn.btn-primary.btn-block.poppinYaColla anwenden
+				div#chart-menu-symbol.relative.max-height
+					div.absolute.vert-center.max-width
+						span.glyphicon.glyphicon-list.icon-lg.hor-center
+			div.chart
+				div#chart-box
