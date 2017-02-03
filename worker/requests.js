@@ -7,6 +7,9 @@ const xlsx = require("node-xlsx");
 const dom = require("xmldom").DOMParser;
 const crypt = require("./cipher.js");
 const config = crypt.decipher("../private/ccdb/cip.file",process.argv[2]);
+const exec = require("child_process").exec;
+const path = require("path");
+const __dir = path.dirname(require.main.filename);
 
 /*
 function twoDigits(val) {
@@ -66,7 +69,7 @@ function paraBuilderNovo(type,date,t) {
 function writeFileNovo(fileName,postHeaders,novBody) {
 	fs.access("../private/ccdb/Datenexport/" + fileName + ".xlsx",function(err,res) {
 		if(err) fs.writeFileSync("../private/ccdb/Datenexport/" + fileName + ".xlsx");
-		let wS = fs.createWriteStream("../private/ccdb/Datenexport/" + fileName + ".xlsx");
+		let wS = fs.createWriteStream("../private/ccdb/Datenexport/" + fileName + ".xlsx",{defaultEncoding:'utf8'});
 		wS.on("finish",function(res) {
 			xlsx2csv("../private/ccdb/Datenexport/" + fileName + ".xlsx",fileName);
 		})
@@ -84,7 +87,7 @@ function xlD2mysqlD(serial) {
    total_seconds -= seconds;
    let hours = Math.floor(total_seconds / (60 * 60));
    let minutes = Math.floor(total_seconds / 60) % 60;
-   return date_info.getUTCFullYear() + "-" + twoDigits(date_info.getUTCMonth()) + "-" + twoDigits(date_info.getUTCDate()) + " " + twoDigits(hours) + ":" + twoDigits(minutes) + ":" + twoDigits(seconds);
+   return date_info.getUTCFullYear() + "-" + twoDigits(date_info.getUTCMonth() + 1) + "-" + twoDigits(date_info.getUTCDate()) + " " + twoDigits(hours) + ":" + twoDigits(minutes) + ":" + twoDigits(seconds);
 }
 
 function xlsx2csv(path,file) {
@@ -103,7 +106,7 @@ function xlsx2csv(path,file) {
 				if(rows[k][l].toString().indexOf(".")>-1) rows[k][l] = xlD2mysqlD(rows[k][l]);
 			}
 		}
-		writeStr += rows[k].join(",") + "\n";
+		writeStr += rows[k].join("|") + "\n";
 	}
 	fs.access("../private/ccdb/Datenexport/csv/" + file + ".csv",function(err,res) {
 		fs.writeFile("../private/ccdb/Datenexport/csv/" + file + ".csv", writeStr, function(err) {
@@ -174,9 +177,9 @@ function download(url,type,header) {
 		req("POST","http://10.172.253.14:8080/apex/wwv_flow.show",headerPOST,apexBody,true,false,function(err,data) {
 			if(err) console.log(err);
 			let url = /f\?.*:CSV:/.exec(data.body);url = "http://10.172.253.14:8080/apex/" + url;
-			let wS = fs.createWriteStream("../private/ccdb/Datenexport/csv/" + type + "Bestellungen.csv");
+			let wS = fs.createWriteStream("../private/ccdb/Datenexport/csv/" + type + "_bestellungen.csv");
 			wS.on("finish",function() {
-				console.log(type + "Bestellungen.csv erstellt");
+				console.log(type + "_bestellungen.csv erstellt");
 			});
 			reqPipe("GET",url,header,null,true,false).pipe(wS);
 		})
@@ -209,34 +212,155 @@ req("POST","http://10.172.253.14:8080/apex/wwv_flow.accept",postHeaders,apexBody
 		download(ordPPurl,"PP",headerGET);
 	})
 })
-
 */
-//temp tables
-let opt = {
-	host: "localhost",
-	user: "root",
-	database: "ccdb",
-	password: ""
-}
 function createTemp(table) {
+	let opt = {
+		host: "localhost",
+		user: "root",
+		database: "ccdb",
+		password: "sausage18"
+	}
+	function _qND(tN) {
+		return "DELETE FROM " + tN + " WHERE ticket_id IN ( " +
+					"SELECT * FROM ( " + 
+						"SELECT " + tN + ".ticket_id FROM " + tN + " " + 
+						"LEFT OUTER JOIN " + tN + "_temp " +
+						"ON " + tN + ".ticket_id = " + tN + "_temp.ticket_id " +
+						"WHERE (date(" + tN + ".receive_date) " +
+						"BETWEEN " +
+						"(SELECT MIN(DATE(receive_date)) FROM " + tN + "_temp) " +
+						"AND " +
+						"(SELECT MAX(DATE(receive_date)) FROM " + tN + "_temp) " + 
+						") AND " + tN + "_temp.ticket_id is null " +
+					") AS t " + 
+				");"
+	}
+	function _qNI(tN) {
+		let _i = (tN == "ayn_bestellungen" || tN == "pp_bestellungen")? "tag" : "ticket_id";
+		return "INSERT INTO " + tN + " SELECT tN.* FROM ( " +
+					"SELECT " + tN + "_temp.* FROM " + tN + " " +  
+					"RIGHT OUTER JOIN " + tN + "_temp " +
+					"ON " + tN + "." + _i + " = " + tN + "_temp." + _i + " " + 
+					"WHERE " + tN + "." + _i + " is null " +
+				") AS tN;";
+	}
+	function _qNU(tN) {
+		return "UPDATE " + tN + " t1 " + 
+			"INNER JOIN " + tN + "_temp t2 " +
+			"ON t1.ticket_id = t2.ticket_id " + 
+			"SET t1.TICKET_ID = t2.TICKET_ID, " + 
+			"t1.PROCESS_ID = t2.PROCESS_ID, " +
+			"t1.RECEIVE_DATE = t2.RECEIVE_DATE, " +
+			"t1.LAST_DATE_PROCESSED = t2.LAST_DATE_PROCESSED, " +
+			"t1.DATE_TOUCHED = t2.DATE_TOUCHED, " +
+			"t1.CATEGORY = t2.CATEGORY, " +
+			"t1.MANDATOR = t2.MANDATOR, " +
+			"t1.TEMPLATE = t2.TEMPLATE, " +
+			"t1.EDIT_TIME_IN_MS = t2.EDIT_TIME_IN_MS, " +
+			"t1.RECATEGORIZED_TO = t2.RECATEGORIZED_TO, " +
+			"t1.RECATEGORIZED_FROM = t2.RECATEGORIZED_FROM, " +
+			"t1.TEMPLATE_OUT = t2.TEMPLATE_OUT, " +
+			"t1.INCOMING_ADDRESS = t2.INCOMING_ADDRESS, " +
+			"t1.INCOMING_ACCOUNT = t2.INCOMING_ACCOUNT, " +
+			"t1.SENDER = t2.SENDER, " +
+			"t1.LANGUAGE = t2.LANGUAGE, " +
+			"t1.LOCATION = t2.LOCATION, " +
+			"t1.STATUS = t2.STATUS, " +
+			"t1.TRANSACTION_CODE = t2.TRANSACTION_CODE, " +
+			"t1.SHOP_ID = t2.SHOP_ID, " +
+			"t1.BESTELLNUMMER = t2.BESTELLNUMMER, " +
+			"t1.KUNDENNUMMER = t2.KUNDENNUMMER  " +
+			"WHERE t1.ticket_id = t2.ticket_id; ";
+	}
+	function _qBU(tN) {
+		if(tN.match(/pp/i)) {
+			return "UPDATE " + tN + " t1 " + 
+				"INNER JOIN " + tN + "_temp t2 " +
+				"ON t1.tag = t2.tag " + 
+				"SET t1.wochentag = t2.wochentag, " + 
+				"t1.anzahl_kunden = t2.anzahl_kunden, " +
+				"t1.anzahl_warenkoerbe = t2.anzahl_warenkoerbe, " +
+				"t1.ds_anzahl_produkte = t2.ds_anzahl_produkte, " +
+				"t1.umsatz = t2.umsatz, " +
+				"t1.versandkosten = t2.versandkosten, " +
+				"t1.gesamtumsatz = t2.gesamtumsatz, " +
+				"t1.ds_warenkorbwert = t2.ds_warenkorbwert, " +
+				"t1.stornierungsquote = t2.stornierungsquote, " +
+				"t1.retourenquote = t2.retourenquote " +
+				"WHERE t1.tag = t2.tag;";
+		} else {
+			return "UPDATE " + tN + " t1 " + 
+				"INNER JOIN " + tN + "_temp t2 " +
+				"ON t1.tag = t2.tag " + 
+				"SET t1.wochentag = t2.wochentag, " + 
+				"t1.anzahl_kunden = t2.anzahl_kunden, " +
+				"t1.anzahl_warenkoerbe = t2.anzahl_warenkoerbe, " +
+				"t1.anzahl_bestellungen = t2.anzahl_bestellungen, " +
+				"t1.anzahl_produkte = t2.anzahl_produkte, " +
+				"t1.umsatz = t2.umsatz, " +
+				"t1.versandkosten = t2.versandkosten, " +
+				"t1.gesamtumsatz = t2.gesamtumsatz, " +
+				"t1.ds_warenkorbwert = t2.ds_warenkorbwert, " +
+				"t1.stornierungsquote = t2.stornierungsquote " +
+				"WHERE t1.tag = t2.tag;";
+		}
+	}
+	let t = table;
 	const connection = mysql.createConnection(opt);
 	let qS = "";
-	connection.query("SHOW COLUMNS FROM " + table + ";",function(err,data) {
+	connection.query("SHOW COLUMNS FROM " + t + ";",function(err,data) {
 		data.forEach(function(v,i){
 			qS += v.Field + " " + v.Type + ",";
 		})
 		qS = "(" + qS.substr(0,qS.length-1) + ")"; 
-		//connection.query("CREATE TABLE " + table + "_temp " + qS,function(err,data) {
-			//if(err) console.log(err);
-			let p = 'C:\\Users\\j6er8a\\Desktop\\Projekt\\node\\private\\ccdb\\Datenexport\\csv\\' + table + '.csv';console.log(p);
-			let q = mysql.format("LOAD DATA LOCAL INFILE ?? INTO TABLE ? CHARACTER SET 'utf8' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES;",[p,table]);
-			console.log(q);
-			connection.query(q,function(err,data) {
-				console.log(err);
-				console.log(data);
+		connection.query("CREATE TABLE " + t + "_temp " + qS + ";",function(err,data) {
+			if(err) console.log(err);
+			let l =  __dir.replace(/\\/g,"/").replace(/worker/,"") + '/private/ccdb/sql/' + table + '.sql';
+			exec("mysql -u " + opt.user + " -p" + opt.password + " < \"" + l + "\"",function(err,stdout,stderr) {
+				if(!err) {
+					if(!t.match(/ayn|pp/i)) {
+						connection.query(_qND(t),function(err,data) {
+							if(!err) {
+								connection.query(_qNU(t),function(err,data) {
+									if(!err) {
+										connection.query(_qNI(t),function(err,data) {
+											if(!err) {
+												connection.query("DROP TABLE " + t + "_temp;",function(err,data) {
+													console.log(t + " erfolgreich aktualisiert");
+													connection.end();
+												})
+											}
+										})
+									}
+								})
+							}
+						})
+					} else {
+						connection.query(_qNI(t),function(err,data) {
+							if(!err) {
+								connection.query(_qBU(t),function(err,data) {
+									if(!err) {
+										connection.query("DROP TABLE " + t + "_temp;",function(err,data) {
+											console.log(t + " erfolgreich aktualisiert");
+											connection.end();
+										})
+									}
+								})
+							}
+						})
+					}
+				}
 			})
-		//})
+		})
 	})
 }
 
+createTemp("hs_reporting");
 createTemp("ks_eingang");
+createTemp("ayn_bestellungen");
+createTemp("pp_bestellungen");
+
+//createTemp("pp_bestellungen");
+//xlsx2csv("../private/ccdb/Datenexport/KS_Chat.xlsx","KS_Chat");
+//xlsx2csv("../private/ccdb/Datenexport/HS_Reporting.xlsx","HS_Reporting");
+//-e \"source c:/users/j6er8a/desktop/projekt/node/private/ccdb/sql/ks_eingang.sql\""

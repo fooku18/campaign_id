@@ -1,6 +1,15 @@
+mixin mixin_check(id,width,title)
+	div.unit.unit-gran.relative.idontwantnoborda(style=width)
+		div.unit-label.absolute
+			div.inline-block.unit-checkbox-gran.relative
+				div.unit-inner-checkbox.absolute(id=id)
+			div.inline-block.unit-text-gran.relative
+				span=title
+				
 html
 	head
 		title Customer Care Dashboard
+		meta(charset="utf-8")
 		meta(name="viewport" content="width=device-width, initial-scale=1")
 		link(rel="stylesheet",href="/css/ccdb/index.css")
 		link(rel="stylesheet",href="/css/libs/bootstrap.css")
@@ -12,8 +21,10 @@ html
 		script(type="text/javascript",src="/js/ccdb/main.js")
 	body
 		div.heading-bar.relative
-			div.vert-center.absolute.icon-box
+			div.vert-center.absolute.icon-box.macurs
 				span.glyphicon.glyphicon-th.icon-lg.hor-center#menu-btn
+			div.vert-center.icon-box.macurs.pref-save.absolute
+				span.glyphicon.glyphicon-floppy-disk.icon-lg.hor-center#pref-btn
 			div#menu.shadow.absolute.menu-up
 				div.inner-menu
 					h3.white Menu
@@ -22,10 +33,12 @@ html
 							a#kq.white(href="javascript:void(0)") Kontaktquote
 						li 
 							a#tt.white(href="javascript:void(0)") Ticket-Themen
+						li
+							a#mv.white(href="javascript:void(0)") Mehrstufige Vorgänge
 						li 
 							a#k.white(href="javascript:void(0)") Kosten
 		div.banner.relative
-			div.headline.absolute Customer Care Dashboard
+			div.headline.madefault.absolute Customer Care Dashboard
 		div.chart-section.relative
 			div#chart-calendar.absolute
 				div.chart-calendar-content.absolute
@@ -33,21 +46,41 @@ html
 						span.glyphicon.glyphicon-calendar.icon-md.cal-table-cell.v-align-middle
 						div.table-cell
 							div.input-group.input-daterange
-								input.form-control.input-correction.chart-calendar-elements(type="text")
+								input#cal-b.form-control.input-correction.chart-calendar-elements.nopadding(type="text")
 								span.input-group-addon.padding-correction bis
-								input.form-control.input-correction.chart-calendar-elements(type="text")
+								input#cal-e.form-control.input-correction.chart-calendar-elements.nopadding(type="text")
 			div#chart-menu.absolute
 				div#chart-menu-content.max-height
 					div.chart-menu-content-box
 						div#chart-menu-content-box-content
 							div.chart-menu-inner-content
-								h3.my-headline Einstellungen
+								h3.my-headline.madefault Einstellungen
+								div#unit-dynamic
 								div#unit-sources
+								div.unit-granularity
+									+mixin_check("gran-day","width:25%;","Tag")
+									+mixin_check("gran-kw","width:25%;","KW")
+									+mixin_check("gran-month","width:25%;","Monat")
+									+mixin_check("gran-year","width:25%;","Jahr")
 							div.chart-menu-inner-button.relative
 								div.chart-menu-inner-button-box.absolute
 									button#btn-apply.btn.btn-primary.btn-block.poppinYaColla anwenden
-				div#chart-menu-symbol.relative.max-height
+				div#chart-menu-symbol.relative.max-height.macurs
 					div.absolute.vert-center.max-width
 						span.glyphicon.glyphicon-list.icon-lg.hor-center
 			div.chart
 				div#chart-box
+		div#layer.absolute.max-height.max-width.layer-hide
+			div.relative.max-height.max-width
+				div#layer-pop.absolute
+					div.layer-row
+						span#layer-x.glyphicon.glyphicon-remove-sign.pull-right.icon-lg-b.macurs
+					div#layer-t
+						div.layer-b
+							table#mv-table.table.table-striped.table-hover
+								tr
+									th ID
+									th Eingang
+									th Abschluss
+									th Kategorie
+									th AB-Code
