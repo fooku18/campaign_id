@@ -221,22 +221,24 @@ function createTemp(table) {
 		password: "sausage18"
 	}
 	function _qND(tN) {
-		return "DELETE FROM " + tN + " WHERE ticket_id IN ( " +
+		var id = tN == "ks_chat"? "ID" : "TICKET_ID";
+		var date = tN == "ks_chat"? "CHAT_START" : "RECEIVE_DATE";
+		return "DELETE FROM " + tN + " WHERE " + id + " IN ( " +
 					"SELECT * FROM ( " + 
-						"SELECT " + tN + ".ticket_id FROM " + tN + " " + 
+						"SELECT " + tN + "." + id + " FROM " + tN + " " + 
 						"LEFT OUTER JOIN " + tN + "_temp " +
-						"ON " + tN + ".ticket_id = " + tN + "_temp.ticket_id " +
-						"WHERE (date(" + tN + ".receive_date) " +
+						"ON " + tN + "." + id + " = " + tN + "_temp." + id + " " +
+						"WHERE (DATE(" + tN + "." + date + ") " +
 						"BETWEEN " +
-						"(SELECT MIN(DATE(receive_date)) FROM " + tN + "_temp) " +
+						"(SELECT MIN(DATE(" + date + ")) FROM " + tN + "_temp) " +
 						"AND " +
-						"(SELECT MAX(DATE(receive_date)) FROM " + tN + "_temp) " + 
-						") AND " + tN + "_temp.ticket_id is null " +
+						"(SELECT MAX(DATE(" + date + ")) FROM " + tN + "_temp) " + 
+						") AND " + tN + "_temp." + id + " is null " +
 					") AS t " + 
 				");"
 	}
 	function _qNI(tN) {
-		let _i = (tN == "ayn_bestellungen" || tN == "pp_bestellungen")? "tag" : "ticket_id";
+		let _i = (tN == "ayn_bestellungen" || tN == "pp_bestellungen")? "tag" : (tN == "ks_chat")? "ID" : "TICKET_ID";
 		return "INSERT INTO " + tN + " SELECT tN.* FROM ( " +
 					"SELECT " + tN + "_temp.* FROM " + tN + " " +  
 					"RIGHT OUTER JOIN " + tN + "_temp " +
@@ -245,32 +247,46 @@ function createTemp(table) {
 				") AS tN;";
 	}
 	function _qNU(tN) {
-		return "UPDATE " + tN + " t1 " + 
-			"INNER JOIN " + tN + "_temp t2 " +
-			"ON t1.ticket_id = t2.ticket_id " + 
-			"SET t1.TICKET_ID = t2.TICKET_ID, " + 
-			"t1.PROCESS_ID = t2.PROCESS_ID, " +
-			"t1.RECEIVE_DATE = t2.RECEIVE_DATE, " +
-			"t1.LAST_DATE_PROCESSED = t2.LAST_DATE_PROCESSED, " +
-			"t1.DATE_TOUCHED = t2.DATE_TOUCHED, " +
-			"t1.CATEGORY = t2.CATEGORY, " +
-			"t1.MANDATOR = t2.MANDATOR, " +
-			"t1.TEMPLATE = t2.TEMPLATE, " +
-			"t1.EDIT_TIME_IN_MS = t2.EDIT_TIME_IN_MS, " +
-			"t1.RECATEGORIZED_TO = t2.RECATEGORIZED_TO, " +
-			"t1.RECATEGORIZED_FROM = t2.RECATEGORIZED_FROM, " +
-			"t1.TEMPLATE_OUT = t2.TEMPLATE_OUT, " +
-			"t1.INCOMING_ADDRESS = t2.INCOMING_ADDRESS, " +
-			"t1.INCOMING_ACCOUNT = t2.INCOMING_ACCOUNT, " +
-			"t1.SENDER = t2.SENDER, " +
-			"t1.LANGUAGE = t2.LANGUAGE, " +
-			"t1.LOCATION = t2.LOCATION, " +
-			"t1.STATUS = t2.STATUS, " +
-			"t1.TRANSACTION_CODE = t2.TRANSACTION_CODE, " +
-			"t1.SHOP_ID = t2.SHOP_ID, " +
-			"t1.BESTELLNUMMER = t2.BESTELLNUMMER, " +
-			"t1.KUNDENNUMMER = t2.KUNDENNUMMER  " +
-			"WHERE t1.ticket_id = t2.ticket_id; ";
+		if(tN != "ks_chat") {
+			return "UPDATE " + tN + " t1 " + 
+				"INNER JOIN " + tN + "_temp t2 " +
+				"ON t1.ticket_id = t2.ticket_id " + 
+				"SET t1.TICKET_ID = t2.TICKET_ID, " + 
+				"t1.PROCESS_ID = t2.PROCESS_ID, " +
+				"t1.RECEIVE_DATE = t2.RECEIVE_DATE, " +
+				"t1.LAST_DATE_PROCESSED = t2.LAST_DATE_PROCESSED, " +
+				"t1.DATE_TOUCHED = t2.DATE_TOUCHED, " +
+				"t1.CATEGORY = t2.CATEGORY, " +
+				"t1.MANDATOR = t2.MANDATOR, " +
+				"t1.TEMPLATE = t2.TEMPLATE, " +
+				"t1.EDIT_TIME_IN_MS = t2.EDIT_TIME_IN_MS, " +
+				"t1.RECATEGORIZED_TO = t2.RECATEGORIZED_TO, " +
+				"t1.RECATEGORIZED_FROM = t2.RECATEGORIZED_FROM, " +
+				"t1.TEMPLATE_OUT = t2.TEMPLATE_OUT, " +
+				"t1.INCOMING_ADDRESS = t2.INCOMING_ADDRESS, " +
+				"t1.INCOMING_ACCOUNT = t2.INCOMING_ACCOUNT, " +
+				"t1.SENDER = t2.SENDER, " +
+				"t1.LANGUAGE = t2.LANGUAGE, " +
+				"t1.LOCATION = t2.LOCATION, " +
+				"t1.STATUS = t2.STATUS, " +
+				"t1.TRANSACTION_CODE = t2.TRANSACTION_CODE, " +
+				"t1.SHOP_ID = t2.SHOP_ID, " +
+				"t1.BESTELLNUMMER = t2.BESTELLNUMMER, " +
+				"t1.KUNDENNUMMER = t2.KUNDENNUMMER  " +
+				"WHERE t1.ticket_id = t2.ticket_id; ";
+		} else {
+			return "UPDATE " + tN + " t1 " + 
+				"INNER JOIN " + tN + "_temp t2 " +
+				"ON t1.ID = t2.ID " + 
+				"SET t1.ID = t2.ID, " + 
+				"t1.CATEGORY = t2.CATEGORY, " +
+				"t1.CHAT_START = t2.CHAT_START, " +
+				"t1.CHAT_END = t2.CHAT_END, " +
+				"t1.DURATION_ROUTING = t2.DURATION_ROUTING, " +
+				"t1.DURATION_REVIEW = t2.DURATION_REVIEW, " +
+				"t1.TRANSACTIONCODE = t2.TRANSACTIONCODE " +
+				"WHERE t1.ID = t2.ID;";
+		}
 	}
 	function _qBU(tN) {
 		if(tN.match(/pp/i)) {
@@ -315,50 +331,64 @@ function createTemp(table) {
 		qS = "(" + qS.substr(0,qS.length-1) + ")"; 
 		connection.query("CREATE TABLE " + t + "_temp " + qS + ";",function(err,data) {
 			if(err) console.log(err);
-			let l =  __dir.replace(/\\/g,"/").replace(/worker/,"") + '/private/ccdb/sql/' + table + '.sql';
-			exec("mysql -u " + opt.user + " -p" + opt.password + " < \"" + l + "\"",function(err,stdout,stderr) {
-				if(!err) {
-					if(!t.match(/ayn|pp/i)) {
-						connection.query(_qND(t),function(err,data) {
-							if(!err) {
-								connection.query(_qNU(t),function(err,data) {
-									if(!err) {
-										connection.query(_qNI(t),function(err,data) {
-											if(!err) {
-												connection.query("DROP TABLE " + t + "_temp;",function(err,data) {
-													console.log(t + " erfolgreich aktualisiert");
-													connection.end();
-												})
-											}
-										})
-									}
-								})
-							}
-						})
-					} else {
-						connection.query(_qNI(t),function(err,data) {
-							if(!err) {
-								connection.query(_qBU(t),function(err,data) {
-									if(!err) {
-										connection.query("DROP TABLE " + t + "_temp;",function(err,data) {
-											console.log(t + " erfolgreich aktualisiert");
-											connection.end();
-										})
-									}
-								})
-							}
-						})
+			//let l =  __dir.replace(/\\/g,"/").replace(/worker\/?/,"") + 'private/ccdb/sql/' + table + '.sql';
+			let l = __dir.replace(/\\/g,"/").replace(/worker\/?/,"") + 'private/ccdb/sql/' + t + '.sql';
+			let lQ = __dir.replace(/\\/g,"/").replace(/worker\/?/,"") + 'private/ccdb/Datenexport/csv/' + t + '.csv';
+			let q = "USE ccdb; " +
+					"LOAD DATA LOCAL INFILE '" + lQ + "' INTO TABLE " + t + "_temp  " +
+					"CHARACTER SET UTF8 FIELDS TERMINATED BY '|' LINES TERMINATED BY '\n' IGNORE 1 LINES;"
+			fs.writeFile(l,q,function(err,data) {
+				exec("mysql -u " + opt.user + " -p" + opt.password + " < \"" + l + "\"",function(err,stdout,stderr) {
+					if(err) console.log(err);
+					if(!err) {
+						if(!t.match(/ayn|pp/i)) {
+							connection.query(_qND(t),function(err,data) {
+								if(err) console.log(err);
+								if(!err) {
+									connection.query(_qNU(t),function(err,data) {
+										if(err) console.log(err);
+										if(!err) {
+											connection.query(_qNI(t),function(err,data) {
+												if(err) console.log(err);
+												if(!err) {
+													connection.query("DROP TABLE " + t + "_temp;",function(err,data) {
+														console.log(t + " erfolgreich aktualisiert");
+														connection.end();
+													})
+												}
+											})
+										}
+									})
+								}
+							})
+						} else {
+							connection.query(_qNI(t),function(err,data) {
+								if(err) console.log(err);
+								if(!err) {
+									connection.query(_qBU(t),function(err,data) {
+										if(err) console.log(err);
+										if(!err) {
+											connection.query("DROP TABLE " + t + "_temp;",function(err,data) {
+												console.log(t + " erfolgreich aktualisiert");
+												connection.end();
+											})
+										}
+									})
+								}
+							})
+						}
 					}
-				}
+				})
 			})
 		})
 	})
 }
 
-createTemp("hs_reporting");
-createTemp("ks_eingang");
-createTemp("ayn_bestellungen");
-createTemp("pp_bestellungen");
+//createTemp("hs_reporting");
+//createTemp("ks_eingang");
+//createTemp("ayn_bestellungen");
+//createTemp("pp_bestellungen");
+createTemp("ks_chat");
 
 //createTemp("pp_bestellungen");
 //xlsx2csv("../private/ccdb/Datenexport/KS_Chat.xlsx","KS_Chat");

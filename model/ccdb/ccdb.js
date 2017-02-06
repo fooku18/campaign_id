@@ -102,7 +102,7 @@ module.exports.tt_init = function(b,e,s,cb) {
 	s.match(/checkppaut/)? a.push("tN.SA = 'PPAUT'") : null;
 	s.match(/checkppde|checkppaut/)? cP = !cP : null;
 	let cH = cA? cP? "AND INSTR(CATEGORY,'_AYN_') OR INSTR(CATEGORY,'_PP_')" : "AND INSTR(CATEGORY,'_AYN_')" :cP? "AND INSTR(CATEGORY,'_PP_')" : "AND false";
-	let	lH = s.match(/checkhs/)? !0 : true;
+	let	lH = s.match(/checkhs/)? !!0 : !0;
 	let q = !a.length? "false" : a.join(" OR ");
 	let qry =   '(SELECT tN.C,"ks-eingang" AS S FROM ' + 
 				'(' +
@@ -118,11 +118,100 @@ module.exports.tt_init = function(b,e,s,cb) {
 				'WHERE ' + q + ' ' +
 				'GROUP BY tN.C) ' +
 				"UNION ALL " +
-				"(SELECT DISTINCT(CATEGORY),\"ks-chat\" FROM ks_chat WHERE CATEGORY IS NOT NULL AND (DATE(CHAT_START) BETWEEN '" + b + "' AND '" + e + "') " + cH + " ORDER BY C ASC) " +
+				"(SELECT DISTINCT(CATEGORY) AS C,\"ks-chat\" FROM ks_chat WHERE CATEGORY IS NOT NULL AND (DATE(CHAT_START) BETWEEN '" + b + "' AND '" + e + "') " + cH + " ORDER BY C ASC) " +
 				"UNION ALL " +
-				"(SELECT DISTINCT(CATEGORY),\"hs-reporting\" FROM hs_reporting WHERE CATEGORY IS NOT NULL AND (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "') AND " + lH + " ORDER BY C ASC);";
+				"(SELECT DISTINCT(CATEGORY) AS C,\"hs-reporting\" FROM hs_reporting WHERE CATEGORY IS NOT NULL AND (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "') AND " + lH + " ORDER BY C ASC);";
 	con.query(qry,function(err,res) {
 		if(err) cb(err);
+		cb(null,res);
+	})
+}
+
+module.exports.tt_cat = function(b,e,s,g,a,t,sn,cb) {
+	let sa = s.substr(1,s.length-2).split(",");
+	let trans = {
+		"checkayn": "AYN",
+		"checkppde": "PPDE",
+		"checkppaut": "PPAUT",
+		"checkhs": "HS"
+	}
+	let ha = function() {
+		let r = "";
+		for(let i in sa) {
+			r += "tN.S = '" + trans[sa[i]] + "' || ";
+		}
+		return r.substr(0,r.length-3);
+	}
+	let ser = ha();
+	let oT = {
+		"ks-eingang":[],
+		"ks-chat":[],
+		"hs-reporting":[]
+	}
+	a.forEach(function(l) {
+		let t = l.split(":");
+		oT[t[1]].push(t[0]);
+	})
+	let ks = s.indexOf("ayn") > - 1 || s.indexOf("pp") > - 1? true : false;
+	let hs = s.indexOf("hs") > - 1? true : false;
+	let ty = sn.indexOf("MAIL") > -1? "MAIL" : sn.indexOf("CALL") > -1? "CALL" : "CHAT";
+	let eaMC = sn.match(/Eingang/i)? "RECEIVE_DATE" : "LAST_DATE_PROCESSED";
+	let eaC = sn.match(/Eingang/i)? "CHAT_START" : "CHAT_END";
+	if(g == "month") {
+		var _ = t.split("/");
+		var _q = "WHERE MONTH(DATE(" + eaMC + ")) = " + _[0] + " AND YEAR(DATE(" + eaMC + ")) = " + _[1];
+		var _qc = "WHERE MONTH(DATE(" + eaC + ")) = " + _[0] + " AND YEAR(DATE(" + eaC + ")) = " + _[1];
+	}
+	if(g == "week") {
+		var _ = t.split("/");
+		var _q = "WHERE WEEK(DATE(" + eaMC + "),3) = " + _[0] + " AND YEAR(DATE(" + eaMC + ")) = " + _[1];
+		var _qc = "WHERE WEEK(DATE(" + eaC + "),3) = " + _[0] + " AND YEAR(DATE(" + eaC + ")) = " + _[1];
+	}
+	if(g == "year") {
+		var _q = "WHERE YEAR(DATE(" + eaMC + ")) = " + t;
+		var _qc = "WHERE YEAR(DATE(" + eaC + ")) = " + t;
+	}
+	if(g == "day") {
+		function mysql(d) {
+			var t = d.substr(0,2);
+			var m = d.substr(3,2);
+			var y = d.substr(6,4);
+			return y + "-" + m + "-" + t;
+		}
+		var _q = "WHERE DATE(RECEIVE_DATE) = '" + mysql(t) + "'";
+	}
+	let qry = 	"SELECT tN.C AS C,COUNT(tN.C) AS CNT FROM " +
+				"((SELECT CATEGORY AS C, " +
+				"CASE WHEN INSTR(TRANSACTION_CODE,'AYN_') THEN 'AYN' " +  
+				"WHEN INCOMING_ADDRESS = 'austria@postpay.de' THEN 'PPAUT' " +   
+				"WHEN INSTR(TRANSACTION_CODE,'PP_') THEN 'PPDE' " +  
+				"WHEN INSTR(INCOMING_ADDRESS,'meinpaket') THEN 'AYN' " +  
+				"WHEN INSTR(INCOMING_ADDRESS,'allyouneed') THEN 'AYN' " +  
+				"ELSE 'PPDE' END AS S, " +
+				"IF(INSTR(TEMPLATE,'CALL'),'CALL','MAIL') AS T " +
+				"FROM ks_eingang " +
+				_q + " AND " + ks + " " + 
+				"AND CATEGORY IN ('" + oT["ks-eingang"].join("','") + "')) " +
+				"UNION ALL " +
+				"(SELECT CATEGORY AS C,'AYN' AS S, " + 
+				"IF(INSTR(TEMPLATE,'CALL'),'CALL','MAIL') AS T " +
+				"FROM hs_reporting " + 
+				_q + " AND " + hs + " " + 
+				"AND CATEGORY IN ('" + oT["hs-reporting"].join("','") + "')) " +
+				"UNION ALL " + 
+				"(SELECT CATEGORY AS C, " +
+				"CASE WHEN INSTR(CATEGORY,'AYN_') THEN 'AYN' " + 
+				"ELSE 'PPDE' END AS S, " + 
+				"'CHAT' AS T " + 
+				"FROM ks_chat " +
+				_qc + " AND " + ks + " " + 
+				"AND CATEGORY IN ('" + oT["ks-chat"].join("','") + "')) " +
+				") AS tN " +
+				"WHERE (" + ser + ") AND tN.T = '" + ty + "' " + 
+				"GROUP BY tN.C " + 
+				"ORDER BY COUNT(tN.C) DESC;";
+	con.query(qry,function(err,res) {
+		if(err) console.log(err);
 		cb(null,res);
 	})
 }
