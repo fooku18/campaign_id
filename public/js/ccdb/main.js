@@ -583,16 +583,18 @@
 			_this.hideLoading();
 		})
 	}
-
+	
 	function tt() {
 		var _this = this;
-		var _dDc = [];
+		var _ls = null;
 		function ls() {
+			if(_ls) return _ls;
 			var l = document.forms["appForm"].elements;
 			var a = [];
 			for(var i = 0;i<l.length;i++) {
 				l.hasOwnProperty(i)? l[i].checked? !l[i].name.match(/^Alle:\b/)? a.push(l[i].name) : null : null : null;
 			}
+			_ls = a;
 			return a
 		}
 		function fSum(a) {
@@ -611,12 +613,97 @@
 		function fSin(a) {
 			
 		}
-		function aS(g,d,s) {
-			g.__ddS = !!0;
-			function _rest() {
-				g.__clear();
-				for(var i in _dDc) {
-					g.addSeries(_dDc[i]);
+		function aS(g,_g,d,s) {
+			function cl(o) {
+				var copy = Object();
+				for (var at in o) {
+					if (o.hasOwnProperty(at)) copy[at] = o[at];
+				}
+				return copy;
+			}
+			function btnCtrl() {
+				function back() {
+					function fun() {
+						g.__lvl--;
+						g.__clear();
+						for(var i in g.__dDc[g.__lvl].s) {
+							var o = {};
+							for(var j in g.__dDc[g.__lvl].s[i]) {
+								o[j] = g.__dDc[g.__lvl].s[i][j];
+							}
+							g.addSeries(o);
+							g.xAxis[0].setCategories(g.__dDc[g.__lvl].c);
+						}
+					}
+					g.__lvl>0? fun() : null;
+					g.__lvl==0? g.__btn.destroy() : null;
+				}
+				function add() {
+					var _css = {
+						fontFamily: "'Abel', sans-serif;",
+						fontSize: "130%;",
+						height: "40px",
+						widht: "100px"
+					}
+					function evt() {
+						back();
+					}
+					g.__btn = g.renderer.button("Ebene zurück",g.plotSizeX - 100,g.plotSizeY / 10,evt,null,null,null).css(_css);
+					g.__btn.add();
+				}
+				function dive(_t) {
+					function api(lvl) {
+						switch(lvl) {
+							case 1:
+								g.__MCC = _t.series.name;
+								g.__C = _t.category;
+								http("/ccdb/api/tt/cat?b=" + _g[2].b + "&e=" + _g[2].e + "&s=[" + _g[1].toString() + "]&tt=" + btoa(ls().join(",")) + "&t=" + _t.category + "&sn=" + _t.series.name + "&g=" + _g[0]).then(function(res) {
+									var x = [],
+										y = [];
+									var _res = JSON.parse(res);
+									for(var i in _res) {
+										x.push(_res[i]["C"]);
+										y.push(_res[i]["CNT"]);
+									}
+									g.__clear();
+									g.xAxis[0].setCategories(x);
+									var o = {
+										name: "Kategorien",
+										type: "column",
+										data: y,
+										point: {
+											events: {
+												click: function() {
+													btnCtrl().dive(this);
+												}
+											}
+										}
+									}
+									g.addSeries(o);
+									save(o,"s");
+									save(x,"c");
+								})
+								break;
+							case 2:
+								console.log("HOLY DIVER");
+								break;
+							case 3: 
+								break;
+							case 4: 
+								break;
+						}
+					}
+					g.__lvl++;
+					api(g.__lvl);
+				}
+				function save(ob,cs) {
+					cs == "s"? g.__dDc[g.__lvl].s.push(cl(ob)) : g.__dDc[g.__lvl].c = ob;
+				}
+				return {
+					back: back,
+					add: add,
+					dive: dive,
+					save: save
 				}
 			}
 			for(var i in d[1]) {
@@ -639,26 +726,33 @@
 					point: {
 						events: {
 							click: function(e) {
-								if(g.__dDS) {
-									_rest();g.__dDS = !g.__dDS;
-								} else {
-									console.log("TEST");g.__dDS = !g.__dDS;
-								}
+								var ctrl = btnCtrl();
+								ctrl.dive(this);
+								g.__lvl == 1? ctrl.add() : null;
 							}
 						}
 					}
 				}
-				_dDc.push(o);
+				a.length? g.__dDc[g.__lvl].s.push(cl(o)) : null;
 				a.length? g.addSeries(o) : null;
 			}
-			console.log(_dDc);
 		}
-		var g = _this.__g.interpret();
+		var _g = _this.__g.interpret();
+		if(_this.__btn) {	
+			try {
+				_this.__btn.destroy()
+			} catch(e) {
+				console.log(e);
+			}
+		}
+		_this.__dDS = !!0;
+		_this.__lvl = 0;
+		_this.__dDc = {0:{c:[],s:[]},1:{c:[],s:[]},2:{c:[],s:[]},3:{c:[],s:[]}};
 		_this.showLoading();
-		http("/ccdb/api/tt/?b=" + g[2].b + "&e=" + g[2].e + "&g=" + g[0] + "&s=[" + g[1].toString() + "]&tt=" + btoa(ls().join(",")) + "&tts=" + g[3]).then(function(res) {
+		http("/ccdb/api/tt/?b=" + _g[2].b + "&e=" + _g[2].e + "&g=" + _g[0] + "&s=[" + _g[1].toString() + "]&tt=" + btoa(ls().join(",")) + "&tts=" + _g[3]).then(function(res) {
 			_this.__clear();
-			var dataI = g[3] == "tt-Summe"? fSum(JSON.parse(res)[0]) : fSin(JSON.parse(res)[0]);
-			var dataO = g[3] == "tt-Summe"? fSum(JSON.parse(res)[1]) : fSin(JSON.parse(res)[1]);
+			var dataI = _g[3] == "tt-Summe"? fSum(JSON.parse(res)[0]) : fSin(JSON.parse(res)[0]);
+			var dataO = _g[3] == "tt-Summe"? fSum(JSON.parse(res)[1]) : fSin(JSON.parse(res)[1]);
 			_this.yAxis[0].update({
 				title: {
 					text: "Ticketanzahl"
@@ -686,11 +780,12 @@
                 },
 				cursor: "default"
 			}
-			aS(_this,dataI,0);
-			aS(_this,dataO,1);
-			if(g[3] == "tt-Summe") {
+			aS(_this,_g,dataI,0);
+			aS(_this,_g,dataO,1);
+			if(_g[3] == "tt-Summe") {
 				_this.setTitle({text: "Summe Service-Tickets"});
 				_this.xAxis[0].setCategories(dataI[0]);
+				_this.__dDc[_this.__lvl].c = dataI[0];
 			} else {
 				
 			}

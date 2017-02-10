@@ -57,6 +57,22 @@ router.get("/api/tt",function(req,res,next) {
 	})
 })
 
+router.get("/api/tt/cat",function(req,res,next) {
+	let buf = Buffer.from(req.query.tt,"base64");
+	let a = buf.toString().split(",");
+	model.tt_cat(req.query.b,req.query.e,req.query.s,req.query.g,a,req.query.t,req.query.sn,function(err,data) {
+		if(err) return res.status(400).send(err);
+		res.status(200).send(data);
+	})
+})
+
+router.get("/api/tt/ab",function(req,res,next) {
+	/*model.tt_cat(req.query.b,req.query.e,req.query.s,req.query.g,a,req.query.t,req.query.sn,function(err,data) {
+		if(err) return res.status(400).send(err);
+		res.status(200).send(data);
+	})*/
+})
+
 router.get("/api/mv",function(req,res,next) {
 	let n = req.query.n || 5;
 	model.mv(req.query.b,req.query.e,n,function(err,data) {
