@@ -4,9 +4,11 @@ const Evt = require("events").EventEmitter;
 const router = express.Router();
 const bodyParser = require("body-parser");
 const jsonParser = bodyParser.json();
-const model = require("../../model/cid/cid.js");
-const config = require("../../private/config.json");
-const appConfig = require("../../private/cid/config.json");
+const path = require('path');
+const __dir = path.dirname(require.main.filename);
+const model = require(__dir + "/model/cid/cid.js");
+const config = require(__dir + "/private/config.json");
+const appConfig = require(__dir + "/private/cid/config.json");
 const publicData = {
 	databaseConfig: appConfig.databaseConfig,
 	routingConfig: appConfig.routingConfig,
@@ -39,7 +41,7 @@ router.use("/",function(req,res,next) {
 })
 
 router.get("/",function(req,res,next) {
-	res.status(200).render("./cid/app",{routing:publicData});
+	res.status(200).render(__dir + "/views/cid/app",{routing:publicData});
 })
 
 router.get("/api/get/:destination",function(req,res,next) {

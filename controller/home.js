@@ -3,7 +3,9 @@ const bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
 const urlParser = bodyParser.urlencoded({extended:false});
 const router = express.Router();
-const config = require("../private/config.json");
+const path = require('path');
+const __dir = path.dirname(require.main.filename);
+const config = require(__dir + "/private/config.json");
 
 function getJWT(cookie) {
 	let c = cookie.split(";");

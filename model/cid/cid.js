@@ -1,8 +1,10 @@
 const mysql = require("mysql");
-const mysql_config = require("../../db/mysql_config_cid.js");
-const mysqlDB = require("../../db/db.js")(mysql_config);
+const path = require('path');
+const __dir = path.dirname(require.main.filename);
+const mysql_config = require(__dir + "/db/mysql_config_cid.js");
+const mysqlDB = require(__dir + "/db/db.js")(mysql_config);
 const wsse = require("wsse");
-const appConfig = require("../../private/cid/config.json");
+const appConfig = require(__dir + "/private/cid/config.json");
 
 exports.get = function(db,q,callback) {
 	mysqlDB.select(["*"],q,"","",db,callback);
