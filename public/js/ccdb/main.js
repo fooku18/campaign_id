@@ -18,18 +18,18 @@
 		var div = document.createElement("DIV");
 		div.classList.add("unit");
 		div.classList.add("relative");
-		var template = 	"<div class='unit-label absolute'>" + 
-							"<div class='inline-block unit-checkbox relative'>" + 
-								"<div id='" + id + "' class='unit-inner-checkbox absolute " + ch + "'></div>" + 
-							"</div>" + 
+		var template = 	"<div class='unit-label absolute'>" +
+							"<div class='inline-block unit-checkbox relative'>" +
+								"<div id='" + id + "' class='unit-inner-checkbox absolute " + ch + "'></div>" +
+							"</div>" +
 							"<div class='inline-block unit-text relative' style='background-image:url(\"../../img/" + imgSrc + "\"'>" +
-								"<div class='absolute' style='bottom:0;right:0;'>" + 
-									"<span class='maLbl madefault'>" + lbl + "</span>" + 
+								"<div class='absolute' style='bottom:0;right:0;'>" +
+									"<span class='maLbl madefault'>" + lbl + "</span>" +
 								"</div>" +
-							"</div>" + 
+							"</div>" +
 						"</div>";
 		div.innerHTML = template;
-		s.append(div);
+		s.appendChild(div);
 		var idL = document.getElementById(id);
 		idL.addEventListener("click",function() {
 			o.changeStatus();
@@ -141,7 +141,7 @@
 			} else {
 				var nd = new Date();
 				$(ar[i]).datepicker("setDate",nd);
-			}	
+			}
 		}
 		return o;
 	}
@@ -167,15 +167,15 @@
 		function unitPlus(w,gr,t) {
 			var lbl = gr + "-" + t,
 				c;
-			c = lbl == g.__tt? "checked" : ""; 
-			return "<div class='unit unit-gran relative idontwantnobordabelow' style='width:" + w + "%;'>" + 
-						"<div class='unit-label absolute'>" + 
-							"<div class='inline-block unit-checkbox-gran relative'>" + 
+			c = lbl == g.__tt? "checked" : "";
+			return "<div class='unit unit-gran relative idontwantnobordabelow' style='width:" + w + "%;'>" +
+						"<div class='unit-label absolute'>" +
+							"<div class='inline-block unit-checkbox-gran relative'>" +
 								"<div class='unit-inner-checkbox absolute " + c + "' id='" + gr + "-" + t + "'></div>" +
 							"</div>" +
 							"<div class='inline-block unit-text-gran relative'>" +
 								"<span>" + t + "</span>" +
-							"</div>" + 
+							"</div>" +
 						"</div>" +
 					"</div>";
 		}
@@ -196,8 +196,8 @@
 							var l = document.createElement("label");l.classList.add("normal-label");l.textContent = (v.C).replace(/&#246;|&#228;|&#252;/g,replacer);
 							var dii = document.createElement("div");dii.classList.add("unit-themen-content-box");
 							var i = document.createElement("input");i.setAttribute("type","checkbox");i.setAttribute("name",v.C + ":" + v.S);i.checked = 1;
-							di.append(l);dii.append(i);dO.append(di);dO.append(dii);
-							ol[v.S].append(dO);
+							di.appendChild(l);dii.appendChild(i);dO.appendChild(di);dO.appendChild(dii);
+							ol[v.S].appendChild(dO);
 						}
 						function listener(l) {
 							l.addEventListener("click",function() {
@@ -211,25 +211,25 @@
 								}
 								var fC = document.forms["appForm"].children;
 								for(var i=0;i<fC.length;i++) {
-									fC[i].id==l.dataset.lbl? s(fC[i]) : h(fC[i]); 
+									fC[i].id==l.dataset.lbl? s(fC[i]) : h(fC[i]);
 								}
 							}.bind(l),false)
 						}
 						var tmp = 	"<div class='unit-themen'>" +
 										"<div class='unit-themen-riders'>" +
-											"<div id='rider-ks-eingang' data-lbl='unit-themen-ks-eingang' class='unit-themen-rider macurs'>KS Eingang</div>" + 
-											"<div id='rider-ks-chat' data-lbl='unit-themen-ks-chat' class='unit-themen-rider macurs'>KS Chat</div>" + 
-											"<div id='rider-hs-reporting' data-lbl='unit-themen-hs-reporting' class='unit-themen-rider macurs'>HS Reporting</div>" +										
-										"</div>" + 
-										"<div class='clear'></div>" + 
-										"<form name='appForm'>" + 
+											"<div id='rider-ks-eingang' data-lbl='unit-themen-ks-eingang' class='unit-themen-rider macurs'>KS Eingang</div>" +
+											"<div id='rider-ks-chat' data-lbl='unit-themen-ks-chat' class='unit-themen-rider macurs'>KS Chat</div>" +
+											"<div id='rider-hs-reporting' data-lbl='unit-themen-hs-reporting' class='unit-themen-rider macurs'>HS Reporting</div>" +
+										"</div>" +
+										"<div class='clear'></div>" +
+										"<form name='appForm'>" +
 											"<div id='unit-themen-ks-eingang' class='unit-themen-container unit-themen-show'></div>" +
-											"<div id='unit-themen-ks-chat' class='unit-themen-container unit-themen-hide'></div>" + 
+											"<div id='unit-themen-ks-chat' class='unit-themen-container unit-themen-hide'></div>" +
 											"<div id='unit-themen-hs-reporting' class='unit-themen-container unit-themen-hide'></div>" +
 										"</form>" +
 										"<div class='clear'></div>" +
-									"</div>" + 
-									"<div id='tt-gran' class='unit-granularity'>" + 
+									"</div>" +
+									"<div id='tt-gran' class='unit-granularity'>" +
 										unitPlus(50,"tt","Einzel") + unitPlus(50,"tt","Summe") +
 									"</div>";
 						dB.innerHTML = tmp;
@@ -411,7 +411,7 @@
 			__g.__gran = bootGranularity();
 			__g.__d = bootDate();
 			__g.__m = bootMode(http,__g);
-			
+
 			//check if cookie is set
 			document.cookie? __g.parseCookie() : null;
 			//boot Highcharts and set global config
@@ -456,8 +456,8 @@
 					var _tdL = document.createElement("td");_tdL.textContent = r[i].LD;
 					var _tdC = document.createElement("td");_tdC.textContent = (r[i].C).replace(/&#246;|&#228;|&#252;/g,replacer);
 					var _tdT = document.createElement("td");_tdT.textContent = (r[i].T).replace(/&#246;|&#228;|&#252;/g,replacer);
-					_tr.append(_tdI);_tr.append(_tdR);_tr.append(_tdL);_tr.append(_tdC);_tr.append(_tdT);
-					_lI.append(_tr);
+					_tr.appendChild(_tdI);_tr.appendChild(_tdR);_tr.appendChild(_tdL);_tr.appendChild(_tdC);_tr.appendChild(_tdT);
+					_lI.appendChild(_tr);
 				}
 			})
 		}
@@ -473,7 +473,7 @@
 			}
 		}
 	}
-	
+
 	//api request
 	function http(src,params) {
 		var p = params || null;
@@ -583,7 +583,7 @@
 			_this.hideLoading();
 		})
 	}
-	
+
 	function tt() {
 		var _this = this;
 		var _ls = null;
@@ -611,7 +611,7 @@
 			return [x,t];
 		}
 		function fSin(a) {
-			
+
 		}
 		function aS(g,_g,d,s) {
 			function cl(o) {
@@ -687,9 +687,9 @@
 							case 2:
 								console.log("HOLY DIVER");
 								break;
-							case 3: 
+							case 3:
 								break;
-							case 4: 
+							case 4:
 								break;
 						}
 					}
@@ -738,7 +738,7 @@
 			}
 		}
 		var _g = _this.__g.interpret();
-		if(_this.__btn) {	
+		if(_this.__btn) {
 			try {
 				_this.__btn.destroy()
 			} catch(e) {
@@ -787,14 +787,14 @@
 				_this.xAxis[0].setCategories(dataI[0]);
 				_this.__dDc[_this.__lvl].c = dataI[0];
 			} else {
-				
+
 			}
 			_this.hideLoading();
 		},function() {
 			_this.hideLoading();
 		})
 	}
-	
+
 	function mv() {
 		function _col(r) {
 			var _a = [],

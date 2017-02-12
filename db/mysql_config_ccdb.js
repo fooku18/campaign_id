@@ -1,8 +1,8 @@
 var mysql_config = {
 	host: "localhost",
-	user: "root",
+	user: "ccdb",
 	database: "ccdb",
-	password: "",
+	password: "ccdb",
 	dateStrings: "date"
 }
 module.exports = mysql_config;

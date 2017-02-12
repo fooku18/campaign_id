@@ -1,3 +1,4 @@
+"use strict";
 const mysql = require("mysql");
 
 module.exports = function(_file) {
@@ -8,7 +9,7 @@ module.exports = function(_file) {
 			callback(null,rows);
 		})
 	}
-	
+
 	let countRows = function(table,where,callback) {
 		function prepend(w,s) {
 			s += " WHERE ";
@@ -26,7 +27,7 @@ module.exports = function(_file) {
 			callback(null,rows);
 		})
 	}
-	
+
 	let select = function(rows,where,limit,order,table,callback) {
 		if(!Array.isArray(rows)) return console.log("Rows must be of type Array");
 		var sql = (rows[0] === "*") ? "SELECT * FROM ??" : "SELECT ?? FROM ??";
@@ -40,7 +41,7 @@ module.exports = function(_file) {
 			callback(null,rows);
 		})
 	}
-	
+
 	let insert = function(rows,values,table,callback) {
 		var sql = "INSERT INTO ?? (??) VALUES (?)";
 		connection.query(sql,[table,rows,values],function(err,rows) {
@@ -48,7 +49,7 @@ module.exports = function(_file) {
 			callback(null,rows);
 		})
 	}
-	
+
 	let insertMultiple = function(rows,table,callback) {
 		var sql = mysql.format("INSERT INTO ?? (??) VALUES ",[table,rows[0]]);
 		for(let i = 1;i<rows.length;i++) {
@@ -60,7 +61,7 @@ module.exports = function(_file) {
 			callback(null,rows);
 		})
 	}
-	
+
 	let del = function(id,table,callback) {
 		var sql = "DELETE FROM ?? WHERE id=?";
 		connection.query(sql,[table,id],function(err,rows) {
@@ -68,7 +69,7 @@ module.exports = function(_file) {
 			callback(null,rows);
 		})
 	}
-	
+
 	let delAll = function(table,callback) {
 		var sql = mysql.format("DELETE FROM ??",table);
 		connection.query(sql,function(err,rows) {
@@ -76,7 +77,7 @@ module.exports = function(_file) {
 			callback(null,rows);
 		})
 	}
-	
+
 	let update = function(id,hash,table,callback) {
 		var sql = "UPDATE `" + table + "` SET ? WHERE id=" + id;
 		sql = mysql.format(sql,hash);
@@ -85,7 +86,7 @@ module.exports = function(_file) {
 			callback(null,rows);
 		})
 	}
-	
+
 	return {
 		showCols:showCols,
 		countRows:countRows,

@@ -1,3 +1,4 @@
+"use strict";
 const mysql = require("mysql");
 const path = require('path');
 const __dir = path.dirname(require.main.filename);

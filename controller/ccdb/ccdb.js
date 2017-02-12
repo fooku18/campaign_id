@@ -1,3 +1,4 @@
+"use strict";
 const router = require("express").Router();
 const model = require("../../model/ccdb/ccdb.js");
 const config = require("../../private/config.json");

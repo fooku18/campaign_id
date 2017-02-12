@@ -1,3 +1,4 @@
+"use strict";
 const mysql = require("mysql");
 const mysql_config = require("../../db/mysql_config_ccdb.js");
 const fs = require("fs");
@@ -16,32 +17,32 @@ function qryBuilder(t,b,e) {
 	switch (t) {
 		case "kq":
 			return "(SELECT tA.d,tA.ayn as tAYN,SUM(tA.ppde) as tPPDE,SUM(tA.ppaut) as tPPAUT,SUM(tA.hs) as tHS,SUM(tB.ayn) as oAYN,SUM(tB.pp) as oPP FROM " +
-						"(SELECT t1.d,SUM(IF(t1.service=\"ayn\",1,0)) as ayn,SUM(IF(t1.service=\"ppde\",1,0)) as ppde,SUM(IF(t1.service=\"ppaut\",1,0)) as ppaut,SUM(IF(t1.service=\"hs\",1,0)) as hs FROM ( " + 
-							"(SELECT DATE(RECEIVE_DATE) as d,CASE WHEN category COLLATE latin1_general_cs like \"%AYN%\" THEN \"ayn\" " + 
-								 "WHEN incoming_address = \"austria@postpay.de\" then \"ppaut\" " + 
-								 "WHEN category COLLATE latin1_general_cs like \"%PP%\" THEN \"ppde\" " +  
-								 "WHEN incoming_address like \"%allyouneed%\" THEN \"ayn\" " + 
-								 "WHEN incoming_address like \"%meinpaket%\" THEN \"ayn\" " + 
-								 "ELSE \"ppde\" END as service " + 
-							"FROM ks_eingang WHERE (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "')) " + 
-							"UNION ALL " + 
-							"(SELECT DATE(CHAT_START),CASE WHEN category COLLATE latin1_general_cs like \"%AYN%\" THEN \"ayn\" " + 
-								   "WHEN category COLLATE latin1_general_cs like \"%PP%\" THEN \"ppde\" " + 
-								   "END as service " + 
-							"FROM ks_chat WHERE (DATE(CHAT_START) BETWEEN '" + b + "' AND '" + e + "')) " + 
-							"UNION ALL " + 
-							"(SELECT DATE(RECEIVE_DATE),\"hs\" as service FROM hs_reporting WHERE (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "')) " + 
-						") as t1 " + 
-						"GROUP BY d) as tA " + 
-					"INNER JOIN " + 
-						"(SELECT t1.tag,SUM(IF(t1.service=\"ayn\",t1.anzahl_bestellungen,0)) as ayn,SUM(IF(t1.service=\"pp\",t1.anzahl_bestellungen,0)) as pp from ( " + 
-							"SELECT tag,anzahl_bestellungen,\"ayn\" as service from ayn_bestellungen WHERE (tag BETWEEN '" + b + "' AND '" + e + "') " + 
-							"UNION ALL " + 
-							"SELECT tag,anzahl_warenkoerbe,\"pp\" as service from pp_bestellungen WHERE (tag BETWEEN '" + b + "' AND '" + e + "') " + 
-						") as t1 " + 
-						"WHERE t1.tag != \"0000-00-00\" " +  
-						"GROUP BY tag) as tB " + 
-					"ON tA.d = tB.tag " + 
+						"(SELECT t1.d,SUM(IF(t1.service=\"ayn\",1,0)) as ayn,SUM(IF(t1.service=\"ppde\",1,0)) as ppde,SUM(IF(t1.service=\"ppaut\",1,0)) as ppaut,SUM(IF(t1.service=\"hs\",1,0)) as hs FROM ( " +
+							"(SELECT DATE(RECEIVE_DATE) as d,CASE WHEN category COLLATE latin1_general_cs like \"%AYN%\" THEN \"ayn\" " +
+								 "WHEN incoming_address = \"austria@postpay.de\" then \"ppaut\" " +
+								 "WHEN category COLLATE latin1_general_cs like \"%PP%\" THEN \"ppde\" " +
+								 "WHEN incoming_address like \"%allyouneed%\" THEN \"ayn\" " +
+								 "WHEN incoming_address like \"%meinpaket%\" THEN \"ayn\" " +
+								 "ELSE \"ppde\" END as service " +
+							"FROM ks_eingang WHERE (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "')) " +
+							"UNION ALL " +
+							"(SELECT DATE(CHAT_START),CASE WHEN category COLLATE latin1_general_cs like \"%AYN%\" THEN \"ayn\" " +
+								   "WHEN category COLLATE latin1_general_cs like \"%PP%\" THEN \"ppde\" " +
+								   "END as service " +
+							"FROM ks_chat WHERE (DATE(CHAT_START) BETWEEN '" + b + "' AND '" + e + "')) " +
+							"UNION ALL " +
+							"(SELECT DATE(RECEIVE_DATE),\"hs\" as service FROM hs_reporting WHERE (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "')) " +
+						") as t1 " +
+						"GROUP BY d) as tA " +
+					"INNER JOIN " +
+						"(SELECT t1.tag,SUM(IF(t1.service=\"ayn\",t1.anzahl_bestellungen,0)) as ayn,SUM(IF(t1.service=\"pp\",t1.anzahl_bestellungen,0)) as pp from ( " +
+							"SELECT tag,anzahl_bestellungen,\"ayn\" as service from ayn_bestellungen WHERE (tag BETWEEN '" + b + "' AND '" + e + "') " +
+							"UNION ALL " +
+							"SELECT tag,anzahl_warenkoerbe,\"pp\" as service from pp_bestellungen WHERE (tag BETWEEN '" + b + "' AND '" + e + "') " +
+						") as t1 " +
+						"WHERE t1.tag != \"0000-00-00\" " +
+						"GROUP BY tag) as tB " +
+					"ON tA.d = tB.tag " +
 					"GROUP BY tA.d) as tN";
 		break;
 	}
@@ -79,8 +80,8 @@ module.exports.kq = function(b,e,g,s,cb) {
 	let t = g=="year"? "year(tN.d)" : g=="day"? "CONCAT(day(tN.d),'.',month(tN.d),'.',year(tN.d))" : g=="week"? "CONCAT(week(tN.d,3),\"/\",year(tN.d))" : "CONCAT(month(tN.d),'/',year(tN.d))";
 	let gran = g=="year"? "year(tN.d)" : g=="month"? "year(tN.d),month(tN.d)" : g=="week"? "year(tN.d),week(tN.d,3)" : "tN.d";
 	let qry = qryBuilder("kq",b,e);
-	qry = "SELECT " + t + " as d,SUM(tN.tAYN) as checkayn,SUM(tN.tPPDE) as checkppde,SUM(tN.tPPAUT) as checkppaut,SUM(tN.tHS) as checkhs,SUM(tN.oAYN) as oA,SUM(tN.oPP) as oP,year(tN.d) as y,month(tN.d) as m, day(tN.d) as da FROM " + 
-		  qry + 
+	qry = "SELECT " + t + " as d,SUM(tN.tAYN) as checkayn,SUM(tN.tPPDE) as checkppde,SUM(tN.tPPAUT) as checkppaut,SUM(tN.tHS) as checkhs,SUM(tN.oAYN) as oA,SUM(tN.oPP) as oP,year(tN.d) as y,month(tN.d) as m, day(tN.d) as da FROM " +
+		  qry +
 		  " GROUP BY " + gran + " " +
 		  " ORDER BY y ASC, m ASC, da ASC;";
 	con.query(qry,function(err,res) {
@@ -104,13 +105,13 @@ module.exports.tt_init = function(b,e,s,cb) {
 	let cH = cA? cP? "AND INSTR(CATEGORY,'_AYN_') OR INSTR(CATEGORY,'_PP_')" : "AND INSTR(CATEGORY,'_AYN_')" :cP? "AND INSTR(CATEGORY,'_PP_')" : "AND false";
 	let	lH = s.match(/checkhs/)? !!0 : !0;
 	let q = !a.length? "false" : a.join(" OR ");
-	let qry =   '(SELECT tN.C,"ks-eingang" AS S FROM ' + 
+	let qry =   '(SELECT tN.C,"ks-eingang" AS S FROM ' +
 				'(' +
 					'SELECT CATEGORY AS C, ' +
-					'CASE WHEN INSTR(CATEGORY,"_AYN_") THEN "AYN" ' + 
-					'WHEN INCOMING_ADDRESS = "austria@postpay.de" THEN "PPAUT" ' +  
+					'CASE WHEN INSTR(CATEGORY,"_AYN_") THEN "AYN" ' +
+					'WHEN INCOMING_ADDRESS = "austria@postpay.de" THEN "PPAUT" ' +
 					'WHEN INSTR(CATEGORY,"_PP_") THEN "PPDE" ' +
-					'WHEN INSTR(INCOMING_ADDRESS,"meinpaket") THEN "AYN" ' + 
+					'WHEN INSTR(INCOMING_ADDRESS,"meinpaket") THEN "AYN" ' +
 					'WHEN INSTR(INCOMING_ADDRESS,"allyouneed") THEN "AYN" ' +
 					'ELSE "PPDE" END AS SA ' +
 					"FROM ks_eingang WHERE CATEGORY IS NOT NULL AND (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "') " +
@@ -182,33 +183,33 @@ module.exports.tt_cat = function(b,e,s,g,a,t,sn,cb) {
 	}
 	let qry = 	"SELECT tN.C AS C,COUNT(tN.C) AS CNT FROM " +
 				"((SELECT CATEGORY AS C, " +
-				"CASE WHEN INSTR(TRANSACTION_CODE,'AYN_') THEN 'AYN' " +  
-				"WHEN INCOMING_ADDRESS = 'austria@postpay.de' THEN 'PPAUT' " +   
-				"WHEN INSTR(TRANSACTION_CODE,'PP_') THEN 'PPDE' " +  
-				"WHEN INSTR(INCOMING_ADDRESS,'meinpaket') THEN 'AYN' " +  
-				"WHEN INSTR(INCOMING_ADDRESS,'allyouneed') THEN 'AYN' " +  
+				"CASE WHEN INSTR(TRANSACTION_CODE,'AYN_') THEN 'AYN' " +
+				"WHEN INCOMING_ADDRESS = 'austria@postpay.de' THEN 'PPAUT' " +
+				"WHEN INSTR(TRANSACTION_CODE,'PP_') THEN 'PPDE' " +
+				"WHEN INSTR(INCOMING_ADDRESS,'meinpaket') THEN 'AYN' " +
+				"WHEN INSTR(INCOMING_ADDRESS,'allyouneed') THEN 'AYN' " +
 				"ELSE 'PPDE' END AS S, " +
 				"IF(INSTR(TEMPLATE,'CALL'),'CALL','MAIL') AS T " +
 				"FROM ks_eingang " +
-				_q + " AND " + ks + " " + 
+				_q + " AND " + ks + " " +
 				"AND CATEGORY IN ('" + oT["ks-eingang"].join("','") + "')) " +
 				"UNION ALL " +
-				"(SELECT CATEGORY AS C,'AYN' AS S, " + 
+				"(SELECT CATEGORY AS C,'AYN' AS S, " +
 				"IF(INSTR(TEMPLATE,'CALL'),'CALL','MAIL') AS T " +
-				"FROM hs_reporting " + 
-				_q + " AND " + hs + " " + 
+				"FROM hs_reporting " +
+				_q + " AND " + hs + " " +
 				"AND CATEGORY IN ('" + oT["hs-reporting"].join("','") + "')) " +
-				"UNION ALL " + 
+				"UNION ALL " +
 				"(SELECT CATEGORY AS C, " +
-				"CASE WHEN INSTR(CATEGORY,'AYN_') THEN 'AYN' " + 
-				"ELSE 'PPDE' END AS S, " + 
-				"'CHAT' AS T " + 
+				"CASE WHEN INSTR(CATEGORY,'AYN_') THEN 'AYN' " +
+				"ELSE 'PPDE' END AS S, " +
+				"'CHAT' AS T " +
 				"FROM ks_chat " +
-				_qc + " AND " + ks + " " + 
+				_qc + " AND " + ks + " " +
 				"AND CATEGORY IN ('" + oT["ks-chat"].join("','") + "')) " +
 				") AS tN " +
-				"WHERE (" + ser + ") AND tN.T = '" + ty + "' " + 
-				"GROUP BY tN.C " + 
+				"WHERE (" + ser + ") AND tN.T = '" + ty + "' " +
+				"GROUP BY tN.C " +
 				"ORDER BY COUNT(tN.C) DESC;";
 	con.query(qry,function(err,res) {
 		if(err) console.log(err);
@@ -235,7 +236,7 @@ module.exports.tt = function(b,e,s,g,a,t,cb) {
 	let serMC = function(v) {
 		let fix = v == "TRANSACTION_CODE"? "" : "_";
 		return	'CASE WHEN INSTR(' + v + ',"' + fix + 'AYN_") THEN "AYN" ' +
-				'WHEN INCOMING_ADDRESS = "austria@postpay.de" THEN "PPAUT" ' + 
+				'WHEN INCOMING_ADDRESS = "austria@postpay.de" THEN "PPAUT" ' +
 				'WHEN INSTR(' + v + ',"' + fix + 'PP_") THEN "PPDE" ' +
 				'WHEN INSTR(INCOMING_ADDRESS,"meinpaket") THEN "AYN" ' +
 				'WHEN INSTR(INCOMING_ADDRESS,"allyouneed") THEN "AYN" ' +
@@ -328,7 +329,7 @@ module.exports.mv = function(b,e,n,cb) {
 module.exports.mv_id = function(i,cb) {
 	let qry  = "SELECT tN.TID,CONCAT(DAY(tN.RD),'.',MONTH(tN.RD),'.',YEAR(tN.RD)) AS RD,CONCAT(DAY(tN.LD),'.',MONTH(tN.LD),'.',YEAR(tN.LD)) AS LD,tN.C AS C,tN.T AS T FROM (";
 		qry += "SELECT TICKET_ID AS TID,RECEIVE_DATE AS RD, LAST_DATE_PROCESSED AS LD,CATEGORY AS C,TRANSACTION_CODE AS T FROM ks_eingang WHERE PROCESS_ID = " + i + " ";
-		qry += "UNION ALL "; 
+		qry += "UNION ALL ";
 		qry += "SELECT TICKET_ID AS TID,RECEIVE_DATE AS RD, LAST_DATE_PROCESSED AS LD,CATEGORY AS C,TRANSACTION_CODE AS T FROM hs_reporting WHERE PROCESS_ID = " + i + " ";
 		qry += ") AS tN";
 	con.query(qry,function(err,res) {
