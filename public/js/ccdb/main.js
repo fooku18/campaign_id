@@ -512,7 +512,7 @@
 		http("/ccdb/api/kq?b=" + g[2].b + "&e=" + g[2].e + "&g=" + g[0] + "&s=[" + g[1].toString() + "]").then(function(d) {
 			var a = setArray(d);
 			_this.__clear();
-			_this.setTitle({text: "Kontaktquote"});
+			_this.setTitle({text: "Kontaktquote"},{text: ""});
 			_this.addAxis({
 				opposite: true,
 				title: {
@@ -653,39 +653,56 @@
 				}
 				function dive(_t) {
 					function api(lvl) {
+						function _filler(res,n) {
+							function replacer(match,offset,string) {
+								var l = {
+									"&#246;": "ö",
+									"&#228;": "ä",
+									"&#252;": "ü"
+								}
+								return l[match]
+							}
+							var x = [],
+								y = [];
+							var _res = JSON.parse(res);
+							for(var i in _res) {
+								_res[i]["C"]==""? x.push("offen") : x.push(_res[i]["C"].replace(/&#246;|&#228;|&#252;/g,replacer));
+								y.push(_res[i]["CNT"]);
+							}
+							g.__clear();
+							g.xAxis[0].setCategories(x);
+							var o = {
+								name: n,
+								type: "column",
+								data: y,
+								cursor: "pointer",
+								point: {
+									events: {
+										click: function() {
+											g.showLoading();
+											btnCtrl().dive(this);
+										}
+									}
+								}
+							}
+							g.addSeries(o);
+							save(o,"s");
+							save(x,"c");
+						}
 						switch(lvl) {
 							case 1:
 								g.__MCC = _t.series.name;
 								g.__C = _t.category;
 								http("/ccdb/api/tt/cat?b=" + _g[2].b + "&e=" + _g[2].e + "&s=[" + _g[1].toString() + "]&tt=" + btoa(ls().join(",")) + "&t=" + _t.category + "&sn=" + _t.series.name + "&g=" + _g[0]).then(function(res) {
-									var x = [],
-										y = [];
-									var _res = JSON.parse(res);
-									for(var i in _res) {
-										x.push(_res[i]["C"]);
-										y.push(_res[i]["CNT"]);
-									}
-									g.__clear();
-									g.xAxis[0].setCategories(x);
-									var o = {
-										name: "Kategorien",
-										type: "column",
-										data: y,
-										point: {
-											events: {
-												click: function() {
-													btnCtrl().dive(this);
-												}
-											}
-										}
-									}
-									g.addSeries(o);
-									save(o,"s");
-									save(x,"c");
+									_filler(res,"Kategorien");
 								})
+								g.hideLoading();
 								break;
 							case 2:
-								console.log("HOLY DIVER");
+								http("/ccdb/api/tt/ab?t=" + g.__C + "&g=" + g.__g.__gran.__gran + "&ty=" + g.__MCC + "&c=" + _t.category).then(function(res) {
+									_filler(res,"Abschluss-Codes");
+								})
+								g.hideLoading();
 								break;
 							case 3:
 								break;
@@ -697,7 +714,11 @@
 					api(g.__lvl);
 				}
 				function save(ob,cs) {
-					cs == "s"? g.__dDc[g.__lvl].s.push(cl(ob)) : g.__dDc[g.__lvl].c = ob;
+					function _do() {
+						g.__dDc[g.__lvl].s = [];
+						g.__dDc[g.__lvl].s.push(cl(ob));
+					}
+					cs == "s"? _do() : g.__dDc[g.__lvl].c = ob;
 				}
 				return {
 					back: back,
@@ -723,6 +744,7 @@
 					data: a,
 					stacking: "normal",
 					stack: s,
+					cursor: "pointer",
 					point: {
 						events: {
 							click: function(e) {
@@ -783,7 +805,7 @@
 			aS(_this,_g,dataI,0);
 			aS(_this,_g,dataO,1);
 			if(_g[3] == "tt-Summe") {
-				_this.setTitle({text: "Summe Service-Tickets"});
+				_this.setTitle({text: "Summe Service-Tickets"},{text: ""});
 				_this.xAxis[0].setCategories(dataI[0]);
 				_this.__dDc[_this.__lvl].c = dataI[0];
 			} else {
@@ -839,6 +861,7 @@
 				type: "column",
 				data: __res[1],
 				name: "Anzahl Tickets zu Vorgängen",
+				color: "#FFDD00",
 				point: {
 					events: {
 						click: function(e) {

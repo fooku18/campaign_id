@@ -180,6 +180,7 @@ module.exports.tt_cat = function(b,e,s,g,a,t,sn,cb) {
 			return y + "-" + m + "-" + t;
 		}
 		var _q = "WHERE DATE(RECEIVE_DATE) = '" + mysql(t) + "'";
+		var _qc = "WHERE DATE(CHAT_START) = '" + mysql(t) + "'";
 	}
 	let qry = 	"SELECT tN.C AS C,COUNT(tN.C) AS CNT FROM " +
 				"((SELECT CATEGORY AS C, " +
@@ -217,6 +218,57 @@ module.exports.tt_cat = function(b,e,s,g,a,t,sn,cb) {
 	})
 }
 
+module.exports.tt_ab = function(t,g,ty,c,cb) {
+	let _g = g.split("-")[1];
+	let _ty = ty.indexOf("MAIL") > -1? "MAIL" : ty.indexOf("CALL") > -1? "CALL" : "CHAT";
+	let eaMC = ty.match(/Eingang/i)? "RECEIVE_DATE" : "LAST_DATE_PROCESSED";
+	let eaC = ty.match(/Eingang/i)? "CHAT_START" : "CHAT_END";
+	let _q,_qc;
+	if(_g == "month") {
+		let _ = t.split("/");
+		_q = "WHERE MONTH(DATE(" + eaMC + ")) = " + _[0] + " AND YEAR(DATE(" + eaMC + ")) = " + _[1];
+		_qc = "WHERE MONTH(DATE(" + eaC + ")) = " + _[0] + " AND YEAR(DATE(" + eaC + ")) = " + _[1];
+	}
+	if(_g == "week") {
+		let _ = t.split("/");
+		_q = "WHERE WEEK(DATE(" + eaMC + "),3) = " + _[0] + " AND YEAR(DATE(" + eaMC + ")) = " + _[1];
+		_qc = "WHERE WEEK(DATE(" + eaC + "),3) = " + _[0] + " AND YEAR(DATE(" + eaC + ")) = " + _[1];
+	}
+	if(_g == "year") {
+		_q = "WHERE YEAR(DATE(" + eaMC + ")) = " + t;
+		_qc = "WHERE YEAR(DATE(" + eaC + ")) = " + t;
+	}
+	if(_g == "day") {
+		function mysql(d) {
+			let t = d.substr(0,2);
+			let m = d.substr(3,2);
+			let y = d.substr(6,4);
+			return y + "-" + m + "-" + t;
+		}
+		_q = "WHERE DATE(RECEIVE_DATE) = '" + mysql(t) + "'";
+		_qc = "WHERE DATE(CHAT_START) = '" + mysql(t) + "'";
+	}
+	let qry = "SELECT tN.TC AS C, COUNT(tN.TC) AS CNT FROM " +
+						"(SELECT TRANSACTION_CODE AS TC, IF(INSTR(TEMPLATE,'CALL'),'CALL','MAIL') AS SER FROM ks_eingang " +
+						_q + " " +
+						"AND CATEGORY = '" + c + "' " +
+						"UNION ALL " +
+						"SELECT TRANSACTION_CODE, IF(INSTR(TEMPLATE,'CALL'),'CALL','MAIL') FROM hs_reporting " +
+						_q + " " +
+						"AND CATEGORY = '" + c + "' " +
+						"UNION ALL " +
+						"SELECT TRANSACTIONCODE, 'CHAT' FROM ks_chat " +
+						_qc + " " +
+						"AND CATEGORY = '" + c + "') AS tN " +
+						"WHERE SER='" + _ty.split(" ")[0] + "' " +
+						"GROUP BY tN.TC " +
+						"ORDER BY COUNT(tN.TC) DESC;";
+  con.query(qry,function(err,res) {
+		if(err) cb(err);
+		cb(null,res);
+	})
+}
+
 module.exports.tt = function(b,e,s,g,a,t,cb) {
 	let ha = function() {
 		let r = "HAVING ",
@@ -249,7 +301,7 @@ module.exports.tt = function(b,e,s,g,a,t,cb) {
 	let sa = s.substr(1,s.length-2).split(",");
 	let tts = t != "tt-Summe"? "tN.C," : "";
 	function repl(i,oT,ty) {
-		let cMC,cC,pMC,pC,pE;
+		let cMC,cC,pMC,pME,pC,pE;
 		if(ty==0) {
 			cMC = "CATEGORY";cC = "CATEGORY";pMC = "RECEIVE_DATE";pC = "CHAT_START";pME = "";pE = "";
 		} else {

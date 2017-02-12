@@ -16,7 +16,7 @@ angular.module("pouchy.multiPurpose",[])
 	};
 	return msgBus;
 }])
-.factory("$hashService",function() {	
+.factory("$hashService",function() {
 	var hash = function(val) {
 		var hash = 0, i, chr, len;
 		if (val.length === 0 || typeof(val) !== "string") return hash;
@@ -27,7 +27,7 @@ angular.module("pouchy.multiPurpose",[])
 		}
 		return hash;
 	};
-	
+
 	return {
 		hash: hash
 	};
@@ -106,23 +106,23 @@ angular.module("pouchy.modal",[])
 	var modal = {
 		defer: null
 	}
-	
+
 	function open(options) {
 		modal.defer = $q.defer();
 		$msgBusService.emit("modal:init",options);
 		return modal.defer.promise;
 	}
-	
+
 	function reject(data) {
 		var tunnel = data || "";
 		modal.defer.reject(tunnel);
 	}
-	
+
 	function resolve(data) {
 		var tunnel = data || "";
 		modal.defer.resolve(tunnel);
 	}
-	
+
 	return {
 		open: open,
 		resolve: resolve,
@@ -144,7 +144,7 @@ angular.module("pouchy.modal",[])
 							"<div class='custom-modal-dialog-padding'>" +
 								"<div class='custom-modal-dialog-content'>" +
 									"<ng-include src='modalTemplate' />" +
-								"</div>" + 
+								"</div>" +
 							"</div>" +
 						"</div>" +
 					"</div>",
@@ -158,7 +158,7 @@ angular.module("pouchy.modal",[])
 				}
 				return {id:id,data:nObj};
 			}
-			
+
 			scope.modalShow = null;
 			scope.modalHide = function() {
 				$modalService.reject();
@@ -310,7 +310,7 @@ filter("included",function includedFilter() {
 angular.module("pouchy.import_export",["pouchy.multiPurpose","pouchy.FileReader"])
 .factory("exportFactory",function exportFactory() {
 	/**
-	 * Export File 
+	 * Export File
 	 *
 	 * exports current databases and data in desired format
 	 *
@@ -329,7 +329,7 @@ angular.module("pouchy.import_export",["pouchy.multiPurpose","pouchy.FileReader"
 		a.click();
 		document.removeChild(a);
 	}
-	
+
 	function exportcsv(fileName,data,track) {
 		var dataStream ="",
 			x;
@@ -342,7 +342,7 @@ angular.module("pouchy.import_export",["pouchy.multiPurpose","pouchy.FileReader"
 				}
 			}
 			for(var k in data[key][x].doc) {
-				dataStream += k + ";" 
+				dataStream += k + ";"
 			}
 			dataStream += "\n";
 			for(var i=x	;i<data[key].length;i++) {
@@ -363,7 +363,7 @@ angular.module("pouchy.import_export",["pouchy.multiPurpose","pouchy.FileReader"
 		if(track) s.tl(a,"o","csv export");
 		document.removeChild(a);
 	}
-	
+
 	return {
 		exportjson: exportjson,
 		exportcsv: exportcsv
@@ -371,26 +371,26 @@ angular.module("pouchy.import_export",["pouchy.multiPurpose","pouchy.FileReader"
 })
 .directive("downloadPop",["exportFactory","$pouchyModelDatabase",function downloadPopDirective(exportFactory,$pouchyModelDatabase) {
 	var tmp = 	"<div class='importexport-wrapper relative'>" +
-					"<div class='importexport-icons'>" + 
+					"<div class='importexport-icons'>" +
 						"<span data-id='export' class='importexport lg glyphicon glyphicon-save glyphicon-30 glyphicon-a'></span>" +
 						"<span data-id='import' class='importexport lg glyphicon glyphicon-open glyphicon-30 glyphicon-a'></span>" +
 					"</div>" +
-					"<div class='importexport-menu absolute'>" + 
+					"<div class='importexport-menu absolute'>" +
 						"<div class='importexport-framer'>" +
 							"<h4 ng-if='import'>Import</h4>" +
 							"<h4 ng-if='!import'>Export</h4>" +
-							"<div class='importexport-content' ng-show='export'>" + 
+							"<div class='importexport-content' ng-show='export'>" +
 								"<button class='btn btn-default importexport-btn' ng-click='getFile(\"json\")'>JSON</button>" +
 								"<button class='btn btn-default importexport-btn' ng-click='getFile(\"csv\")'>CSV</button>" +
-							"</div>" + 
-							"<div class='importexport-content' ng-show='import'>" + 
-								"<label class='btn btn-default importexport-btn' file-reader>JSON" + 
-								"<input type='file' class='display-none' />" + 
+							"</div>" +
+							"<div class='importexport-content' ng-show='import'>" +
+								"<label class='btn btn-default importexport-btn' file-reader>JSON" +
+								"<input type='file' class='display-none' />" +
 								"</label>" +
-								"<label class='btn btn-default importexport-btn' file-reader>CSV" + 
-								"<input type='file' class='display-none' />" + 
+								"<label class='btn btn-default importexport-btn' file-reader>CSV" +
+								"<input type='file' class='display-none' />" +
 								"</label>" +
-							"</div>" + 
+							"</div>" +
 						"</div>" +
 					"</div>" +
 				"</div>";
@@ -438,7 +438,7 @@ angular.module("pouchy.FileReader",["pouchy.import_export"])
 			i++;
 		}
 	}
-	
+
 	function parser(data) {
 		var n = data.type.substr(data.type.indexOf("/") + 1,data.type.length);
 		if(n === "csv" || n === "plain" || n === "vnd.ms-excel") {
@@ -452,7 +452,7 @@ angular.module("pouchy.FileReader",["pouchy.import_export"])
 			return b;
 		}
 	}
-	
+
 	return {
 		restrict: "A",
 		scope: {},
@@ -618,7 +618,7 @@ angular.module("pouchy.model",[])
 			url: "/cid/api/token",
 		})
 	}
-	
+
 	return {
 		get: get,
 		post: post,
@@ -666,7 +666,7 @@ angular.module("pouchy.model",[])
 		format: format
 	}
 })
-//mainCtrl is initilized on every new tab - this is to prevent too much scope overhead for non relevant data as 
+//mainCtrl is initilized on every new tab - this is to prevent too much scope overhead for non relevant data as
 .controller("mainCtrl",["$scope","$pouchyWorker","$hashService","$msgBusService","$attrs","$modalService","$pouchyModel","$filter","$pouchyLoader","$pouchySAINTAPI","$pouchyHTTP","$q","activeDB","dataExchange","formatMYSQL",function mainController($scope,$pouchyWorker,$hashService,$msgBusService,$attrs,$modalService,$pouchyModel,$filter,$pouchyLoader,$pouchySAINTAPI,$pouchyHTTP,$q,activeDB,dataExchange,formatMYSQL) {
 	//fetch database name from template attribute - this is important to seperate the data from the model service
 	//config
@@ -835,7 +835,7 @@ angular.module("pouchy.model",[])
 			$pouchyHTTP.get("intelliad_db",null,null,"id=" + data.intelliadid).then(function(res) {
 				data.FQ = res.data[0][0].root + encodeURIComponent(data.FQ) + res.data[0][0].ext;
 				data.saintstatus = 0;
-				data.modified = new Date().toISOString();
+				data.modified = new Date().toISOString().substr(0,10);
 				deferred.resolve(data);
 			})
 		} else {
@@ -850,48 +850,6 @@ angular.module("pouchy.model",[])
 	}
 }])
 .controller("cid-create",["$scope","dataExchange","$pouchyHTTP","cidGenerator","formatMYSQL","$modalService",function($scope,dataExchange,$pouchyHTTP,cidGenerator,formatMYSQL,$modalService) {
-	//TEST//
-	testObj = {
-		FQ:"www.katzen.dehttps%3A%2F%2Fwww.vanilla-ice-tea.com%3Fe_dhlmp_1e_dpcom_00008_00002_XX-AAA?pppp=1",
-		ad:"a",
-		adid:"00002",
-		adtype:"a",
-		campaign_intext:"Extern",
-		campaignid:8,
-		channelid:1,
-		cid:"e_dhlmp_1e_dpcom_00008_00002_XX-AAA",
-		intelliadid:2,
-		modified:"2016-12-18T17:32:35.889Z",
-		placement:"a",
-		randomid:"XX-AAA",
-		saintstatus:0,
-		targeturl:"https://www.vanilla-ice-tea.com",
-		id:""
-	}
-	
-	testvalidation = function(val) {	
-		cidGenerator.generate(val).then(function(res) {
-			if(!res.id) {
-				delete res.id;
-				$pouchyHTTP.post("cid_db",formatMYSQL.format(res),1,10).then(function() {
-					$modalService.open({template:"success",barColor:"green"}).
-					then(function() {
-						console.log("resolved");
-					},function() {
-						console.log("rejected");
-					});
-				});
-			}
-			//function post(target,data,currentPage,maxRows) {
-			/*$pouchyHTTP.getToken().then(function(data) {
-				console.log(data);
-			})*/
-		});
-	}
-	testvalidation(testObj);
-	//TEST//
-	
-	
 	function filterResponse(r) {
 		var args = Array.prototype.slice.call(arguments,1);
 		var a = [];
@@ -949,7 +907,7 @@ angular.module("pouchy.model",[])
 						});
 					});
 				}
-				
+
 			});
 		}
 	}
@@ -959,7 +917,7 @@ angular.module("pouchy.model",[])
 		return val.substr(8,2) + "." + val.substr(5,2) + "." + val.substr(0,4);
 	}
 })
-//bootstrapUI date picker 
+//bootstrapUI date picker
 .directive("datepicker",function datepickerDirective() {
 	return {
 		restrict: "A",
@@ -975,7 +933,7 @@ angular.module("pouchy.model",[])
 		}
 	}
 })
-//date validator - start date needs to be before end date otherwise the form gets invalid. 
+//date validator - start date needs to be before end date otherwise the form gets invalid.
 //date validator modifies ngModel for this purpose
 .directive("validateDate", function validateDateDirective() {
 	return {
@@ -1006,14 +964,14 @@ angular.module("pouchy.model",[])
 	var tmp = 	"<div class='main-center relative'>" +
 					"<button type='button' class='btn btn-circle btn-circle-lg btn-outline-none rotate-360' ng-class='getClass()'>" +
 						"<span class='glyphicon' ng-class='getIcon()'></span>" +
-					"</button>" + 
+					"</button>" +
 					"<div class='main-fluid-action absolute'>" +
 						"<button type='button' ng-click='switchSAINT(0)' class='btn btn-circle btn-danger btn-fluid rotate-360'>" +
 							"<span class='glyphicon glyphicon-remove'></span>" +
-						"</button>" + 
+						"</button>" +
 						"<button type='button' ng-click='switchSAINT(1)' class='btn btn-circle btn-success btn-fluid rotate-360'>" +
 							"<span class='glyphicon glyphicon-ok'></span>" +
-						"</button>" + 
+						"</button>" +
 					"</div>" +
 				"</div>";
 	return {
@@ -1103,7 +1061,7 @@ angular.module("pouchy.model",[])
 						conf.header = sn;
 						conf.rsid_list = [__routing.analyticsConfig.reportSuite];
 						return $pouchySAINTAPI.requestSAINT("Classifications.CreateImport",conf);
-					}).then(function(res) {						
+					}).then(function(res) {
 						_id = res.data["job_id"];
 						return $pouchyHTTP.get("campaign_db",null,null,"id=" + scope.item.campaignid);
 					}).then(function(res) {
@@ -1140,7 +1098,7 @@ angular.module("pouchy.model",[])
 						console.log(err);
 					});
 				} else {
-					console.log(scope.item);
+					console.log(err);
 				}
 			}
 		}
@@ -1174,7 +1132,7 @@ angular.module("pouchy.model",[])
 			});
 		})
 	}
-	
+
 	return {
 		requestSAINT: requestSAINT
 	}
@@ -1202,18 +1160,18 @@ angular.module("pouchy.model",[])
 			}
 		},
 		compile: function(tElement,tAttribute) {
-			var html = 	"<div id='contextMenu' class='context-menu-wrapper'>" + 
-							"<ul class='context-menu-framer'>" + 
+			var html = 	"<div id='contextMenu' class='context-menu-wrapper'>" +
+							"<ul class='context-menu-framer'>" +
 								"<li class='context-menu-li' ng-repeat='(key,value) in values'>" +
 									"<a class='context-menu-li-content'>" +
-										"{{key}}: " + 
+										"{{key}}: " +
 										"<div data-id='{{key}}' class='inline-block' ng-click='copyValue(key)'>{{value}}</div>" +
 									"</a>" +
-								"<li>" + 
+								"<li>" +
 							"</ul>" +
 						"</div>";
 			tElement.append(html);
-			
+
 			return {
 				post: function(scope,element,attr) {
 					$(element).on("contextmenu", function(e) {
@@ -1265,22 +1223,22 @@ angular.module("pouchy.model",[])
 angular.module("pouchy.worker",["pouchy.errors"])
 .service("$pouchyWorker",["$pouchyModelDatabase","$q","$pouchyError",function pouchyWorkerService($pouchyModelDatabase,$q,$pouchyError) {
 	//the following two functions are necessary to transform data to arraybuffers
-	//this gives us the opportunity to transfer data to the worker instead of just 
+	//this gives us the opportunity to transfer data to the worker instead of just
 	//cloning it and then passing it over - this will give the process some boost
 	//arraybuffer to string
 	//
 	//in order to use the worker we have to define our function as a string and name
 	//the database that contains our raw data. the callWorker method wraps the task
-	//into a promise and responds when finished - this enables us to use the worker 
+	//into a promise and responds when finished - this enables us to use the worker
 	//response in our controller.
 	//
 	//    EXAMPLE USAGE:
 	//---------------------------------------------------------------------------------
-	//		var fn = 	"function(doc) {" + 
+	//		var fn = 	"function(doc) {" +
 	//						"var id = [];" +
 	//						"for(var i=0;i<doc.length;i++) {" +
 	//							"id.push(doc[i].id);" +
-	//						"}" + 
+	//						"}" +
 	//						"return id;" +
 	//					"}";
 	//			$pouchyWorker.callWorker("campaigns_db",fn).then(function(doc) {
@@ -1298,11 +1256,11 @@ angular.module("pouchy.worker",["pouchy.errors"])
 		}
 		return buf;
 	}
-	
+
 	function serviceCaller(db,fn) {
 		var defer = $q.defer();
 		var doc;
-		//if first parameter is a call to a database then assign the values to doc 
+		//if first parameter is a call to a database then assign the values to doc
 		//else take the data as an array - which is the alternative
 		try {
 			if(typeof(db) === "string") {
@@ -1320,14 +1278,14 @@ angular.module("pouchy.worker",["pouchy.errors"])
 			var workerParameter = JSON.stringify(doc) + "UNIQUE_SEPERATOR" + fn;
 			var ab = str2ab(workerParameter)
 			worker.postMessage(ab);
-				
+
 			return defer.promise;
 		}
 		catch(e) {
 			console.log(e.message);
 		}
 	}
-	
+
 	return {
 		callWorker: serviceCaller
 	}
@@ -1344,7 +1302,7 @@ angular.module("pouchy.errors",[])
 	function FormatError(msg) {
 		this.message = msg;
 	}
-	
+
 	return {
 		FormatError: FormatError
 	}

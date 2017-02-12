@@ -14,7 +14,7 @@ const publicData = {
 	databaseConfig: appConfig.databaseConfig,
 	routingConfig: appConfig.routingConfig,
 	cidConfig: appConfig.cidConfig,
-	analyticsConfig: appConfig.analyticsConfigPublic
+	analyticsConfig: appConfig.analyticsConfig
 };
 let message = new Evt();
 

@@ -54,6 +54,6 @@ exports.update = function(id,hash,table,callback) {
 
 exports.getToken = function(callback) {
 	var W = new wsse();
-	var token = W.generateAuth(appConfig.analyticsConfigPrivate.username,appConfig.analyticsConfigPrivate.secret);
+	var token = W.generateAuth(appConfig.analyticsConfig.username,appConfig.analyticsConfig.secret);
 	callback(null,token);
 }

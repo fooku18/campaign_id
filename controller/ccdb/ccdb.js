@@ -68,10 +68,10 @@ router.get("/api/tt/cat",function(req,res,next) {
 })
 
 router.get("/api/tt/ab",function(req,res,next) {
-	/*model.tt_cat(req.query.b,req.query.e,req.query.s,req.query.g,a,req.query.t,req.query.sn,function(err,data) {
-		if(err) return res.status(400).send(err);
-		res.status(200).send(data);
-	})*/
+	model.tt_ab(req.query.t,req.query.g,req.query.ty,req.query.c,function(err,data) {
+		if(err) return res.status(400).send(err)
+			else res.status(200).send(data);
+	})
 })
 
 router.get("/api/mv",function(req,res,next) {
