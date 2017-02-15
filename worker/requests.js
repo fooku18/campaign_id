@@ -11,7 +11,7 @@ const exec = require("child_process").exec;
 const path = require("path");
 const __dir = path.dirname(require.main.filename);
 
-/*
+
 function twoDigits(val) {
 	if(val.toString().length < 2) {
 		return "0" + val;
@@ -55,7 +55,7 @@ function reqPipe(method,uri,headers,body,followRedirect,proxy) {
 	if(proxy) opt.proxy = "http://globalproxy.goc.dhl.com:8080";
 	return request(opt);
 }
-
+/*
 function paraBuilderNovo(type,date,t) {
 	let now = date;
 	let tM = t;
@@ -115,7 +115,7 @@ function xlsx2csv(path,file) {
 		});
 	})
 }
-
+*/
 //Novomind
 let rQ = {
 	"KS_Eingang": {
@@ -134,7 +134,7 @@ let rQ = {
 let postHeaders = {
 	"Content-Type": "application/x-www-form-urlencoded"
 },
-	novBody = "username=" + config.novo.username + "&password=" + config.novo.password;
+	novBody = "username=" + config.novo.username + "&password=" + config.novo.password;/*
 req("POST","https://allyouneed.novomind.com/iMail/index.imail",postHeaders,novBody,false,true,function(err,data) {
 	if(err) return console.log(err);
 	let cookie = parseCookie(data.headers)[0];
@@ -149,7 +149,7 @@ req("POST","https://allyouneed.novomind.com/iMail/index.imail",postHeaders,novBo
 		writeFileNovo(i,postHeaders,paraBuilderNovo(i,now,tM));
 	}
 });
-
+*/
 //APEX
 function findMyWay(path,node) {
 	path.forEach(function(l) {
@@ -163,7 +163,7 @@ function findAttribute(id,attr,template) {
 	return doc.getElementById(id).getAttribute(attr);
 }
 
-function download(url,type,header) {
+function download(url,type,header,table) {
 	req("GET",url,header,null,true,false,function(err,data) {
 		if(err) console.log(err);
 		let template = data.body;
@@ -180,6 +180,7 @@ function download(url,type,header) {
 			let wS = fs.createWriteStream("../private/ccdb/Datenexport/csv/" + type + "_bestellungen.csv");
 			wS.on("finish",function() {
 				console.log(type + "_bestellungen.csv erstellt");
+				createTemp(table);
 			});
 			reqPipe("GET",url,header,null,true,false).pipe(wS);
 		})
@@ -208,17 +209,19 @@ req("POST","http://10.172.253.14:8080/apex/wwv_flow.accept",postHeaders,apexBody
 		let doc = new dom().parseFromString(template,"text/html");
 		let ordAYNurl = findMyWay([1,0,1,0,1,1],doc.getElementById(14000).nextSibling).getAttribute("href");ordAYNurl = "http://10.172.253.14:8080/apex/" + ordAYNurl;
 		let ordPPurl = findMyWay([1,0,0,1,0,1,1],doc.getElementById(16000).nextSibling).getAttribute("href");ordPPurl = "http://10.172.253.14:8080/apex/" + ordPPurl;
-		download(ordAYNurl,"AYN",headerGET);
-		download(ordPPurl,"PP",headerGET);
+		let ord90 = findMyWay([1,1,0,1,0,0,1],doc.getElementById(14000).nextSibling).getAttribute("href");ord90 = "http://10.172.253.14:8080/apex/" + ord90;
+		download(ordAYNurl,"AYN",headerGET,"ayn_bestellungen");
+		download(ordPPurl,"PP",headerGET,"pp_bestellungen");
+		//download(ord90,"kunden",headerGET,"kunden_bestellungen");
 	})
 })
-*/
+
 function createTemp(table) {
 	let opt = {
 		host: "localhost",
-		user: "root",
+		user: "ccdb",
 		database: "ccdb",
-		password: "sausage18"
+		password: "ccdb"
 	}
 	function _qND(tN) {
 		var id = tN == "ks_chat"? "ID" : "TICKET_ID";
@@ -334,9 +337,10 @@ function createTemp(table) {
 			//let l =  __dir.replace(/\\/g,"/").replace(/worker\/?/,"") + 'private/ccdb/sql/' + table + '.sql';
 			let l = __dir.replace(/\\/g,"/").replace(/worker\/?/,"") + 'private/ccdb/sql/' + t + '.sql';
 			let lQ = __dir.replace(/\\/g,"/").replace(/worker\/?/,"") + 'private/ccdb/Datenexport/csv/' + t + '.csv';
+			let _qual = (t == "ayn_bestellungen" || t == "pp_bestellungen" || t == "kunden_bestellungen")? ";" : "|";
 			let q = "USE ccdb; " +
 					"LOAD DATA LOCAL INFILE '" + lQ + "' INTO TABLE " + t + "_temp  " +
-					"CHARACTER SET UTF8 FIELDS TERMINATED BY '|' LINES TERMINATED BY '\n' IGNORE 1 LINES;"
+					"CHARACTER SET UTF8 FIELDS TERMINATED BY '" + _qual + "' LINES TERMINATED BY '\n' IGNORE 1 LINES;"
 			fs.writeFile(l,q,function(err,data) {
 				exec("mysql -u " + opt.user + " -p" + opt.password + " < \"" + l + "\"",function(err,stdout,stderr) {
 					if(err) console.log(err);
@@ -368,10 +372,11 @@ function createTemp(table) {
 									connection.query(_qBU(t),function(err,data) {
 										if(err) console.log(err);
 										if(!err) {
-											connection.query("DROP TABLE " + t + "_temp;",function(err,data) {
+											/*connection.query("DROP TABLE " + t + "_temp;",function(err,data) {
 												console.log(t + " erfolgreich aktualisiert");
 												connection.end();
-											})
+											})*/
+											connection.end();
 										}
 									})
 								}
@@ -383,14 +388,3 @@ function createTemp(table) {
 		})
 	})
 }
-
-//createTemp("hs_reporting");
-//createTemp("ks_eingang");
-//createTemp("ayn_bestellungen");
-//createTemp("pp_bestellungen");
-createTemp("ks_chat");
-
-//createTemp("pp_bestellungen");
-//xlsx2csv("../private/ccdb/Datenexport/KS_Chat.xlsx","KS_Chat");
-//xlsx2csv("../private/ccdb/Datenexport/HS_Reporting.xlsx","HS_Reporting");
-//-e \"source c:/users/j6er8a/desktop/projekt/node/private/ccdb/sql/ks_eingang.sql\""

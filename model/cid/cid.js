@@ -1,4 +1,3 @@
-"use strict";
 const mysql = require("mysql");
 const path = require('path');
 const __dir = path.dirname(require.main.filename);
@@ -54,6 +53,6 @@ exports.update = function(id,hash,table,callback) {
 
 exports.getToken = function(callback) {
 	var W = new wsse();
-	var token = W.generateAuth(appConfig.analyticsConfig.username,appConfig.analyticsConfig.secret);
+	var token = W.generateAuth(appConfig.analyticsConfigPrivate.username,appConfig.analyticsConfigPrivate.secret);
 	callback(null,token);
 }

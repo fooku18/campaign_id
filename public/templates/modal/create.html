@@ -92,7 +92,7 @@
 				<span class="label label-default">Creative Channel</span>
 			</div>
 			<select name="cCreativechannel" ng-model="values.channelid" class="form-control" ng-pattern="/.*/" required>
-				<option ng-repeat="i in creativeChannel" value="{{i.id}}">{{i.channel}}</option>
+				<option ng-repeat="i in creativeChannel" value="{{i.channelID}}">{{i.channel}}</option>
 			</select>
 		</div>
 		<div class="col-md-12 col-sm-12 block form-group" ng-class="{'has-error': userForm.cRandomid.$invalid && !userForm.cRandomid.$pristine, 'has-success': userForm.cRandomid.$valid}">

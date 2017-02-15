@@ -823,11 +823,12 @@ angular.module("pouchy.model",[])
 		var domainToken = __routing.cidConfig.domainToken;
 		var organizationToken = __routing.cidConfig.organizationToken;
 		//if question mark does exist then add ampersand and concatenate
-		var cid = data.campaign_intext[0].toLowerCase() + "_" + domainToken + "_" + data.channelid + data.campaign_intext[0].toLowerCase() + "_" + organizationToken + "_" + lZ(data.campaignid) + "_" + data.adid + "_" + data.randomid;
+		var __intExt = data.campaign_intext[0].toLowerCase() == "e"? "c" : "i";
+		var cid = __intExt + "_" + domainToken + "_" + data.channelid[0] + data.campaign_intext[0].toLowerCase() + "_" + organizationToken + "_" + lZ(data.campaignid) + "_" + data.adid + "_" + data.randomid;
 		if(data.targeturl.indexOf("?") > -1) {
-			var FQ = data.targeturl + "&" + cid;
+			var FQ = data.targeturl + "&cid=" + cid;
 		} else {
-			var FQ = data.targeturl + "?" + cid;
+			var FQ = data.targeturl + "?cid=" + cid;
 		}
 		data.FQ = FQ;
 		data.cid = cid;
@@ -865,7 +866,7 @@ angular.module("pouchy.model",[])
 	}
 	$scope.values = dataExchange.getData();
 	$pouchyHTTP.get("channelid_db",null,null,null).then(function(data) {
-		$scope.creativeChannel = filterResponse(data.data[0],"channel","id");
+		$scope.creativeChannel = filterResponse(data.data[0],"channel","channelID");
 	});
 	$scope.isActive = function(val) {
 		var a = (val === "Extern") ? true : false;
