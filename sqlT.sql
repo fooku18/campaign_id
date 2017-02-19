@@ -1,18 +1,28 @@
-SELECT tN.TC, COUNT(tN.TC) FROM
-(SELECT TRANSACTION_CODE AS TC, IF(INSTR(TEMPLATE,'CALL'),'CALL','MAIL') AS SER
-  FROM ks_eingang
-  WHERE MONTH(DATE(RECEIVE_DATE)) = 1 AND YEAR(DATE(RECEIVE_DATE)) = 2017
-  AND CATEGORY = 'KS_AYN_Kuendigung'
-  UNION ALL
-  SELECT TRANSACTION_CODE, IF(INSTR(TEMPLATE,'CALL'),'CALL','MAIL')
-  FROM hs_reporting
-  WHERE MONTH(DATE(RECEIVE_DATE)) = 1 AND YEAR(DATE(RECEIVE_DATE)) = 2017
-  AND CATEGORY = 'KS_AYN_Kuendigung'
-  UNION ALL
-  SELECT TRANSACTIONCODE, 'CHAT'
-  FROM ks_chat
-  WHERE MONTH(DATE(CHAT_START)) = 1
-  AND YEAR(DATE(CHAT_START)) = 2017
-  AND CATEGORY = 'KS_AYN_Kuendigung') AS tN
-  WHERE SER = 'MAIL'
-  GROUP BY tN.TC ORDER BY COUNT(tN.TC) DESC;
+LOAD DATA LOCAL INFILE "/home/jakob/node/private/ccdb/Datenexport/csv/AYN_Bestellungen.csv" INTO TABLE ayn_bestellungen_temp
+FIELDS TERMINATED BY ";" OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(@tag,
+  @wochentag,
+  @anzahl_kunden,
+  @anzahl_warenkoerbe,
+  @anzahl_bestellungen,
+  @anzahl_produkte,
+  @ds_anzahl_produkte,
+  @umsatz,
+  @versandkosten,
+  @gesamtumsatz,
+  @ds_warenkorbwert,
+  @stornierungsquote)
+SET
+  tag = @tag,
+  wochentag = @wochentag,
+  anzahl_kunden = REPLACE(REPLACE(@anzahl_kunden,".",""),",","."),
+  anzahl_warenkoerbe = REPLACE(REPLACE(@anzahl_warenkoerbe,".",""),",","."),
+  anzahl_bestellungen = REPLACE(REPLACE(@anzahl_bestellungen,".",""),",","."),
+  anzahl_produkte = REPLACE(REPLACE(@anzahl_produkte,".",""),",","."),
+  ds_anzahl_produkte = REPLACE(REPLACE(@ds_anzahl_produkte,".",""),",","."),
+  umsatz = REPLACE(REPLACE(@umsatz,".",""),",","."),
+  versandkosten = REPLACE(REPLACE(@versandkosten,".",""),",","."),
+  gesamtumsatz = REPLACE(REPLACE(@gesamtumsatz,".",""),",","."),
+  ds_warenkorbwert = REPLACE(REPLACE(@ds_warenkorbwert,".",""),",","."),
+  stornierungsquote = REPLACE(REPLACE(@stornierungsquote,".",""),",",".")
