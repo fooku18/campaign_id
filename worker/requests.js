@@ -324,6 +324,7 @@ function createTemp(table) {
 				"WHERE t1.tag = t2.tag;";
 		}
 	}
+	
 	let t = table;
 	const connection = mysql.createConnection(opt);
 	let qS = "";
@@ -340,7 +341,7 @@ function createTemp(table) {
 			let _qual = (t == "ayn_bestellungen" || t == "pp_bestellungen" || t == "kunden_bestellungen")? ";" : "|";
 			let q = "USE ccdb; " +
 					"LOAD DATA LOCAL INFILE '" + lQ + "' INTO TABLE " + t + "_temp  " +
-					"CHARACTER SET UTF8 FIELDS TERMINATED BY '" + _qual + "' LINES TERMINATED BY '\n' IGNORE 1 LINES;"
+					"CHARACTER SET UTF8 FIELDS TERMINATED BY '" + _qual + "' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\n' IGNORE 1 LINES;"
 			fs.writeFile(l,q,function(err,data) {
 				exec("mysql -u " + opt.user + " -p" + opt.password + " < \"" + l + "\"",function(err,stdout,stderr) {
 					if(err) console.log(err);
