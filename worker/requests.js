@@ -10,6 +10,7 @@ const config = crypt.decipher("../private/ccdb/cip.file",process.argv[2]);
 const exec = require("child_process").exec;
 const path = require("path");
 const __dir = path.dirname(require.main.filename);
+const _mL = require("./dataLoadSQL.js");
 
 
 function twoDigits(val) {
@@ -55,14 +56,15 @@ function reqPipe(method,uri,headers,body,followRedirect,proxy) {
 	if(proxy) opt.proxy = "http://globalproxy.goc.dhl.com:8080";
 	return request(opt);
 }
-/*
+
 function paraBuilderNovo(type,date,t) {
 	let now = date;
 	let tM = t;
-	body = "startDate=" + now.getTime() - tM + "&endDate=" + now.getTime() + "&action=executeDataExport&dataExportPath=%2Fsrv%2Fnovomind" +
+	let _t = now.getTime() - tM;
+	body = "startDate=" + _t + "&endDate=" + now.getTime() + "&action=executeDataExport&dataExportPath=%2Fsrv%2Fnovomind" +
 		   "%2FiAGENT%2FdataExport%2F&chosenId=" + rQ[type].id + "&cats=&downloadToken=" + now.getTime() + "&checkbox_del_cat=&fromField" +
 		   "=" + twoDigits(new Date(now.getTime() - tM).getDay()) + "." + twoDigits(new Date(now.getTime() - tM).getMonth()) + "." + new Date(now.getTime() - tM).getFullYear() + "+00%3A00%3A00&toField=" + 
-		   twoDigits(now.getDay()) + twoDigits(now.getMonth()) + now.getFullYear() + "+00%3A00%3A00&file=" + rQ[type].id + "&cats=" + rQ[type].cats;
+		   twoDigits(now.getDay()) + twoDigits(now.getMonth()) + now.getFullYear() + "+23%3A59%3A59&file=" + rQ[type].id + "&cats=" + rQ[type].cats;
 	return body;
 }
 
@@ -112,10 +114,12 @@ function xlsx2csv(path,file) {
 		fs.writeFile("../private/ccdb/Datenexport/csv/" + file + ".csv", writeStr, function(err) {
 			if(err) return console.log(err);
 			console.log(file + ".csv erstellt");
+			var _f = file.toLowerCase()
+			createTemp(_f);
 		});
 	})
 }
-*/
+
 //Novomind
 let rQ = {
 	"KS_Eingang": {
@@ -134,7 +138,7 @@ let rQ = {
 let postHeaders = {
 	"Content-Type": "application/x-www-form-urlencoded"
 },
-	novBody = "username=" + config.novo.username + "&password=" + config.novo.password;/*
+	novBody = "username=" + config.novo.username + "&password=" + config.novo.password;
 req("POST","https://allyouneed.novomind.com/iMail/index.imail",postHeaders,novBody,false,true,function(err,data) {
 	if(err) return console.log(err);
 	let cookie = parseCookie(data.headers)[0];
@@ -149,7 +153,7 @@ req("POST","https://allyouneed.novomind.com/iMail/index.imail",postHeaders,novBo
 		writeFileNovo(i,postHeaders,paraBuilderNovo(i,now,tM));
 	}
 });
-*/
+
 //APEX
 function findMyWay(path,node) {
 	path.forEach(function(l) {
@@ -324,7 +328,6 @@ function createTemp(table) {
 				"WHERE t1.tag = t2.tag;";
 		}
 	}
-	
 	let t = table;
 	const connection = mysql.createConnection(opt);
 	let qS = "";
@@ -335,13 +338,10 @@ function createTemp(table) {
 		qS = "(" + qS.substr(0,qS.length-1) + ")"; 
 		connection.query("CREATE TABLE " + t + "_temp " + qS + ";",function(err,data) {
 			if(err) console.log(err);
-			//let l =  __dir.replace(/\\/g,"/").replace(/worker\/?/,"") + 'private/ccdb/sql/' + table + '.sql';
 			let l = __dir.replace(/\\/g,"/").replace(/worker\/?/,"") + 'private/ccdb/sql/' + t + '.sql';
 			let lQ = __dir.replace(/\\/g,"/").replace(/worker\/?/,"") + 'private/ccdb/Datenexport/csv/' + t + '.csv';
 			let _qual = (t == "ayn_bestellungen" || t == "pp_bestellungen" || t == "kunden_bestellungen")? ";" : "|";
-			let q = "USE ccdb; " +
-					"LOAD DATA LOCAL INFILE '" + lQ + "' INTO TABLE " + t + "_temp  " +
-					"CHARACTER SET UTF8 FIELDS TERMINATED BY '" + _qual + "' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\n' IGNORE 1 LINES;"
+			let q = _mL._loader(t,_qual);
 			fs.writeFile(l,q,function(err,data) {
 				exec("mysql -u " + opt.user + " -p" + opt.password + " < \"" + l + "\"",function(err,stdout,stderr) {
 					if(err) console.log(err);
@@ -373,11 +373,14 @@ function createTemp(table) {
 									connection.query(_qBU(t),function(err,data) {
 										if(err) console.log(err);
 										if(!err) {
-											/*connection.query("DROP TABLE " + t + "_temp;",function(err,data) {
-												console.log(t + " erfolgreich aktualisiert");
-												connection.end();
-											})*/
-											connection.end();
+											connection.query("DROP TABLE " + t + "_temp;",function(err,data) {
+												if(err) {
+													connection.end();
+												} else {
+													console.log(t + " erfolgreich aktualisiert");
+													connection.end();
+												}
+											})
 										}
 									})
 								}

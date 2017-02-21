@@ -773,6 +773,7 @@
 		_this.showLoading();
 		http("/ccdb/api/tt/?b=" + _g[2].b + "&e=" + _g[2].e + "&g=" + _g[0] + "&s=[" + _g[1].toString() + "]&tt=" + btoa(ls().join(",")) + "&tts=" + _g[3]).then(function(res) {
 			_this.__clear();
+			console.log(res);return;
 			var dataI = _g[3] == "tt-Summe"? fSum(JSON.parse(res)[0]) : fSin(JSON.parse(res)[0]);
 			var dataO = _g[3] == "tt-Summe"? fSum(JSON.parse(res)[1]) : fSin(JSON.parse(res)[1]);
 			_this.yAxis[0].update({

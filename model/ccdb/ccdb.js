@@ -343,7 +343,8 @@ module.exports.tt = function(b,e,s,g,a,t,cb) {
 		col=[];__const(1);
 		con.query(qry(),function(err,res) {
 			if(err) cb(err);
-			cb(null,[resIn,res]);
+			cb(null,qry());
+			//cb(null,[resIn,res]);
 		})
 	})
 }
