@@ -5,7 +5,7 @@ mixin mixin_check(id,width,title)
 				div.unit-inner-checkbox.absolute(id=id)
 			div.inline-block.unit-text-gran.relative
 				span=title
-				
+
 html
 	head
 		title Customer Care Dashboard
@@ -28,15 +28,19 @@ html
 			div#menu.shadow.absolute.menu-up
 				div.inner-menu
 					h3.white Menu
-					ul.new-font
-						li 
+					ul.new-font.mContainer
+						li
 							a#kq.white(href="javascript:void(0)") Kontaktquote
-						li 
+						li
 							a#tt.white(href="javascript:void(0)") Ticket-Themen
 						li
+							a#kat.white(href="javascript:void(0)") Eingänge nach Kategorien
+						li
+							a#ab.white(href="javascript:void(0)") Eingänge nach Abschluss-Codes
+						li
 							a#mv.white(href="javascript:void(0)") Mehrstufige Vorgänge
-						li 
-							a#k.white(href="javascript:void(0)") Kosten
+						li
+							a#tk.white(href="javascript:void(0)") Ticketkosten
 		div.banner.relative
 			div.headline.madefault.absolute Customer Care Dashboard
 		div.chart-section.relative

@@ -89,4 +89,18 @@ router.get("/api/mv_id",function(req,res,next) {
 	})
 })
 
+router.get("/api/kat",function(req,res,next) {
+	model.kat(req.query.b,req.query.e,req.query.s,req.query.c,function(err,data) {
+		if(err) return res.status(400).send("fail") 
+			else res.status(200).send(data);
+	})
+})
+
+router.get("/api/ab",function(req,res,next) {
+	model.ab(req.query.b,req.query.e,req.query.s,req.query.c,function(err,data) {
+		if(err) return res.status(400).send("fail") 
+			else res.status(200).send(data);
+	})
+})
+
 module.exports = router;

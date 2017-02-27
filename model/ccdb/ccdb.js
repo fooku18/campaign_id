@@ -312,16 +312,16 @@ module.exports.tt = function(b,e,s,g,a,t,cb) {
 		let ser = i == "ks-chat"? serC(cC) : serMC(cMC);
 		let apl = (i == "ks-eingang" || i == "ks-chat")? (sa.indexOf("checkayn")>-1 || sa.indexOf("checkppde")>-1 || sa.indexOf("checkppaut")>-1)? true : false : (sa.indexOf("checkhs")>-1)? true : false;
 		let lbl = i == "ks-chat"? cC : cMC;
-		let q = "SELECT DATE(3) AS d," + lbl + " AS C," + ser + " AS S," + m + " AS Q FROM 1 WHERE CATEGORY IN ('2') AND (DATE(3) BETWEEN '" + b + "' AND '" + e + "') AND " + apl + " " + ex + " ";
+		let q = "SELECT DATE(!3!) AS d," + lbl + " AS C," + ser + " AS S," + m + " AS Q FROM !1! WHERE CATEGORY IN ('!2!') AND (DATE(!3!) BETWEEN '" + b + "' AND '" + e + "') AND " + apl + " " + ex + " ";
 		let d = i == "ks-chat"? pC : pMC;
-		col.push(q.replace(/1/,i.replace(/-/,"_")).replace(/2/,oT.join("','")).replace(/3/g,d));
+		col.push(q.replace(/!1!/,i.replace(/-/,"_")).replace(/!2!/,oT.join("','")).replace(/!3!/g,d));
 	}
 	function qry() {
 		let t = g=="year"? "year(tN.d)" : g=="day"? "CONCAT(day(tN.d),'.',month(tN.d),'.',year(tN.d))" : g=="week"? "CONCAT(week(tN.d,3),\"/\",year(tN.d))" : "CONCAT(month(tN.d),'/',year(tN.d))";
 		let gran = g=="year"? "year(tN.d)" : g=="month"? "year(tN.d),month(tN.d)" : g=="week"? "year(tN.d),week(tN.d,3)" : "tN.d";
-		let q = "SELECT " + t + " AS d," + tts + "COUNT(tN.C) AS CT,tN.S AS S,tN.Q AS Q FROM (1) AS tN GROUP BY " + gran + "," + tts + "tN.S,tN.Q " + ha() + ";";
+		let q = "SELECT " + t + " AS d," + tts + "COUNT(tN.C) AS CT,tN.S AS S,tN.Q AS Q FROM (!1!) AS tN GROUP BY " + gran + "," + tts + "tN.S,tN.Q " + ha() + ";";
 		let c = col.length>1? col.join("UNION ALL ") : col[0];
-		return q.replace(/1/,c);
+		return q.replace(/!1!/,c);
 	}
 	let oT = {
 		"ks-eingang":[],
@@ -343,8 +343,8 @@ module.exports.tt = function(b,e,s,g,a,t,cb) {
 		col=[];__const(1);
 		con.query(qry(),function(err,res) {
 			if(err) cb(err);
-			cb(null,qry());
-			//cb(null,[resIn,res]);
+			//cb(null,qry());
+			cb(null,[resIn,res]);
 		})
 	})
 }
@@ -366,12 +366,12 @@ module.exports.mv = function(b,e,n,cb) {
 		qry += "(SELECT PROCESS_ID AS PID,TICKET_ID AS TID FROM ks_eingang ";
 		qry += "UNION ALL ";
 		qry += "SELECT PROCESS_ID,TICKET_ID FROM hs_reporting) AS tN ";
-		qry += "WHERE tN.PID IN (1) ";
+		qry += "WHERE tN.PID IN (!1!) ";
 		qry += "GROUP BY tN.PID ";
 		qry += "HAVING COUNT(tN.TID) >= " + n +" ";
 		qry += "ORDER BY COUNT(tN.TID) DESC;";
 		let _c = _fcol(res);
-		qry = qry.replace(/1/,_c.join(","));
+		qry = qry.replace(/!1!/,_c.join(","));
 		con.query(qry,function(err,res) {
 			if(err) cb(err);
 			cb(null,res);
@@ -385,6 +385,137 @@ module.exports.mv_id = function(i,cb) {
 		qry += "UNION ALL ";
 		qry += "SELECT TICKET_ID AS TID,RECEIVE_DATE AS RD, LAST_DATE_PROCESSED AS LD,CATEGORY AS C,TRANSACTION_CODE AS T FROM hs_reporting WHERE PROCESS_ID = " + i + " ";
 		qry += ") AS tN";
+	con.query(qry,function(err,res) {
+		if(err) cb(err);
+		cb(null,res);
+	})
+}
+
+module.exports.kat = function(b,e,s,c,cb) {
+	let sa = s.substr(1,s.length-2).split(",");
+	let trans = [{
+		"checkayn": "AYN",
+		"checkppde": "PPDE",
+		"checkppaut": "PPAUT",
+		"checkhs": "HS"
+	},{
+		"kat-Mail": "MAIL",
+		"kat-Call": "CALL",
+		"kat-Chat": "CHAT",
+	}]
+	let ha = function(s) {
+		let r = "";
+		if(s) {
+			for(let i in sa) {
+				r += "tN.S = '" + trans[0][sa[i]] + "' || ";
+			}
+		} else {
+			let _jp = JSON.parse(c);
+			for(let i in _jp) {
+				r += "tN.T = '" + trans[1][_jp[i]] + "' || ";
+			}
+		}
+		return r.substr(0,r.length-3);
+	}
+	let ser = ha(!0);
+	let ch = ha(!!0);
+	let qry =  	"SELECT tN.C AS C,COUNT(tN.C) AS CNT FROM " + 
+				"(" + 
+					"SELECT CATEGORY AS C, " +
+					"CASE WHEN INSTR(TRANSACTION_CODE,'AYN_') THEN 'AYN' " +
+					"WHEN INCOMING_ADDRESS = 'austria@postpay.de' THEN 'PPAUT' " +
+					"WHEN INSTR(TRANSACTION_CODE,'PP_') THEN 'PPDE' " +
+					"WHEN INSTR(INCOMING_ADDRESS,'meinpaket') THEN 'AYN' " +
+					"WHEN INSTR(INCOMING_ADDRESS,'allyouneed') THEN 'AYN' " +
+					"ELSE 'PPDE' END AS S, " +
+					"IF(INSTR(TEMPLATE,'CALL'),'CALL','MAIL') AS T " +
+					"FROM ks_eingang " +
+					"WHERE (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "') " +
+					"UNION ALL " +
+					"SELECT CATEGORY AS C,'HS' AS S, " +
+					"IF(INSTR(TEMPLATE,'CALL'),'CALL','MAIL') AS T " +
+					"FROM hs_reporting " +
+					"WHERE (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "') " +
+					"UNION ALL " +
+					"SELECT CATEGORY AS C, " +
+					"CASE WHEN INSTR(CATEGORY,'AYN_') THEN 'AYN' " +
+					"ELSE 'PPDE' END AS S, " +
+					"'CHAT' AS T " +
+					"FROM ks_chat " +
+					"WHERE (DATE(CHAT_START) BETWEEN '" + b + "' AND '" + e + "') " +
+					"AND (TIME_TO_SEC(TIME(CHAT_START)) BETWEEN TIME_TO_SEC('" + service_config.time_begin + "') AND TIME_TO_SEC('" + service_config.time_end + "')) AND WEEKDAY(DATE(DATE(CHAT_START))) >= " + service_config.working_days[0] + " AND WEEKDAY(DATE(DATE(CHAT_START))) < " + service_config.working_days[service_config.working_days.length-1] + " " + 
+				") AS tN " +
+				"WHERE (" + ser + ") " + 
+				"AND (" + ch + ") " + 
+				"GROUP BY tN.C " +
+				"ORDER BY COUNT(tN.C) DESC;";
+	con.query(qry,function(err,res) {
+		if(err) cb(err);
+		cb(null,res);
+	})
+}
+
+module.exports.ab = function(b,e,s,c,cb) {
+	let sa = s.substr(1,s.length-2).split(",");
+	let trans = [{
+		"checkayn": "AYN",
+		"checkppde": "PPDE",
+		"checkppaut": "PPAUT",
+		"checkhs": "HS"
+	},{
+		"kat-Mail": "MAIL",
+		"kat-Call": "CALL",
+		"kat-Chat": "CHAT",
+	}]
+	let ha = function(s) {
+		let r = "";
+		if(s) {
+			for(let i in sa) {
+				r += "tN.S = '" + trans[0][sa[i]] + "' || ";
+			}
+		} else {
+			let _jp = JSON.parse(c);
+			for(let i in _jp) {
+				r += "tN.T = '" + trans[1][_jp[i]] + "' || ";
+			}
+		}
+		return r.substr(0,r.length-3);
+	}
+	let ser = ha(!0);
+	let ch = ha(!!0);
+	let qry =  	"SELECT tN.C AS C,COUNT(tN.C) AS CNT FROM " + 
+				"(" + 
+					"SELECT TRANSACTION_CODE AS C, " +
+					"CASE WHEN INSTR(TRANSACTION_CODE,'AYN_') THEN 'AYN' " +
+					"WHEN INCOMING_ADDRESS = 'austria@postpay.de' THEN 'PPAUT' " +
+					"WHEN INSTR(TRANSACTION_CODE,'PP_') THEN 'PPDE' " +
+					"WHEN INSTR(INCOMING_ADDRESS,'meinpaket') THEN 'AYN' " +
+					"WHEN INSTR(INCOMING_ADDRESS,'allyouneed') THEN 'AYN' " +
+					"ELSE 'PPDE' END AS S, " +
+					"IF(INSTR(TEMPLATE,'CALL'),'CALL','MAIL') AS T " +
+					"FROM ks_eingang " +
+					"WHERE (DATE(LAST_DATE_PROCESSED) BETWEEN '" + b + "' AND '" + e + "') " +
+					"AND TRANSACTION_CODE <> '' AND TRANSACTION_CODE IS NOT NULL " + 
+					"UNION ALL " +
+					"SELECT TRANSACTION_CODE AS C,'HS' AS S, " +
+					"IF(INSTR(TEMPLATE,'CALL'),'CALL','MAIL') AS T " +
+					"FROM hs_reporting " +
+					"WHERE (DATE(LAST_DATE_PROCESSED) BETWEEN '" + b + "' AND '" + e + "') " +
+					"AND TRANSACTION_CODE <> '' AND TRANSACTION_CODE IS NOT NULL " + 
+					"UNION ALL " +
+					"SELECT TRANSACTIONCODE AS C, " +
+					"CASE WHEN INSTR(CATEGORY,'AYN_') THEN 'AYN' " +
+					"ELSE 'PPDE' END AS S, " +
+					"'CHAT' AS T " +
+					"FROM ks_chat " +
+					"WHERE (DATE(CHAT_START) BETWEEN '" + b + "' AND '" + e + "') " +
+					"AND (TIME_TO_SEC(TIME(CHAT_START)) BETWEEN TIME_TO_SEC('" + service_config.time_begin + "') AND TIME_TO_SEC('" + service_config.time_end + "')) AND WEEKDAY(DATE(DATE(CHAT_START))) >= " + service_config.working_days[0] + " AND WEEKDAY(DATE(DATE(CHAT_START))) < " + service_config.working_days[service_config.working_days.length-1] + " " + 
+					"AND TRANSACTIONCODE <> '' AND TRANSACTIONCODE IS NOT NULL " + 
+				") AS tN " +
+				"WHERE (" + ser + ") " + 
+				"AND (" + ch + ") " + 
+				"GROUP BY tN.C " +
+				"ORDER BY COUNT(tN.C) DESC;";
 	con.query(qry,function(err,res) {
 		if(err) cb(err);
 		cb(null,res);

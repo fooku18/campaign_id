@@ -193,6 +193,64 @@ function _loader(t,q) {
 				  "DURATION_REVIEW = @DURATION_REVIEW, " +
 				  "TRANSACTIONCODE = @TRANSACTIONCODE;";
 			break;
+		case "kunden_bestellungen": 
+			return "USE ccdb; " + 
+				"LOAD DATA LOCAL INFILE '" + __p + "kunden_bestellungen.csv' INTO TABLE kunden_bestellungen_temp_f " + 
+				"FIELDS TERMINATED BY '" + q + "' OPTIONALLY ENCLOSED BY '\"' " +
+				"LINES TERMINATED BY '\n' " +
+				"IGNORE 1 LINES " +
+				"( " +
+					"@datum, " +
+					"@shopid, " +
+					"@haendlername, " +
+					"@bestellnummer, " +
+					"@kategorie_code, " +
+					"@status, " +
+					"@stornogrund, " +
+					"@anzahl_storno, " +
+					"@storno_warenwert, " +
+					"@storno_datum, " +
+					"@stornogebuehren, " +
+					"@retoure, " +
+					"@retoure_datum, " +
+					"@anzahl_retoure, " +
+					"@retoure_warenwert, " +
+					"@retoure_gebuehr, " +
+					"@anzahl, " +
+					"@preis, " +
+					"@zahlungsart, " +
+					"@versandkosten, " +
+					"@aynmp_provision, " +
+					"@standard_provision, " +
+					"@voucher_wert, " +
+					"@usertype " +
+				") " +
+				"SET " +
+					"datum = DATE(concat('20',mid(@datum,7,2),'-',mid(@datum,4,2),'-',left(@datum,2))), " +
+					"shopid = @shopid, " +
+					"haendlername = @haendlername, " +
+					"bestellnummer = @bestellnummer, " +
+					"kategorie_code = @kategorie_code, " +
+					"status = @status, " +
+					"stornogrund = @stornogrund, " +
+					"anzahl_storno = @anzahl_storno, " +
+					"storno_warenwert = REPLACE(REPLACE(@storno_warenwert,'.',''),',','.'), " +
+					"storno_datum = IF(@storno_datum = '-',DATE('0000-00-00'),DATE(concat('20',mid(@storno_datum,7,2),'-',mid(@storno_datum,4,2),'-',left(@storno_datum,2)))), " +
+					"stornogebuehren = REPLACE(REPLACE(@stornogebuehren,'.',''),',','.'), " +
+					"retoure = @retoure, " +
+					"retoure_datum = IF(@retoure_datum = '-',DATE('0000-00-00'),DATE(concat('20',mid(@retoure_datum,7,2),'-',mid(@retoure_datum,4,2),'-',left(@retoure_datum,2)))), " +
+					"anzahl_retoure = @anzahl_retoure, " +
+					"retoure_warenwert = REPLACE(REPLACE(@retoure_warenwert,'.',''),',','.'), " +
+					"retoure_gebuehr = REPLACE(REPLACE(@retoure_gebuehr,'.',''),',','.'), " +
+					"anzahl = @anzahl, " +
+					"preis = REPLACE(REPLACE(@preis,'.',''),',','.'), " +
+					"zahlungsart = @zahlungsart, " +
+					"versandkosten = REPLACE(REPLACE(@versandkosten,'.',''),',','.'), " +
+					"aynmp_provision = REPLACE(REPLACE(@aynmp_provision,'.',''),',','.'), " +
+					"standard_provision = REPLACE(REPLACE(@standard_provision,'.',''),',','.'), " +
+					"voucher_wert = REPLACE(REPLACE(@voucher_wert,'.',''),',','.'), " +
+					"usertype = @usertype;";
+			break;
 	}
 }
 

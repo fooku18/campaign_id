@@ -164,10 +164,11 @@
 			}
 			return l[match];
 		}
-		function unitPlus(w,gr,t) {
+		function unitPlus(w,gr,t,ch) {
 			var lbl = gr + "-" + t,
 				c;
 			c = lbl == g.__tt? "checked" : "";
+			ch? c = "checked" : "";
 			return "<div class='unit unit-gran relative idontwantnobordabelow' style='width:" + w + "%;'>" +
 						"<div class='unit-label absolute'>" +
 							"<div class='inline-block unit-checkbox-gran relative'>" +
@@ -188,7 +189,7 @@
 				_this.__mode = v;
 				g.__tt = !g.__tt? "tt-Summe" : g.__tt;
 				switch(v) {
-					case "tt": {
+					case "tt": 
 						__init();
 						var dyn = function(v) {
 							var dO = document.createElement("div");dO.classList.add("unit-themen-content");
@@ -283,15 +284,43 @@
 						g.__d.__addListener(fun);
 						for(var x in g.__src) {g.__src[x].__addListener(fun);}
 						break;
-					}
-					case "kq": {
+					case "mv": 
 						__init();
 						break;
-					}
-					case "mv": {
+					case "ab":
+					case "kat": 
+						__init();
+						function _init() {
+							function _col() {
+								var _a = [];
+								kA.forEach(function(l) {
+									l.classList.contains("checked")? _a.push(l.id) : null;
+								})
+								return _a;
+							}	
+							var kA = [document.getElementById("kat-Mail"),
+								document.getElementById("kat-Call"),
+								document.getElementById("kat-Chat")],
+								fun = function() {
+									this.classList.contains("checked")? this.classList.remove("checked") : this.classList.add("checked");
+									g.__kat =_col();
+								}
+							kA.forEach(function(l) {
+								evtClick(l,fun.bind(l))
+							})
+							g.__kat = _col();
+						}
+						var _t = 	"<div id='kat-gran' class='unit-granularity'>" +
+										unitPlus(33.33,"kat","Mail",!0) + unitPlus(33.33,"kat","Call",!0) + unitPlus(33.33,"kat","Chat",!0) +
+									"</div>";
+						dB.innerHTML = _t;
+						_init();
+						break;
+					//add new cases for side-menu manipulation
+					//default just restores the initial menu
+					default: 
 						__init();
 						break;
-					}
 				}
 			}
 		}
@@ -316,11 +345,11 @@
 			}
 		}
 		evtClick(_lX,function() {_fun()})
+		var mCont = Array.prototype.slice.call(document.querySelectorAll(".mContainer li>a"),0);
 		var fun = function(a) {__g.__m.__changeMode(a.id)};
-		var kqL = document.getElementById("kq");evtClick(kqL,function() {fun(kqL)});
-		var tL = document.getElementById("tt");evtClick(tL,function() {fun(tL)});
-		var mV = document.getElementById("mv");evtClick(mV,function() {fun(mV)});
-		var kL = document.getElementById("k");evtClick(kL,function() {fun(kL)});
+		mCont.forEach(function(l) {
+			evtClick(l,function() {fun(l)});
+		})
 		var menuBtn = document.getElementById("menu-btn");
 		var menu = document.getElementById("menu");
 		menuBtn.addEventListener("click",function() {
@@ -365,7 +394,8 @@
 				if(l.status) s.push(l.id);
 			})
 			var _tt = this.__tt? this.__tt : null;
-			return [gran[this.__gran.__gran],s,{b:this.__d.__b,e:this.__d.__e},_tt]
+			var _kat = this.__kat? this.__kat : null;
+			return [gran[this.__gran.__gran],s,{b:this.__d.__b,e:this.__d.__e},_tt,_kat]
 		}
 		__g.writeCookie = function() {
 			document.cookie = "settings=" + btoa(JSON.stringify(this)) + ";max-age=" + 60*60*24*90;
@@ -429,6 +459,9 @@
 			__c.__kq = kq;
 			__c.__tt = tt;
 			__c.__mv = mv;
+			__c.__kat = kat;
+			__c.__ab = ab;
+			__c.__tk = tk;
 			//initial call
 			__c["__" + __c.__g.__m.__mode].call(__c);
 			console.log(__c);
@@ -773,7 +806,7 @@
 		_this.showLoading();
 		http("/ccdb/api/tt/?b=" + _g[2].b + "&e=" + _g[2].e + "&g=" + _g[0] + "&s=[" + _g[1].toString() + "]&tt=" + btoa(ls().join(",")) + "&tts=" + _g[3]).then(function(res) {
 			_this.__clear();
-			console.log(res);return;
+			//console.log(res);return;
 			var dataI = _g[3] == "tt-Summe"? fSum(JSON.parse(res)[0]) : fSin(JSON.parse(res)[0]);
 			var dataO = _g[3] == "tt-Summe"? fSum(JSON.parse(res)[1]) : fSin(JSON.parse(res)[1]);
 			_this.yAxis[0].update({
@@ -875,6 +908,142 @@
 		},function() {
 			_this.hideLoading();
 		})
+	}
+
+	function kat() {
+		function replacer(match,offset,string) {
+			var l = {
+				"&#246;": "ö",
+				"&#228;": "ä",
+				"&#252;": "ü"
+			}
+			return l[match];
+		}
+		function o2a(o) {
+			var x = [],
+				y = [],
+				po = JSON.parse(o);
+			for(var i in po) {
+				x.push(po[i].C.replace(/&#246;|&#228;|&#252;/g,replacer));
+				y.push(po[i].CNT);
+			}
+			return [x,y]
+		}
+		var _this = this;
+		var _g = _this.__g.interpret();
+		_this.showLoading();
+		http("/ccdb/api/kat?b=" + _g[2].b + "&e=" + _g[2].e + "&c=" + JSON.stringify(_g[4]) + "&s=[" + _g[1].toString() + "]").then(function(res) {
+			var _r = o2a(res);
+			_this.__clear();
+			_this.setTitle({text: "Anzahl Eingänge in Kategorien"},{text: "Aggregierte Eingänge in Kategorien im angegebenen Zeitraum"});
+			_this.yAxis[0].update({
+				title: {
+					text: "Ticketanzahl"
+				},
+				labels: {
+					formatter: function() {
+						return this.value
+					}
+				},
+				floor: 0,
+				min: 0,
+				ceiling: null
+			})
+			_this.options.plotOptions.series = {
+                borderWidth: 0,
+                dataLabels: {
+                    enabled: true
+                },
+				cursor: "pointer"
+			}
+			_this.xAxis[0].setCategories(_r[0]);
+			_this.addSeries({
+				type: "column",
+				data: _r[1],
+				name: "Anzahl Tickets",
+				color: "#7CB5EC",
+				point: {
+					events: {
+						click: function(e) {
+							
+						}
+					}
+				}
+			})
+			_this.hideLoading();
+		},function(err) {
+			_this.hideLoading();
+		})
+	}
+
+	function ab() {
+		function replacer(match,offset,string) {
+			var l = {
+				"&#246;": "ö",
+				"&#228;": "ä",
+				"&#252;": "ü"
+			}
+			return l[match];
+		}
+		function o2a(o) {
+			var x = [],
+				y = [],
+				po = JSON.parse(o);
+			for(var i in po) {
+				x.push(po[i].C.replace(/&#246;|&#228;|&#252;/g,replacer));
+				y.push(po[i].CNT);
+			}
+			return [x,y]
+		}
+		var _this = this;
+		var _g = _this.__g.interpret();
+		_this.showLoading();
+		http("/ccdb/api/ab?b=" + _g[2].b + "&e=" + _g[2].e + "&c=" + JSON.stringify(_g[4]) + "&s=[" + _g[1].toString() + "]").then(function(res) {
+			var _r = o2a(res);
+			_this.__clear();
+			_this.setTitle({text: "Anzahl Abschlüsse in AB-Codes"},{text: "Aggregierte Abschlüsse im angegebenen Zeitraum"});
+			_this.yAxis[0].update({
+				title: {
+					text: "Abschlüsse"
+				},
+				labels: {
+					formatter: function() {
+						return this.value
+					}
+				},
+				floor: 0,
+				min: 0,
+				ceiling: null
+			})
+			_this.options.plotOptions.series = {
+                borderWidth: 0,
+                dataLabels: {
+                    enabled: true
+                },
+				cursor: "pointer"
+			}
+			_this.xAxis[0].setCategories(_r[0]);
+			_this.addSeries({
+				type: "column",
+				data: _r[1],
+				name: "Anzahl Abschlüsse",
+				color: "#F45B5B",
+				point: {
+					events: {
+						click: function(e) {
+							
+						}
+					}
+				}
+			})
+			_this.hideLoading();
+		},function(err) {
+			_this.hideLoading();
+		})
+	}
+
+	function tk() {
+
 	}
 
 	//Highcharts general options
