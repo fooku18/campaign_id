@@ -1,16 +1,22 @@
-/*SELECT tN.SHOP_ID, COUNT(PROCESS_ID) FROM 
-(
-	SELECT SHOP_ID, PROCESS_ID
-	FROM ks_eingang 
-	WHERE (DATE(RECEIVE_DATE) BETWEEN '2016-12-01' AND '2017-01-31')
-	UNION ALL 
-	SELECT SHOP_ID, PROCESS_ID
-	FROM hs_reporting 
-	WHERE (DATE(RECEIVE_DATE) BETWEEN '2016-12-01' AND '2017-01-31')
-) AS tN
-GROUP BY tN.SHOP_ID 
-HAVING tN.SHOP_ID <> 0 
-ORDER BY COUNT(PROCESS_ID) DESC;*/
+SELECT t1.shopid,t1.haendlername,t1.ertrag,t2.C,t2.M FROM 
+	(SELECT shopid,haendlername,sum(ertrag) AS ertrag FROM kunden_bestellungen 
+	WHERE (datum BETWEEN '2016-12-01' AND '2017-01-31')
+	GROUP BY shopid) t1
+INNER JOIN 
+	(SELECT tN.SHOP_ID as shopid, SUM(IF(TEMPLATE LIKE "%call%",1,0)) AS C, SUM(IF(TEMPLATE NOT LIKE "%call%",1,0)) AS M FROM 
+	(
+		SELECT SHOP_ID, TEMPLATE
+		FROM ks_eingang 
+		WHERE (DATE(RECEIVE_DATE) BETWEEN '2016-12-01' AND '2017-01-31')
+		UNION ALL 
+		SELECT SHOP_ID, TEMPLATE
+		FROM hs_reporting 
+		WHERE (DATE(RECEIVE_DATE) BETWEEN '2016-12-01' AND '2017-01-31')
+	) AS tN
+	GROUP BY tN.SHOP_ID 
+	HAVING tN.SHOP_ID <> 0 
+	) t2
+ON t1.shopid = t2.shopid;
 /*INSERT INTO kunden_bestellungen_temp (  
 			datum,  
 			shopid,  
@@ -58,9 +64,9 @@ ORDER BY COUNT(PROCESS_ID) DESC;*/
 		WHERE bestellnummer IS NOT NULL   
 		GROUP BY bestellnummer;*/
 	
-SELECT kunden_bestellungen_temp.* FROM kunden_bestellungen RIGHT OUTER JOIN kunden_bestellungen_temp 
+/*SELECT kunden_bestellungen_temp.* FROM kunden_bestellungen RIGHT OUTER JOIN kunden_bestellungen_temp 
 ON kunden_bestellungen.bestellnummer = kunden_bestellungen_temp.bestellnummer 
-WHERE kunden_bestellungen.bestellnummer IS NULL;
+WHERE kunden_bestellungen.bestellnummer IS NULL;*/
 	
 	
 	

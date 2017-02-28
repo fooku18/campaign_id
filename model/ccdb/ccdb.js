@@ -521,3 +521,7 @@ module.exports.ab = function(b,e,s,c,cb) {
 		cb(null,res);
 	})
 }
+
+module.exports.tk = function(b,e) {
+	
+}

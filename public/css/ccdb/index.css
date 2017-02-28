@@ -25,6 +25,10 @@ a {
 	padding: 0 !important;
 }
 
+.floater-left {
+	float: left;
+}
+
 .macurs:hover {
 	cursor: pointer;
 }
@@ -79,6 +83,11 @@ a {
 	bottom: 0;
 	color: #ffffff;
 	font-size: 230%;
+}
+
+.icon-cont {
+	right: 0;
+	margin-right: 20px;
 }
 
 .icon-box {

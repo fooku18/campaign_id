@@ -103,4 +103,11 @@ router.get("/api/ab",function(req,res,next) {
 	})
 })
 
+router.get("/api/tk",function(req,res,next) {
+	model.tk(req.query.b,req.query.e,function(err,data) {
+		if(err) return res.status(400).send("fail") 
+			else res.status(200).send(data);
+	})
+})
+
 module.exports = router;
