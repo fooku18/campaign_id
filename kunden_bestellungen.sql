@@ -19,10 +19,10 @@
 -- Table structure for table `kunden_bestellungen`
 --
 
-DROP TABLE IF EXISTS `kunden_bestellungen`;
+DROP TABLE IF EXISTS `kunden_bestellungen_temp`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `kunden_bestellungen` (
+CREATE TABLE `kunden_bestellungen_temp` (
   `datum` date DEFAULT NULL,
   `shopid` int(10) DEFAULT NULL,
   `haendlername` varchar(300) DEFAULT NULL,

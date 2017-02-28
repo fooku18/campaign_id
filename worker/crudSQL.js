@@ -16,13 +16,21 @@ function _qND(tN) {
 			");"
 }
 function _qNI(tN) {
-	let _i = (tN == "ayn_bestellungen" || tN == "pp_bestellungen")? "tag" : (tN == "ks_chat")? "ID" : "TICKET_ID";
-	return "INSERT INTO " + tN + " SELECT tN.* FROM ( " +
-				"SELECT " + tN + "_temp.* FROM " + tN + " " +  
-				"RIGHT OUTER JOIN " + tN + "_temp " +
-				"ON " + tN + "." + _i + " = " + tN + "_temp." + _i + " " + 
-				"WHERE " + tN + "." + _i + " is null " +
-			") AS tN;";
+	let _i = (tN == "ayn_bestellungen" || tN == "pp_bestellungen")? "tag" : (tN == "kunden_bestellungen")? "bestellnummer" : (tN == "ks_chat")? "ID" : "TICKET_ID";
+	if(tN == "kunden_bestellungen") {
+		return	"INSERT INTO " + tN + " SELECT tN.* FROM ( " + 
+					"SELECT " + tN + "_temp.* FROM " + tN + " RIGHT OUTER JOIN " + tN + "_temp " + 
+					"ON " + tN + ".bestellnummer = " + tN + "_temp.bestellnummer " +
+					"WHERE " + tN + ".bestellnummer IS NULL " + 
+				") AS tN;";
+	} else {
+		return "INSERT INTO " + tN + " SELECT tN.* FROM ( " +
+					"SELECT " + tN + "_temp.* FROM " + tN + " " +  
+					"RIGHT OUTER JOIN " + tN + "_temp " +
+					"ON " + tN + "." + _i + " = " + tN + "_temp." + _i + " " + 
+					"WHERE " + tN + "." + _i + " IS NULL " +
+				") AS tN;";
+	}
 }
 function _qNU(tN) {
 	if(tN != "ks_chat") {
@@ -83,20 +91,46 @@ function _qBU(tN) {
 			"t1.retourenquote = t2.retourenquote " +
 			"WHERE t1.tag = t2.tag;";
 	} else {
-		return "UPDATE " + tN + " t1 " + 
-			"INNER JOIN " + tN + "_temp t2 " +
-			"ON t1.tag = t2.tag " + 
-			"SET t1.wochentag = t2.wochentag, " + 
-			"t1.anzahl_kunden = t2.anzahl_kunden, " +
-			"t1.anzahl_warenkoerbe = t2.anzahl_warenkoerbe, " +
-			"t1.anzahl_bestellungen = t2.anzahl_bestellungen, " +
-			"t1.anzahl_produkte = t2.anzahl_produkte, " +
-			"t1.umsatz = t2.umsatz, " +
-			"t1.versandkosten = t2.versandkosten, " +
-			"t1.gesamtumsatz = t2.gesamtumsatz, " +
-			"t1.ds_warenkorbwert = t2.ds_warenkorbwert, " +
-			"t1.stornierungsquote = t2.stornierungsquote " +
-			"WHERE t1.tag = t2.tag;";
+		if(tN == "kunden_bestellungen") {
+			return "UPDATE " + tN + " t1 " +
+				"INNER JOIN " + tN + "_temp t2 " +
+				"ON t1.bestellnummer = t2.bestellnummer " + 
+				"SET t1.datum = t2.datum, " + 
+				"t1.shopid = t2.shopid, " + 
+				"t1.haendlername = t2.haendlername, " + 
+				"t1.status = t2.status, " + 
+				"t1.stornogrund = t2.stornogrund, " + 
+				"t1.anzahl_storno = t2.anzahl_storno, " + 
+				"t1.storno_warenwert = t2.storno_warenwert, " + 
+				"t1.storno_datum = t2.storno_datum, " + 
+				"t1.stornogebuehren = t2.stornogebuehren, " + 
+				"t1.retoure = t2.retoure, " + 
+				"t1.retoure_datum = t2.retoure_datum, " + 
+				"t1.anzahl_retoure = t2.anzahl_retoure, " + 
+				"t1.retoure_warenwert = t2.retoure_warenwert, " + 
+				"t1.retoure_gebuehr = t2.retoure_gebuehr, " + 
+				"t1.anzahl = t2.anzahl, " + 
+				"t1.preis = t2.preis, " + 
+				"t1.zahlungsart = t2.zahlungsart, " + 
+				"t1.versandkosten = t2.versandkosten, " + 
+				"t1.ertrag = t2.ertrag, " + 
+				"t1.usertype = t2.usertype;";
+		} else {
+			return "UPDATE " + tN + " t1 " + 
+				"INNER JOIN " + tN + "_temp t2 " +
+				"ON t1.tag = t2.tag " + 
+				"SET t1.wochentag = t2.wochentag, " + 
+				"t1.anzahl_kunden = t2.anzahl_kunden, " +
+				"t1.anzahl_warenkoerbe = t2.anzahl_warenkoerbe, " +
+				"t1.anzahl_bestellungen = t2.anzahl_bestellungen, " +
+				"t1.anzahl_produkte = t2.anzahl_produkte, " +
+				"t1.umsatz = t2.umsatz, " +
+				"t1.versandkosten = t2.versandkosten, " +
+				"t1.gesamtumsatz = t2.gesamtumsatz, " +
+				"t1.ds_warenkorbwert = t2.ds_warenkorbwert, " +
+				"t1.stornierungsquote = t2.stornierungsquote " +
+				"WHERE t1.tag = t2.tag;";
+		}
 	}
 }
 function _qM(tN) {
@@ -145,7 +179,36 @@ function _qM(tN) {
 			"usertype  " +
 		"FROM kunden_bestellungen_temp_f  " +
 		"WHERE bestellnummer IS NOT NULL  " +
-		"GROUP BY bestellnummer;";
+		"GROUP BY bestellnummer;";		
+}
+
+function _qNT() {
+	return "(" + 
+		  "datum date DEFAULT NULL," + 
+		  "shopid int(10) DEFAULT NULL," + 
+		  "haendlername varchar(300) DEFAULT NULL," + 
+		  "bestellnummer varchar(20) DEFAULT NULL," + 
+		  "kategorie_code varchar(30) DEFAULT NULL," + 
+		  "status varchar(40) DEFAULT NULL," + 
+		  "stornogrund varchar(50) DEFAULT NULL," + 
+		  "anzahl_storno int(5) DEFAULT NULL," + 
+		  "storno_warenwert float(8,2) DEFAULT NULL," + 
+		  "storno_datum date DEFAULT NULL," + 
+		  "stornogebuehren float(8,2) DEFAULT NULL," + 
+		  "retoure varchar(5) DEFAULT NULL," + 
+		  "retoure_datum date DEFAULT NULL," + 
+		  "anzahl_retoure int(5) DEFAULT NULL," + 
+		  "retoure_warenwert float(8,2) DEFAULT NULL," + 
+		  "retoure_gebuehr float(8,2) DEFAULT NULL," + 
+		  "anzahl int(3) DEFAULT NULL," + 
+		  "preis float(8,2) DEFAULT NULL," + 
+		  "zahlungsart varchar(50) DEFAULT NULL," + 
+		  "versandkosten float(8,2) DEFAULT NULL," + 
+		  "aynmp_provision float(8,2) DEFAULT NULL," + 
+		  "standard_provision float(8,2) DEFAULT NULL," + 
+		  "voucher_wert float(8,2) DEFAULT NULL," + 
+		  "usertype varchar(50) DEFAULT NULL" + 
+		")";
 }
 
 module.exports = {
@@ -153,5 +216,6 @@ module.exports = {
 	_qNI: _qNI,
 	_qNU: _qNU,
 	_qBU: _qBU,
-	_qM: _qM
+	_qM: _qM,
+	_qNT: _qNT
 }

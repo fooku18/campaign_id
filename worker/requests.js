@@ -114,7 +114,7 @@ function xlsx2csv(path,file) {
 	fs.access("../private/ccdb/Datenexport/csv/" + file + ".csv",function(err,res) {
 		fs.writeFile("../private/ccdb/Datenexport/csv/" + file + ".csv", writeStr, function(err) {
 			if(err) return console.log(err);
-			console.log(file + ".csv erstellt");
+			console.log("CSV: " + file + ".csv erstellt");
 			var _f = file.toLowerCase()
 			createTemp(_f);
 		});
@@ -184,7 +184,7 @@ function download(url,type,header,table) {
 			let url = /f\?.*:CSV:/.exec(data.body);url = "http://10.172.253.14:8080/apex/" + url;
 			let wS = fs.createWriteStream("../private/ccdb/Datenexport/csv/" + type + "_bestellungen.csv");
 			wS.on("finish",function() {
-				console.log(type + "_bestellungen.csv erstellt");
+				console.log("CSV: " + type + "_bestellungen.csv erstellt");
 				createTemp(table);
 			});
 			reqPipe("GET",url,header,null,true,false).pipe(wS);
@@ -217,7 +217,7 @@ req("POST","http://10.172.253.14:8080/apex/wwv_flow.accept",postHeaders,apexBody
 		let ord90 = findMyWay([1,1,0,1,0,0,1],doc.getElementById(14000).nextSibling).getAttribute("href");ord90 = "http://10.172.253.14:8080/apex/" + ord90;
 		download(ordAYNurl,"AYN",headerGET,"ayn_bestellungen");
 		download(ordPPurl,"PP",headerGET,"pp_bestellungen");
-		//download(ord90,"kunden",headerGET,"kunden_bestellungen");
+		download(ord90,"kunden",headerGET,"kunden_bestellungen");
 	})
 })
 
@@ -236,70 +236,83 @@ function createTemp(table) {
 		data.forEach(function(v,i){
 			qS += v.Field + " " + v.Type + ",";
 		})
-		qS = "(" + qS.substr(0,qS.length-1) + ")"; 
-		var _f = t == "kunden_bestellungen"? "_f" : "";
-		connection.query("CREATE TABLE " + t + "_temp" + _f + " " + qS + ";",function(err,data) {
-			if(err) console.log(err);
-			let l = __dir.replace(/\\/g,"/").replace(/worker\/?/,"") + 'private/ccdb/sql/' + t + '.sql';
-			let lQ = __dir.replace(/\\/g,"/").replace(/worker\/?/,"") + 'private/ccdb/Datenexport/csv/' + t + '.csv';
-			let _qual = (t == "ayn_bestellungen" || t == "pp_bestellungen" || t == "kunden_bestellungen")? ";" : "|";
-			let q = _mL._loader(t,_qual);
-			fs.writeFile(l,q,function(err,data) {
-				exec("mysql -u " + opt.user + " -p" + opt.password + " < \"" + l + "\"",function(err,stdout,stderr) {
-					if(err) console.log(err);
-					if(!err) {
-						if(!t.match(/ayn|pp/i)) {
-							connection.query(_crud._qND(t),function(err,data) {
-								if(err) console.log(err);
-								if(!err) {
-									connection.query(_crud._qNU(t),function(err,data) {
-										if(err) console.log(err);
-										if(!err) {
-											connection.query(_crud._qNI(t),function(err,data) {
-												if(err) console.log(err);
-												if(!err) {
-													connection.query("DROP TABLE " + t + "_temp;",function(err,data) {
-														console.log(t + " erfolgreich aktualisiert");
-														connection.end();
-													})
-												}
-											})
-										}
-									})
-								}
-							})
-						} else {
-							if(t == "kunden_bestellungen") {
-								connection.query(_crud._qM(t),function(err,data) {
-									__f();	
-								})
-							} else {
-								__f();
-							}
-							let __f = function() {
-								connection.query(_crud._qNI(t),function(err,data) {
+		qS = "(" + qS.substr(0,qS.length-1) + ")";
+		let __gf = function() {
+			connection.query("CREATE TABLE " + t + "_temp " + qS + ";",function(err,data) {
+				if(err) console.log(err);
+				let l = __dir.replace(/\\/g,"/").replace(/worker\/?/,"") + 'private/ccdb/sql/' + t + '.sql';
+				let lQ = __dir.replace(/\\/g,"/").replace(/worker\/?/,"") + 'private/ccdb/Datenexport/csv/' + t + '.csv';
+				let _qual = (t == "ayn_bestellungen" || t == "pp_bestellungen" || t == "kunden_bestellungen")? ";" : "|";
+				let q = _mL._loader(t,_qual);
+				fs.writeFile(l,q,function(err,data) {
+					exec("mysql -u " + opt.user + " -p" + opt.password + " < \"" + l + "\"",function(err,stdout,stderr) {
+						if(err) console.log(err);
+						if(!err) {
+							if(!t.match(/ayn|pp/i) && !t.match(/kunden_bestellungen/)) {
+								connection.query(_crud._qND(t),function(err,data) {
 									if(err) console.log(err);
 									if(!err) {
-										connection.query(_crud._qBU(t),function(err,data) {
+										connection.query(_crud._qNU(t),function(err,data) {
 											if(err) console.log(err);
 											if(!err) {
-												connection.query("DROP TABLE " + t + "_temp;",function(err,data) {
-													if(err) {
-														connection.end();
-													} else {
-														console.log(t + " erfolgreich aktualisiert");
-														connection.end();
+												connection.query(_crud._qNI(t),function(err,data) {
+													if(err) console.log(err);
+													if(!err) {
+														connection.query("DROP TABLE " + t + "_temp;",function(err,data) {
+															console.log("MYSQL: " + t + " erfolgreich aktualisiert");
+															connection.end();
+														})
 													}
 												})
 											}
 										})
 									}
 								})
+							} else {
+								let __f = function() {
+									connection.query(_crud._qNI(t),function(err,data) {
+										if(err) console.log(err);
+										if(!err) {
+											connection.query(_crud._qBU(t),function(err,data) {
+												if(err) console.log(err);
+												if(!err) {
+													connection.query("DROP TABLE " + t + "_temp;",function(err,data) {
+														if(err) {
+															connection.end();
+														} else {
+															console.log("MYSQL: " + t + " erfolgreich aktualisiert");
+															connection.end();
+														}
+													})
+												}
+											})
+										}
+									})
+								}
+								if(t == "kunden_bestellungen") {
+									let _cQ = _crud._qM(t);
+									connection.query(_cQ,function(err,data) {
+										if(err) console.log(err);
+										connection.query("DROP TABLE kunden_bestellungen_temp_f;",function(err,data) {
+											if(err) console.log(err);
+											__f();
+										})
+									})
+								} else {
+									__f();
+								}
 							}
 						}
-					}
+					})
 				})
 			})
-		})
+		}
+		if(t == "kunden_bestellungen") {
+			connection.query("CREATE TABLE kunden_bestellungen_temp_f " + _crud._qNT(),function(res) {
+				__gf();
+			})
+		} else {
+			__gf();
+		}
 	})
 }

@@ -1,5 +1,5 @@
 USE ccdb;
-LOAD DATA LOCAL INFILE '/home/jakob/node/private/ccdb/Datenexport/csv/kunden_bestellungen.csv' INTO TABLE kunden_bestellungen_temp 
+LOAD DATA LOCAL INFILE 'C:/Users/j6er8a/Desktop/Projekt/node/private/ccdb/Datenexport/csv/kunden_bestellungen.csv' INTO TABLE kunden_bestellungen_temp_f 
 FIELDS TERMINATED BY ';' OPTIONALLY ENCLOSED BY '"' 
 LINES TERMINATED BY "\n" 
 IGNORE 1 LINES 
