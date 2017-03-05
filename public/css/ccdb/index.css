@@ -437,10 +437,17 @@ a {
 	display: block;
 }
 
+.table-show {
+	display: inline-table;
+}
+
 .layer-hide {
 	display: none;
 }
 
+.hide {
+	display: none;
+}
 .layer-row {
 	width: 100%;
 	padding-right: 20px;
@@ -449,6 +456,10 @@ a {
 
 .icon-lg-b {
 	font-size: 220%;
+}
+
+.icon-marg {
+	margin-left: 6px;
 }
 
 #layer-pop {
@@ -470,4 +481,27 @@ a {
 	height: 90%;
 	width: 100%;
 	overflow-y: auto;
+}
+
+.set-container {
+	width: 100%;
+}
+
+.set-lbl {
+	float: left;
+	width: 20%;
+}
+
+.set-val {
+	float: left;
+	width: 80%;
+}
+
+.set-half {
+	float: left;
+	width: 50%;
+}
+
+.set-unit {
+	margin-top: 2px;
 }

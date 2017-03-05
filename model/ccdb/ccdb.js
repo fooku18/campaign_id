@@ -380,7 +380,7 @@ module.exports.mv = function(b,e,n,cb) {
 }
 
 module.exports.mv_id = function(i,cb) {
-	let qry  = "SELECT tN.TID,CONCAT(DAY(tN.RD),'.',MONTH(tN.RD),'.',YEAR(tN.RD)) AS RD,CONCAT(DAY(tN.LD),'.',MONTH(tN.LD),'.',YEAR(tN.LD)) AS LD,tN.C AS C,tN.T AS T FROM (";
+	let qry  = "SELECT tN.TID,CONCAT(IF(LENGTH(DAY(tN.RD))=1,CONCAT('0',DAY(tN.RD)),DAY(tN.RD)),'.',IF(LENGTH(MONTH(tN.RD))=1,CONCAT('0',MONTH(tN.RD)),MONTH(tN.RD)),'.',YEAR(tN.RD)) AS RD,CONCAT(IF(LENGTH(DAY(tN.LD))=1,CONCAT('0',DAY(tN.LD)),DAY(tN.LD)),'.',IF(LENGTH(MONTH(tN.LD))=1,CONCAT('0',MONTH(tN.LD)),MONTH(tN.LD)),'.',YEAR(tN.LD)) AS LD,tN.C AS C,tN.T AS T FROM (";
 		qry += "SELECT TICKET_ID AS TID,RECEIVE_DATE AS RD, LAST_DATE_PROCESSED AS LD,CATEGORY AS C,TRANSACTION_CODE AS T FROM ks_eingang WHERE PROCESS_ID = " + i + " ";
 		qry += "UNION ALL ";
 		qry += "SELECT TICKET_ID AS TID,RECEIVE_DATE AS RD, LAST_DATE_PROCESSED AS LD,CATEGORY AS C,TRANSACTION_CODE AS T FROM hs_reporting WHERE PROCESS_ID = " + i + " ";
@@ -517,11 +517,89 @@ module.exports.ab = function(b,e,s,c,cb) {
 				"GROUP BY tN.C " +
 				"ORDER BY COUNT(tN.C) DESC;";
 	con.query(qry,function(err,res) {
-		if(err) cb(err);
+		if(err) {
+			cb(err);
+			return
+		}
 		cb(null,res);
 	})
 }
 
-module.exports.tk = function(b,e) {
-	
+module.exports.set_get = function(y,cb) {
+	let qry = "SELECT * FROM kosten WHERE jahr = " + y + ";";
+	con.query(qry,function(err,res) {
+		if(err) cb(err);
+		cb(null,res);
+	})	
+}
+
+module.exports.set_set = function(j,cb) {
+	var _c = 0;
+	function _chk() {
+		_c++;
+		_c == j._a.length? cb() : null;
+	}
+	j._a.forEach(function(l) {
+		con.query("SELECT COUNT(*) AS CNT FROM kosten WHERE jahr=" + l.jahr + " AND monat=" + l.monat + " AND service='" + l.service + "';",function(err,res) {
+			if(parseInt(res[0].CNT)) {
+				con.query("UPDATE kosten SET kosten=" + l.kosten + " WHERE jahr=" + l.jahr + " AND monat=" + l.monat + " AND service='" + l.service + "';",function(err,res) {
+					if(err) console.log(err);
+					_chk();
+				})
+			} else {
+				con.query("INSERT INTO kosten (jahr,monat,kosten,service) VALUES (" + l.jahr + "," + l.monat + "," + l.kosten + ",'" + l.service + "');",function(err,res) {
+					if(err) console.log(err);
+					_chk();
+				})
+			}
+		})
+	})
+}
+
+module.exports.tk = function(b,e,c,cb) {
+	var _b = c.indexOf("tk-Beschwerde") > -1? "AND CATEGORY IN ('KS_AYN_Lieferung')" : "";
+	var _ks = _b == ""? c.indexOf("tk-KS") > -1? "AND TRUE" : "AND FALSE" : "AND TRUE";
+	var _hs = _b == ""? c.indexOf("tk-HS") > -1? "AND TRUE" : "AND FALSE" : "AND TRUE";
+	let qry = 	"SELECT t2.Y,t2.M,t2.SHOP_ID,SUM(t2.EDIT_TIME) AS EDIT_TIME,COUNT(t2.TICKET_ID) AS CNT,t2.S FROM " + 
+					"(SELECT YEAR(DATE(RECEIVE_DATE)) AS Y,MONTH(DATE(RECEIVE_DATE)) AS M,SHOP_ID,EDIT_TIME_IN_MS AS EDIT_TIME, 'KS' AS S, TICKET_ID " + 
+					"FROM ks_eingang " + 
+					"WHERE (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "') " + 
+					"AND SHOP_ID <> 0 AND SHOP_ID IS NOT NULL " + _b + " " + _ks + " " + 
+					"UNION ALL " + 
+					"SELECT YEAR(DATE(RECEIVE_DATE)) AS Y,MONTH(DATE(RECEIVE_DATE)) AS M,SHOP_ID,EDIT_TIME_IN_MS AS EDIT_TIME, 'HS' AS S, TICKET_ID " + 
+					"FROM hs_reporting " + 
+					"WHERE (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "') " + 
+					"AND SHOP_ID <> 0 AND SHOP_ID IS NOT NULL " + _b + " " + _hs + ") t2 " + 
+				"GROUP BY t2.Y, t2.M, t2.S, t2.SHOP_ID;";
+	let qryE = 	"SELECT YEAR(datum) AS Y,MONTH(datum) AS M,shopid AS SHOP_ID,haendlername,sum(ertrag) AS ertrag FROM kunden_bestellungen " + 
+				"WHERE (datum BETWEEN '" + b + "' AND '" + e + "') " +
+				"GROUP BY YEAR(datum),MONTH(datum),shopid;";
+	let qryC = 	"SELECT jahr AS Y, monat AS M, kosten AS C, service AS S FROM kosten WHERE (jahr BETWEEN YEAR('" + b + "') AND YEAR('" + e + "'))";
+	con.query(qry,function(err,res) {
+		if(err) {
+			cb(err);
+			return
+		}
+		let _l = res;
+		con.query(qryE,function(err,res) {
+			if(err) {
+				cb(err);
+				return
+			}
+			let _e = res;
+			con.query(qryC,function(err,res) {
+				if(err) {
+					cb(err);
+					return
+				}
+				let _c = res;
+				let _o = {
+					l: _l,
+					e: _e,
+					c: _c
+				}
+				cb(null,_o)
+			})
+		})
+	})
 }

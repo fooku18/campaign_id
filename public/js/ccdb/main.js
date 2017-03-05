@@ -1,4 +1,4 @@
-(function(_hC) {
+var h = (function(_hC) {
 	function evtClick(l,fun) {
 		l.addEventListener("click",function() {
 			fun();
@@ -10,6 +10,55 @@
 			fun();
 		},false);
 	}
+	
+	function evtSubmit(l,fun) {
+		l.addEventListener("submit",function(e) {
+			fun(e);
+		},false);
+	}
+	/**
+	*** @class _layerHandler - returns an pop-up control instance to open an close an individually defined modal
+	*** @method open {int width, int height, string html-template} - opens an modal window (window.width + window.height if too large)
+	**/
+	function _layerHandler() {
+		var _this = this;
+		var _fun = function() {
+			_this.close();
+		}
+		var _l = document.querySelector("#layer"),
+			_lp = document.querySelector("#layer-pop"),
+			_lc = document.querySelector(".layer-b"),
+			_lX = document.querySelector("#layer-x");
+		evtClick(_lX,_fun)
+		function _chkDim() {
+			return [window.innerWidth,window.innerHeight]
+		}
+		function _d(w,h) {
+			var d = _chkDim();
+			var _w = w > d[0]? d[0] : w;
+			var	_h = h > d[1]? d[1] : h;
+			return [_w,_h]
+		}
+		this.open = function open(w,h,t) {
+			function show(l) {
+				l.classList.remove("hide");
+				l.classList.add("show");
+			}
+			var d = _d(w,h);
+			_lp.style.width = d[0] + "px";_lp.style.height = d[1] + "px";
+			_lc.innerHTML = t;
+			!_l.classList.contains("show")? show(_l) : null;
+		}
+		this.close = function close() {
+			function hide(l) {
+				l.classList.remove("show");
+				l.classList.add("hide");
+			}
+			_l.classList.contains("show")? hide(_l) : null;
+			_lc.innerHTML = "";
+		}
+	}
+	var _oLayerHandler = new _layerHandler();
 
 	function Source(id,imgSrc,label,checked) {
 		var ch = (!checked)? "checked" : "";
@@ -183,6 +232,50 @@
 		return {
 			__mode: "kq",
 			__changeMode: function(v) {
+				function _initBuilder(a,t) {
+					function _init() {
+						function _col() {
+							var _a = [];
+							kA.forEach(function(l) {
+								l.classList.contains("checked")? _a.push(l.id) : null;	
+							})
+							return _a
+						}
+						var kA = a.map(function(l) {
+							return document.getElementById(t + "-" + l)	
+						});
+						var fun = function() {
+							function _plaus(_this) {
+								var _b = 0;
+								kA.forEach(function(l) {
+									if(l != _this) {
+										if(l.classList.contains("checked")) _b++;
+									}
+								})
+								return _b;
+							}
+							if(this.classList.contains("checked")) {
+								if(!_plaus(this)) return;
+							}
+							this.classList.contains("checked")? this.classList.remove("checked") : this.classList.add("checked");
+							g["__" + t] = _col();
+						}
+						kA.forEach(function(l) {
+							evtClick(l,fun.bind(l));
+						})
+						g["__" + t] = _col();
+					}
+					var _t = "<div id='" + t + "-gran' class='unit-granularity'>" +
+								"###UNITS###" + 
+							"</div>",
+						_u = "",
+						_l = parseFloat(parseFloat(100/a.length).toFixed(2));
+					a.forEach(function(l) {
+						_u += unitPlus(_l,t,l,!0);
+					})
+					dB.innerHTML = _t.replace(/###UNITS###/,_u);
+					_init();
+				}
 				var __mBox = document.getElementById("chart-menu-content");
 				__mBox.classList.contains("expander")? null : __mBox.classList.add("expander");
 				_this = this;
@@ -290,31 +383,11 @@
 					case "ab":
 					case "kat": 
 						__init();
-						function _init() {
-							function _col() {
-								var _a = [];
-								kA.forEach(function(l) {
-									l.classList.contains("checked")? _a.push(l.id) : null;
-								})
-								return _a;
-							}	
-							var kA = [document.getElementById("kat-Mail"),
-								document.getElementById("kat-Call"),
-								document.getElementById("kat-Chat")],
-								fun = function() {
-									this.classList.contains("checked")? this.classList.remove("checked") : this.classList.add("checked");
-									g.__kat =_col();
-								}
-							kA.forEach(function(l) {
-								evtClick(l,fun.bind(l))
-							})
-							g.__kat = _col();
-						}
-						var _t = 	"<div id='kat-gran' class='unit-granularity'>" +
-										unitPlus(33.33,"kat","Mail",!0) + unitPlus(33.33,"kat","Call",!0) + unitPlus(33.33,"kat","Chat",!0) +
-									"</div>";
-						dB.innerHTML = _t;
-						_init();
+						_initBuilder(["Mail","Call","Chat"],"kat");
+						break;
+					case "tk": 
+						__init();
+						_initBuilder(["KS","HS","Beschwerde"],"tk");
 						break;
 					//add new cases for side-menu manipulation
 					//default just restores the initial menu
@@ -327,24 +400,10 @@
 	}
 
 	function addListeners(__g) {
-		var _l = document.getElementById("layer");
-		var _lI = document.getElementById("mv-table").firstChild.firstChild;
-		var _lX = document.getElementById("layer-x");
-		var _fun = function() {
-			function _rem() {
-				var _s = document.getElementById("mv-table").firstChild.firstChild.nextSibling? document.getElementById("mv-table").firstChild.firstChild.nextSibling : null;
-				while(_s) {
-					_s.parentNode.removeChild(_s);
-					_s = document.getElementById("mv-table").firstChild.firstChild.nextSibling;
-				}
-			}
-			if(_l.classList.contains("layer-show")) {
-				_l.classList.add("layer-hide");_l.classList.remove("layer-show");_rem();
-			} else {
-				_l.classList.remove("layer-hide");_l.classList.add("layer-show");
-			}
-		}
-		evtClick(_lX,function() {_fun()})
+		/**
+		***	initial block for setting UI events
+		**/
+		// Method Menu Events
 		var mCont = Array.prototype.slice.call(document.querySelectorAll(".mContainer li>a"),0);
 		var fun = function(a) {__g.__m.__changeMode(a.id)};
 		mCont.forEach(function(l) {
@@ -361,6 +420,7 @@
 				menu.classList.add("menu-down");
 			}
 		},false);
+		// Menu Expander Events
 		var chartMenuBtn = document.getElementById("chart-menu-symbol");
 		var chartMenuContent = document.getElementById("chart-menu-content");
 		chartMenuBtn.addEventListener("click",function() {
@@ -370,9 +430,75 @@
 				chartMenuContent.classList.add("expander");
 			}
 		},false);
-		var prefSave = document.getElementById("pref-btn");
+		// Save Button and Setting Button Events
+		var prefSave = document.getElementById("pref-btn"),
+			prefSet = document.querySelector("#pref-set");
 		evtClick(prefSave,function() {
 			__g.writeCookie();
+		})
+		evtClick(prefSet,function() {
+			var _fun = function(e) {
+				e.preventDefault();
+				http("/ccdb/api/set","password=" + document.getElementById("frmSetpw").value,!0).then(function(res) {
+					if(res.code == 0) {
+						document.querySelector("#frmSetpw").style.borderColor = "rgba(255,0,0,.5)";
+					} else {
+						__fun()
+					}
+				})
+			}
+			var __fun = function() {
+				http("/ccdb/api/set").then(function(res) {
+					var _rP = JSON.parse(res);
+					if(_rP[0] == 0) {
+						_oLayerHandler.open(400,160,_rP[1]);
+						var _f = document.querySelector("#frmSet");
+						evtSubmit(_f,_fun);
+					} else {
+						function _fill(res) {
+							var _p = JSON.parse(res);
+							!function _clear() {
+								_e.forEach(function(l) {
+									l.value = "0";
+								})
+							}()
+							_p.forEach(function(l) {
+								var _f = l.service + "-" + l.monat;
+								document.querySelector("[data-set=" + _f + "]").value = l.kosten.toString();
+							})
+						}
+						_oLayerHandler.open(400,600,_rP[1]);
+						var _e = Array.prototype.slice.call(document.querySelectorAll("[data-set-block]"),0);
+						//Handler
+						!function() {
+							var _funSel = function() {
+								http("ccdb/api/set_get?y=" + document.querySelector("#set-sel").value).then(function(res) {
+									!res.length? null : _fill(res);
+								})
+							};
+							var _funCon = function(e) {
+								e.preventDefault();
+								!function _col() {
+									var _y = document.querySelector("#set-sel").value,
+										_o = Object.assign({});_o._a = [];
+									_e.forEach(function(l) {
+										_o._a.push({"jahr":_y,"monat":l.getAttribute("data-set").split("-")[1],"kosten":l.value,"service":l.getAttribute("data-set").split("-")[0]});
+									})
+									http("/ccdb/api/set_set",_o,1,1).then(function(data) {
+										console.log(data);	
+									})
+								}()
+							}
+							evtChange(document.querySelector("#set-sel"),_funSel);
+							evtSubmit(document.querySelector("#frmSet"),_funCon);
+						}()
+						http("ccdb/api/set_get?y=" + document.querySelector("#set-sel").value).then(function(res) {
+							!res.length? null : _fill(res);
+						})
+					}
+				})
+			}
+			__fun();
 		})
 	}
 
@@ -395,7 +521,8 @@
 			})
 			var _tt = this.__tt? this.__tt : null;
 			var _kat = this.__kat? this.__kat : null;
-			return [gran[this.__gran.__gran],s,{b:this.__d.__b,e:this.__d.__e},_tt,_kat]
+			var _tk = this.__tk? this.__tk : null;
+			return [gran[this.__gran.__gran],s,{b:this.__d.__b,e:this.__d.__e},_tt,_kat,_tk]
 		}
 		__g.writeCookie = function() {
 			document.cookie = "settings=" + btoa(JSON.stringify(this)) + ";max-age=" + 60*60*24*90;
@@ -480,7 +607,11 @@
 		}
 		var _add = function(_vID) {
 			http("/ccdb/api/mv_id?i=" + _vID).then(function(res) {
-				var _lI = document.getElementById("mv-table").firstChild;
+				var _t = document.createElement("table"),
+					_tr = document.createElement("tr");
+				_tr.innerHTML = "<th>ID</th><th>Eingang</th><th>Abschluss</th><th>Kategorie</th><th>AB-Code</th>";
+				_t.classList.add("table","table-striped","table-hover");
+				_t.appendChild(_tr);
 				var r = JSON.parse(res);
 				for(var i in r) {
 					var _tr = document.createElement("tr");
@@ -490,40 +621,45 @@
 					var _tdC = document.createElement("td");_tdC.textContent = (r[i].C).replace(/&#246;|&#228;|&#252;/g,replacer);
 					var _tdT = document.createElement("td");_tdT.textContent = (r[i].T).replace(/&#246;|&#228;|&#252;/g,replacer);
 					_tr.appendChild(_tdI);_tr.appendChild(_tdR);_tr.appendChild(_tdL);_tr.appendChild(_tdC);_tr.appendChild(_tdT);
-					_lI.appendChild(_tr);
+					_t.appendChild(_tr);
 				}
+				_oLayerHandler.open(850,600,_t.outerHTML);
 			})
 		}
 		return {
 			exec: function(vID) {
-				this._show(vID);
-			},
-			_show: function(vID) {
-				var _l = document.getElementById("layer");
 				_add(vID);
-				_l.classList.remove("layer-hide");
-				_l.classList.add("layer-show");
 			}
 		}
 	}
 
-	//api request
-	function http(src,params) {
+	/** REST CALLS
+	*** @params {string src} - Target Source {string params} - Parameters to include {int post} - 1 if post 0 if get {int json} - 1 if json 0 if not
+	*** @return {promise}
+	**/
+	function http(src,params,post,json) {
 		var p = params || null;
 		var deferred = new Promise(function(resolve,reject) {
 			var xhr = new XMLHttpRequest();
-			xhr.open("GET",src,true);
+			!post? xhr.open("GET",src,true) : xhr.open("POST",src,true);
+			post? json? xhr.setRequestHeader("Content-Type","application/json") : xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded") : null;
 			xhr.onreadystatechange = function() {
 				if(xhr.readyState == 4 && xhr.status == 200) {
 					resolve(xhr.responseText);
 				}
 				if(xhr.status != 200) reject();
 			}
-			xhr.send(p)
+			var _p = json? typeof(p) == "object"? JSON.stringify(p) : p : p;
+			xhr.send(_p)
 		});
 		return deferred;
 	}
-
+	
+	/** 
+	*** HIGHCHARTS APPLICATION SPECIFIC METHODS
+	*** THESE FUNCTIONS ARE ATTACHED TO THE HIGHCHARTS CHART OBJECT 
+	*** USAGE: Highcharts.charts[0].{METHOD}
+	**/
 	function kq() {
 		_this = this;
 		function setArray(s) {
@@ -1043,10 +1179,16 @@
 	}
 
 	function tk() {
-
+		var _this = this;
+		var _g = _this.__g.interpret();
+		http("/ccdb/api/tk?b=" + _g[2].b + "&e=" + _g[2].e + "&tk=" + _g[5].toString() + "&s=[" + _g[1].toString() + "]").then(function(res) {
+			console.log(res);
+		})
 	}
 
-	//Highcharts general options
+	/**
+	*** HIGHCHARTS GENERAL CONFIG
+	**/
 	function highchartsBoot() {
 		_hC.setOptions({
 			lang: {
@@ -1070,4 +1212,6 @@
 		var __c = _hC.chart(cB,o);
 		return __c;
 	}
+	//TEST TO BE REMOVED ******************************************************
+	return _oLayerHandler
 }(Highcharts))

@@ -18,15 +18,16 @@ html
 		script(type="text/javascript",src="/js/libs/highcharts.js")
 		script(type="text/javascript" src="/js/libs/bootstrap-datepicker.js")
 		script(type="text/javascript" src="/js/libs/bootstrap.min.js")
-		script(type="text/javascript",src="/js/ccdb/main.js")
 	body
 		div.heading-bar.relative
 			div.vert-center.absolute.icon-box.macurs
 				span.glyphicon.glyphicon-th.icon-lg.hor-center#menu-btn
 			div.vert-center.icon-cont.absolute
-				div.icon-box.macurs.floater-left
+				div.icon-box.icon-marg.macurs.floater-left
+					span.glyphicon.glyphicon-random.icon-lg.hor-center#pref-novo
+				div.icon-box.icon-marg.macurs.floater-left
 					span.glyphicon.glyphicon-tasks.icon-lg.hor-center#pref-set
-				div.icon-box.macurs.floater-left
+				div.icon-box.icon-marg.macurs.floater-left
 					span.glyphicon.glyphicon-floppy-disk.icon-lg.hor-center#pref-btn
 				div.clear
 			div#menu.shadow.absolute.menu-up
@@ -78,17 +79,19 @@ html
 						span.glyphicon.glyphicon-list.icon-lg.hor-center
 			div.chart
 				div#chart-box
-		div#layer.absolute.max-height.max-width.layer-hide
+		div#layer.absolute.max-height.max-width.hide
 			div.relative.max-height.max-width
 				div#layer-pop.absolute
 					div.layer-row
 						span#layer-x.glyphicon.glyphicon-remove-sign.pull-right.icon-lg-b.macurs
 					div#layer-t
 						div.layer-b
-							table#mv-table.table.table-striped.table-hover
+							table#mv-table.table.table-striped.table-hover.hide
 								tr
 									th ID
 									th Eingang
 									th Abschluss
 									th Kategorie
 									th AB-Code
+		script(type="text/javascript",src="/js/ccdb/main.js")
+					
