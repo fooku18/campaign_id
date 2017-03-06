@@ -575,6 +575,7 @@ module.exports.tk = function(b,e,c,cb) {
 				"WHERE (datum BETWEEN '" + b + "' AND '" + e + "') " +
 				"GROUP BY YEAR(datum),MONTH(datum),shopid;";
 	let qryC = 	"SELECT jahr AS Y, monat AS M, kosten AS C, service AS S FROM kosten WHERE (jahr BETWEEN YEAR('" + b + "') AND YEAR('" + e + "'))";
+	let qryT = 	"SELECT";
 	con.query(qry,function(err,res) {
 		if(err) {
 			cb(err);

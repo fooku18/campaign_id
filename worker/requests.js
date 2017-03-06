@@ -13,7 +13,6 @@ const __dir = path.dirname(require.main.filename);
 const _mL = require("./dataLoadSQL.js");
 const _crud = require("./crudSQL.js");
 
-
 function twoDigits(val) {
 	if(val.toString().length < 2) {
 		return "0" + val;
@@ -228,10 +227,10 @@ function createTemp(table) {
 		database: "ccdb",
 		password: "ccdb"
 	}
-	
 	let t = table;
 	const connection = mysql.createConnection(opt);
 	let qS = "";
+	let _oC = 0;
 	connection.query("SHOW COLUMNS FROM " + t + ";",function(err,data) {
 		data.forEach(function(v,i){
 			qS += v.Field + " " + v.Type + ",";
@@ -259,7 +258,44 @@ function createTemp(table) {
 													if(err) console.log(err);
 													if(!err) {
 														connection.query("DROP TABLE " + t + "_temp;",function(err,data) {
+															function _fun() {
+																var _aD = new Date(),
+																	_aDM = _aD.getMonth(),
+																	_aDY = _aD.getFullYear(),
+																	_sixM = 1000 * 60 * 60 * 24 * 30 * 6,
+																	_bD = new Date(_aD - _sixM),
+																	_bDM = _bD.getMonth() + 1,
+																	_bDY = _bD.getFullYear();
+																while(_bDM != _aDM+1) {
+																	_bDM != 12? _bDM++ : _bDM = 1;
+																	_bDM != 12? null : _bDY++;
+																	console.log("M: " + _bDM);
+																	console.log("Y: " + _bDY);
+																	var _t = 	"UPDATE kosten SET " + 
+																					"tickets = " + 
+																					"(SELECT COUNT(*) " +
+																					"FROM ###T### " +
+																					"WHERE MONTH(DATE(RECEIVE_DATE)) = " + _bDM + " AND YEAR(DATE(RECEIVE_DATE)) = " + _bDY + "), " +
+																					"edit_time = " +
+																					"(SELECT SUM(EDIT_TIME_IN_MS) " + 
+																					"FROM ###T### " + 
+																					"WHERE MONTH(DATE(RECEIVE_DATE)) = " + _bDM + " AND YEAR(DATE(RECEIVE_DATE)) = " + _bDY + ") " +
+																				"WHERE jahr = " + _bDY + " AND monat = " + _bDM + " AND service = '###S###';";
+																	var _tks = _t.replace(/###S###/g,"ks").replace(/###T###/g,"ks_eingang"),
+																		_ths = _t.replace(/###S###/g,"hs").replace(/###T###/g,"hs_reporting");
+																	connection.query(_tks,function(err,res) {
+																		if(err) console.log(err);
+																		console.log("MYSQL: kosten_ks erfolgreich aktualisiert");
+																	})
+																	connection.query(_ths,function(err,res) {
+																		if(err) console.log(err);
+																		console.log("MYSQL: kosten_hs erfolgreich aktualisiert");
+																	})
+																}
+															}
 															console.log("MYSQL: " + t + " erfolgreich aktualisiert");
+															_oC++;
+															_oC == 2? _fun() : null;
 															connection.end();
 														})
 													}

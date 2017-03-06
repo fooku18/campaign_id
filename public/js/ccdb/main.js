@@ -405,12 +405,19 @@ var h = (function(_hC) {
 		**/
 		// Method Menu Events
 		var mCont = Array.prototype.slice.call(document.querySelectorAll(".mContainer li>a"),0);
-		var fun = function(a) {__g.__m.__changeMode(a.id)};
+		var fun = function(a) {
+			__g.__m.__changeMode(a.id)
+			document.querySelector("[data-headline]").textContent = a.textContent;
+		};
 		mCont.forEach(function(l) {
 			evtClick(l,function() {fun(l)});
 		})
 		var menuBtn = document.getElementById("menu-btn");
 		var menu = document.getElementById("menu");
+		menu.addEventListener("click",function() {
+			menu.classList.remove("menu-down");
+			menu.classList.add("menu-up");
+		},false);
 		menuBtn.addEventListener("click",function() {
 			if(menu.classList.contains("menu-down")) {
 				menu.classList.remove("menu-down");
@@ -1182,7 +1189,10 @@ var h = (function(_hC) {
 		var _this = this;
 		var _g = _this.__g.interpret();
 		http("/ccdb/api/tk?b=" + _g[2].b + "&e=" + _g[2].e + "&tk=" + _g[5].toString() + "&s=[" + _g[1].toString() + "]").then(function(res) {
-			console.log(res);
+			var _s = ""
+			var _d = d.data;
+			
+			_worker("postMessage(d.data);",JSON.parse(res),function(r){console.log(r.data)});
 		})
 	}
 
@@ -1212,6 +1222,23 @@ var h = (function(_hC) {
 		var __c = _hC.chart(cB,o);
 		return __c;
 	}
+	/**
+	*** CREATE WORKER AS BLOB - JS IN NEW THREAD
+	*** @param {string s} - worker script {object d} - data passed to worker {function cb} - callback function
+	***	END s WITH postMessage(data) TO PASS BACK DATA TO THE MAIN THREAD
+	**/
+	function _worker(s,d,cb) {
+		var t = "self.onmessage = function(d){###INPUT###}",
+			_s = t.replace(/###INPUT###/,s),
+			_blob = new Blob([_s],{type:"application/javascript"}),
+			worker = new Worker(URL.createObjectURL(_blob));
+		// @return {array r.data} - returned data
+		worker.onmessage = function(r) {
+			cb(r)
+		}
+		worker.postMessage(d);
+	}
+	
 	//TEST TO BE REMOVED ******************************************************
 	return _oLayerHandler
 }(Highcharts))

@@ -63,7 +63,7 @@ html
 					div.chart-menu-content-box
 						div#chart-menu-content-box-content
 							div.chart-menu-inner-content
-								h3.my-headline.madefault Einstellungen
+								h3.my-headline.madefault(data-headline="") Einstellungen
 								div#unit-dynamic
 								div#unit-sources
 								div.unit-granularity
@@ -82,16 +82,10 @@ html
 		div#layer.absolute.max-height.max-width.hide
 			div.relative.max-height.max-width
 				div#layer-pop.absolute
-					div.layer-row
-						span#layer-x.glyphicon.glyphicon-remove-sign.pull-right.icon-lg-b.macurs
-					div#layer-t
-						div.layer-b
-							table#mv-table.table.table-striped.table-hover.hide
-								tr
-									th ID
-									th Eingang
-									th Abschluss
-									th Kategorie
-									th AB-Code
+					div#layer-border
+						div.layer-row
+							span#layer-x.glyphicon.glyphicon-remove-sign.pull-right.icon-lg-b.macurs
+						div#layer-t
+							div.layer-b
 		script(type="text/javascript",src="/js/ccdb/main.js")
 					

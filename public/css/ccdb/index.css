@@ -429,8 +429,13 @@ a {
 #layer {
 	top: 0;
 	left: 0;
-	background-color: rgba(0,0,0,.7);
+	background-color: rgba(255,255,255,.5);
 	z-index: 2;
+}
+
+#layer-border {
+	border: 8px solid rgba(0,0,0,.5);
+    border-radius: 20px;
 }
 
 .layer-show {
