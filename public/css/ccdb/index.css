@@ -510,3 +510,52 @@ a {
 .set-unit {
 	margin-top: 2px;
 }
+
+.be-container {
+	width: 100%;
+	height: 100%;
+}
+
+.be-s {
+	width: 6.5%;
+	height: 100%;
+	float: left;
+}
+
+.be-m {
+	width: 40%;
+	height: 100%;
+	border: 2px solid rgba(0,0,0,.4);
+	float: left;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+.be-m-b {
+	height: 100%;
+	padding: 2px;	
+}
+
+.be-unit {
+	position: relative;
+	cursor: move;
+	height: 30px;
+	background-color: rgba(95,192,239,.3);
+	margin-bottom: 2px;
+}
+
+.be-unit-i {
+	font-size: .85em;
+	position: absolute;
+	top: 50%;
+	left: 5%;
+	transform: translate(0,-50%);
+}	
+
+.drag-none {
+	background-color: rgba(255,255,255,1);		
+}
+
+.drag-act {
+	background-color: rgba(66,169,150,.13);	
+}

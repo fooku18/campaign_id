@@ -534,7 +534,7 @@ module.exports.set_get = function(y,cb) {
 }
 
 module.exports.set_set = function(j,cb) {
-	var _c = 0;
+	let _c = 0;
 	function _chk() {
 		_c++;
 		_c == j._a.length? cb() : null;
@@ -556,10 +556,89 @@ module.exports.set_set = function(j,cb) {
 	})
 }
 
+module.exports.set_be = function(cb) {
+	function _c(t) {
+		if(t == "") return "";
+		return 	"<div class='be-unit' draggable='true' data-be-unit=" + t + ">" + 
+					"<div class='be-unit-i'>" + 
+						"<span>" + t + "</span>" + 
+					"</div>" + 
+				"</div>";
+	}
+	let _s = 	"!function() {" + 
+					"function _c(t) {" +
+						"var _d = document.createElement(\"div\")," + 
+						"	 __d = document.createElement(\"div\")," + 
+						"	 _s = document.createElement(\"span\");" +
+						"_d.classList.add('be-unit');__d.classList.add('be-unit-i');_s.textContent = t;" +
+						"__d.appendChild(_s);_d.appendChild(__d);_trgt.appendChild(_d);" +
+						"_src.removeChild(document.querySelector('[data-be-unit=' + t + ']'));" +
+					"}" +
+					"var _trgt = document.querySelectorAll('.be-m-b')[1]," + 
+					"	 _src = document.querySelectorAll('.be-m-b')[0];" + 
+					"[].forEach.call(document.querySelectorAll('.be-unit'),function(l) {" + 
+						"l.addEventListener('dragstart',function(e) {" +
+							"l.style.opacity = '.5';" + 
+							"e.dataTransfer.dropEffect = 'move';" +
+							"e.dataTransfer.setData('text/plain',l.firstChild.textContent);" +
+							"_trgt.classList.remove('drag-none');_trgt.classList.add('drag-act');" +
+						"},false);" + 
+						"l.addEventListener('dragend',function(e) {" +
+							"l.style.opacity = '1';" + 
+							"_trgt.classList.remove('drag-act');_trgt.classList.add('drag-none');" +
+							"console.log(e);" +
+						"},false);" + 
+					"});" + 
+					"_trgt.addEventListener('dragover',function(e) {" +
+						"e.preventDefault();" + 
+					"},false);" +
+					"_trgt.addEventListener('drop',function(e) {" +
+						"_c(e.dataTransfer.getData('text/plain'));" +
+					"},false);" + 
+				"}()";
+	let _t = 	"<div class='be-container'>" + 
+					"<div class='be-s'></div>" + 
+					"<div class='be-m'>" + 
+						"<div class='be-m-b'>" + 
+							"###L###" + 
+						"</div>" + 
+					"</div>" + 
+					"<div class='be-s'></div>" + 
+					"<div class='be-m'>" + 
+						"<div class='be-m-b drag-none'>" + 
+							"###R###" + 
+						"</div>" + 
+					"</div>" + 
+					"<div class='be-s'></div>" + 
+					"<div class='clear'></div>" + 
+				"</div>";
+	let _l = "";
+	let _r = "";
+	let qryA = 	"SELECT DISTINCT(CATEGORY) AS C FROM ks_eingang WHERE CATEGORY IS NOT NULL AND CATEGORY NOT IN (SELECT * FROM kosten_be) " +
+				"UNION ALL " + 
+				"SELECT DISTINCT(CATEGORY) AS C FROM hs_reporting WHERE CATEGORY IS NOT NULL AND CATEGORY NOT IN (SELECT * FROM kosten_be);";
+	let qryB = 	"SELECT CATEGORY AS C FROM kosten_be;";
+	con.query(qryA,function(err,res) {
+		if(err) console.log(err);
+		res.forEach(function(l) {
+			_l += _c(l.C)	
+		})
+		let __t = _t.replace(/###L###/,_l);
+		con.query(qryB,function(err,res) {
+			if(err) console.log(err);
+			res.forEach(function(l) {
+				_r += _c(l.C)
+			})
+			let ___t = __t.replace(/###R###/,_r);
+			cb(null,{t:___t,s:_s});
+		})
+	})
+}
+
 module.exports.tk = function(b,e,c,cb) {
-	var _b = c.indexOf("tk-Beschwerde") > -1? "AND CATEGORY IN ('KS_AYN_Lieferung')" : "";
-	var _ks = _b == ""? c.indexOf("tk-KS") > -1? "AND TRUE" : "AND FALSE" : "AND TRUE";
-	var _hs = _b == ""? c.indexOf("tk-HS") > -1? "AND TRUE" : "AND FALSE" : "AND TRUE";
+	let _b = c.indexOf("tk-Beschwerde") > -1? "AND CATEGORY IN ('KS_AYN_Lieferung')" : "";
+	let _ks = _b == ""? c.indexOf("tk-KS") > -1? "AND TRUE" : "AND FALSE" : "AND TRUE";
+	let _hs = _b == ""? c.indexOf("tk-HS") > -1? "AND TRUE" : "AND FALSE" : "AND TRUE";
 	let qry = 	"SELECT t2.Y,t2.M,t2.SHOP_ID,SUM(t2.EDIT_TIME) AS EDIT_TIME,COUNT(t2.TICKET_ID) AS CNT,t2.S FROM " + 
 					"(SELECT YEAR(DATE(RECEIVE_DATE)) AS Y,MONTH(DATE(RECEIVE_DATE)) AS M,SHOP_ID,EDIT_TIME_IN_MS AS EDIT_TIME, 'KS' AS S, TICKET_ID " + 
 					"FROM ks_eingang " + 

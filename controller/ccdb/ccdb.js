@@ -219,15 +219,21 @@ router.post("/api/set",urlParser,function(req,res,next) {
 	}
 })
 
-router.get("/api/set_get",function(req,res,next) {
+function _authChk() {
 	if(!dec.admin) {
-		res.status(403).send("unauthorized");
-		return
+		return 0
 	} else {
 		if(dec.admin.indexOf("ccdb") < 0) {
-			res.status(403).send("unauthorized");
-			return		
+			return 0
 		}
+		return !0
+	}
+}
+
+router.get("/api/set_get",function(req,res,next) {
+	if(!_authChk()) {
+		res.status(403).send("unauthorized");
+		return
 	}
 	model.set_get(req.query.y,function(err,data) {
 		if(err) {
@@ -240,14 +246,9 @@ router.get("/api/set_get",function(req,res,next) {
 })
 
 router.post("/api/set_set",bodyParser.json(),function(req,res,next) {
-	if(!dec.admin) {
+	if(!_authChk()) {
 		res.status(403).send("unauthorized");
 		return
-	} else {
-		if(dec.admin.indexOf("ccdb") < 0) {
-			res.status(403).send("unauthorized");
-			return		
-		}
 	}
 	model.set_set(req.body,function(err,data) {
 		if(err) {
@@ -255,6 +256,21 @@ router.post("/api/set_set",bodyParser.json(),function(req,res,next) {
 			return
 		} else {
 			res.status(200).send("OK");	
+		}
+	})
+})
+
+router.get("/api/set_be",function(req,res,next) {
+	if(!_authChk()) {
+		res.status(403).send("unauthorized");
+		return
+	}
+	model.set_be(function(err,data) {
+		if(err) {
+			res.status(401).send("error");
+			return
+		} else {
+			res.status(200).send(data);	
 		}
 	})
 })

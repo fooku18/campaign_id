@@ -439,7 +439,8 @@ var h = (function(_hC) {
 		},false);
 		// Save Button and Setting Button Events
 		var prefSave = document.getElementById("pref-btn"),
-			prefSet = document.querySelector("#pref-set");
+			prefSet = document.querySelector("#pref-set"),
+			prefBe = document.querySelector("#pref-be");
 		evtClick(prefSave,function() {
 			__g.writeCookie();
 		})
@@ -506,6 +507,15 @@ var h = (function(_hC) {
 				})
 			}
 			__fun();
+		})
+		evtClick(prefBe,function() {
+			http("/ccdb/api/set_be").then(function(res) {
+				var _p = JSON.parse(res);
+				_oLayerHandler.open(600,400,_p.t);
+				eval(_p.s);
+			},function(err) {
+				console.log(err);
+			})
 		})
 	}
 
