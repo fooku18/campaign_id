@@ -275,4 +275,19 @@ router.get("/api/set_be",function(req,res,next) {
 	})
 })
 
+router.get("/api/set_be_s",function(req,res,next) {
+	if(!_authChk()) {
+		res.status(403).send("unauthorized");
+		return
+	}
+	model.set_be_s(req.query.u,function(err,data) {
+		if(err) {
+			res.status(401).send("error");
+			return
+		} else {
+			res.status(200).send(data);	
+		}
+	})
+})
+
 module.exports = router;
