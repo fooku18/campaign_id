@@ -1198,11 +1198,9 @@ var h = (function(_hC) {
 	function tk() {
 		var _this = this;
 		var _g = _this.__g.interpret();
-		http("/ccdb/api/tk?b=" + _g[2].b + "&e=" + _g[2].e + "&tk=" + _g[5].toString() + "&s=[" + _g[1].toString() + "]").then(function(res) {
-			var _s = ""
-			var _d = d.data;
-			
-			_worker("postMessage(d.data);",JSON.parse(res),function(r){console.log(r.data)});
+		http("/ccdb/api/tk?b=" + _g[2].b + "&e=" + _g[2].e + "&tk=" + _g[5].toString()).then(function(res) {
+			var _p = JSON.parse(res);
+			_worker("postMessage(" + _p[1] + ");",_p[0],function(r){console.log(r.data)});
 		})
 	}
 
@@ -1233,8 +1231,8 @@ var h = (function(_hC) {
 		return __c;
 	}
 	/**
-	*** CREATE WORKER AS BLOB - JS IN NEW THREAD
-	*** @param {string s} - worker script {object d} - data passed to worker {function cb} - callback function
+	*** CREATE WORKER AS BLOB TO EXECUTE JS IN NEW THREAD
+	*** @param {string s} - worker script | {object d} - data passed to worker | {function cb} - callback function
 	***	END s WITH postMessage(data) TO PASS BACK DATA TO THE MAIN THREAD
 	**/
 	function _worker(s,d,cb) {

@@ -4,7 +4,7 @@ const mysql_config = require("../../db/mysql_config_ccdb.js");
 const fs = require("fs");
 const path = require('path');
 const __dir = path.dirname(require.main.filename);
-const _templates = require(__dir + "/private/ccdb/templates.js");
+const _templates = require(__dir + "/model/ccdb/templates/templates.js");
 const service_config = require(__dir + "/private/ccdb/service_config.json");
 
 const con = mysql.createConnection({
@@ -627,7 +627,7 @@ module.exports.set_be_s = function(l,cb) {
 }
 
 module.exports.tk = function(b,e,c,cb) {
-	let _b = c.indexOf("tk-Beschwerde") > -1? "AND CATEGORY IN ('KS_AYN_Lieferung')" : "";
+	let _b = c.indexOf("tk-Beschwerde") > -1? "AND CATEGORY IN (SELECT CATEGORY FROM kosten_be)" : "";
 	let _ks = _b == ""? c.indexOf("tk-KS") > -1? "AND TRUE" : "AND FALSE" : "AND TRUE";
 	let _hs = _b == ""? c.indexOf("tk-HS") > -1? "AND TRUE" : "AND FALSE" : "AND TRUE";
 	let qry = 	"SELECT t2.Y,t2.M,t2.SHOP_ID,SUM(t2.EDIT_TIME) AS EDIT_TIME,COUNT(t2.TICKET_ID) AS CNT,t2.S FROM " + 
@@ -644,8 +644,7 @@ module.exports.tk = function(b,e,c,cb) {
 	let qryE = 	"SELECT YEAR(datum) AS Y,MONTH(datum) AS M,shopid AS SHOP_ID,haendlername,sum(ertrag) AS ertrag FROM kunden_bestellungen " + 
 				"WHERE (datum BETWEEN '" + b + "' AND '" + e + "') " +
 				"GROUP BY YEAR(datum),MONTH(datum),shopid;";
-	let qryC = 	"SELECT jahr AS Y, monat AS M, kosten AS C, service AS S FROM kosten WHERE (jahr BETWEEN YEAR('" + b + "') AND YEAR('" + e + "'))";
-	let qryT = 	"SELECT";
+	let qryC = 	"SELECT jahr AS Y, monat AS M, kosten AS C, service AS S, tickets AS T, edit_time AS E FROM kosten WHERE (jahr BETWEEN YEAR('" + b + "') AND YEAR('" + e + "'))";
 	con.query(qry,function(err,res) {
 		if(err) {
 			cb(err);
@@ -669,7 +668,7 @@ module.exports.tk = function(b,e,c,cb) {
 					e: _e,
 					c: _c
 				}
-				cb(null,_o)
+				cb(null,[_o,_templates._tk_f()])
 			})
 		})
 	})
