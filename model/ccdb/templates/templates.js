@@ -56,9 +56,12 @@ module.exports._f = function() {
 						"})" +
 					"}" + 
 					"_trgt.addEventListener('dragover',function(e) {" +
+						"var e = e || event;" +
 						"e.preventDefault();" + 
 					"},false);" +
 					"_trgt.addEventListener('drop',function(e) {" +
+						"var e = e || event;" +
+						"e.preventDefault();" +
 						"_c(e.dataTransfer.getData('text/plain'));" +
 					"},false);" + 
 					"function _col() {" + 
@@ -106,41 +109,27 @@ module.exports._t = function() {
 }	
 
 module.exports._tk_f = function() {
-	return 	"(function(tl,te,tc) {" +
-				"var _tl = Array.prototype.slice.call(tl,0);" +
-				"_tl.forEach(function(l,_i) {" +
-				"for(var i=0;i<=tc.length-1;i++) {" +
-					"if(tc[i].Y == l.Y && tc[i].M == l.M && tc[i].S.toLowerCase() == l.S.toLowerCase()) {" +
-						"_tl[_i].T = tc[i].T;" +
-						"_tl[_i].E = tc[i].E;" +
-						"_tl[_i].C = tc[i].C;" +
-						"break;" +
-					"}" +
-				"}" +
-				"for(var j=0;j<=te.length-1;j++) {" +
-					"if(te[j].Y == l.Y && te[j].M == l.M && te[j].SHOP_ID == l.SHOP_ID) {" +
-						"_tl[_i].haendlername = te[j].haendlername;" +
-						"_tl[_i].ertrag = te[j].ertrag;" +
-						"break;" +
-					"}" +
-				"}" +
-				"});" +
-				"var __tl = Object.prototype;" +
-				"_tl.forEach(function(l) {" +
-					"if(!__tl[l.Y]) __tl[l.Y] = {};" +
-					"if(!__tl[l.Y][l.M]) __tl[l.Y][l.M] = {};" +
-					"if(!__tl[l.Y][l.M][l.S]) __tl[l.Y][l.M][l.S] = {" +
-						"'E': l.E," +
-						"'C': l.C," +
-						"'T': l.T" +
+	return 	"(function(t,c) {" +
+				"var _c = {}," +
+				"	 _t = {};" + 
+				"c.forEach(function(l) {" +
+					"!_c[l.S]? _c[l.S] = {} : null;" +
+					"!_c[l.S][l.Y]? _c[l.S][l.Y] = {} : null;" +
+					"!_c[l.S][l.Y][l.M]? _c[l.S][l.Y][l.M] = {} : null;" +
+					"_c[l.S][l.Y][l.M] = {" +
+					"	CTicket: (l.C/l.T === Infinity)? 0 : parseFloat(parseFloat(l.C/l.T).toFixed(3))," +
+					"	CTime: (l.C/l.E === Infinity)? 0 : parseFloat(parseFloat(l.C/l.E).toFixed(20))" +
 					"};" +
-					"if(!__tl[l.Y][l.M][l.S][l.SHOP_ID]) __tl[l.Y][l.M][l.S][l.SHOP_ID] = {" +
-						"'CNT': l.CNT," +
-						"'EDIT_TIME': l.EDIT_TIME," +
-						"'haendlername': l.haendlername," +
-						"'ertrag': l.ertrag" +
-					"}" +
 				"});" +
-				"ret" + "urn __tl" +
-			"})(d.data.l,d.data.e,d.data.c)";
+				"t.forEach(function(l) {" +
+					"if(!_t[l.Y]) _t[l.Y] = {};" +
+					"if(!_t[l.Y][l.M]) _t[l.Y][l.M] = [];" +
+					"l['C_TICKET_KS'] = _c['ks'][l.Y][l.M]['CTicket'] * l.CNT_KS;" +
+					"l['C_TICKET_HS'] = _c['hs'][l.Y][l.M]['CTicket'] * l.CNT_HS;" +
+					"l['C_TICKET_TIME_KS'] = _c['ks'][l.Y][l.M]['CTime'] * l.EDIT_TIME_KS;" +
+					"l['C_TICKET_TIME_HS'] = _c['hs'][l.Y][l.M]['CTime'] * l.EDIT_TIME_HS;" +
+					"_t[l.Y][l.M].push(l)" +
+				"});" +
+				"return _t" + 
+			"})(d.data.l,d.data.c)";
 }

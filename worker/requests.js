@@ -12,6 +12,7 @@ const path = require("path");
 const __dir = path.dirname(require.main.filename);
 const _mL = require("./dataLoadSQL.js");
 const _crud = require("./crudSQL.js");
+const xlsx2 = require("xlsx");
 
 function twoDigits(val) {
 	if(val.toString().length < 2) {
@@ -93,6 +94,16 @@ function xlD2mysqlD(serial) {
 }
 
 function xlsx2csv(path,file) {
+	function replacer(str) {
+		function _nr(s) {
+			return new RegExp(s,"g")
+		}
+		var _c = ["&#246;","&#228;","&#252;"],
+		_t = ["ö","ä","ü"],
+		_r = "";
+		_r = str.replace(_nr(_c[0]),_t[0]).replace(_nr(_c[1]),_t[1]).replace(_nr(_c[2]),_t[2]);
+		return _r
+	}
 	let obj = xlsx.parse(path);
 	let rows = [];
 	let writeStr = "";
@@ -107,6 +118,7 @@ function xlsx2csv(path,file) {
 			if(typeof(rows[k][l]) === "number") {
 				if(rows[k][l].toString().indexOf(".")>-1) rows[k][l] = xlD2mysqlD(rows[k][l]);
 			}
+			if(typeof(rows[k][l]) === "string") rows[k][l] = replacer(rows[k][l]);
 		}
 		writeStr += rows[k].join("|") + "\n";
 	}
@@ -352,3 +364,56 @@ function createTemp(table) {
 		}
 	})
 }
+/*
+var _wb = xlsx2.readFile("/home/jakob/node/private/ccdb/Datenexport/KS_Eingang.xlsx",{type:"binary"});
+var _ws = _wb.Sheets[_wb.SheetNames[0]];
+var _wsC = xlsx2.utils.sheet_to_csv(_ws,{FS:"|",RS:"\n"});
+fs.writeFile("/home/jakob/node/private/ccdb/Datenexport/Test.csv",_wsC,function(err,data) {
+	if(err) {
+		console.log(err);
+		return
+	}
+	console.log("SUCCESS");
+})
+
+function replacer(str) {
+	//console.log(typeof(str));
+	function _nr(s) {
+		return new RegExp(s,"g")
+	}
+	var _c = ["&#246;","&#228;","&#252;"],
+	_t = ["ö","ä","ü"],
+	_r = "";
+	_r = str.replace(_nr(_c[0]),_t[0]).replace(_nr(_c[1]),_t[1]).replace(_nr(_c[2]),_t[2]);
+	return _r
+}
+let obj = xlsx.parse("/home/jakob/node/private/ccdb/Datenexport/KS_Eingang.xlsx");
+let rows = [];
+let writeStr = "";
+for(let i=0;i<obj.length;i++) {
+	let sheet = obj[i];
+	for(let j=0;j<sheet["data"].length;j++) {
+		rows.push(sheet["data"][j]);
+	}
+}
+for(let k = 0;k<rows.length; k++) {
+	for(let l=0;l<rows[k].length;l++) {
+		if(typeof(rows[k][l]) === "number") {
+			//if(rows[k][l].toString().indexOf(".")>-1) rows[k][l] = xlD2mysqlD(rows[k][l]);
+		}
+		if(typeof(rows[k][l]) === "string") rows[k][l] = replacer(rows[k][l]);
+	}
+	writeStr += rows[k].join("|") + "\n";
+}
+fs.access("/home/jakob/node/private/ccdb/Datenexport/Test.csv",function(err,res) {
+	fs.writeFile("/home/jakob/node/private/ccdb/Datenexport/Test.csv", writeStr, function(err) {
+		if(err) {
+			console.log(err);
+			return
+		}
+		console.log("SUCCESS");
+		//var _f = file.toLowerCase()
+		//createTemp(_f);
+	});
+})
+*/

@@ -630,20 +630,24 @@ module.exports.tk = function(b,e,c,cb) {
 	let _b = c.indexOf("tk-Beschwerde") > -1? "AND CATEGORY IN (SELECT CATEGORY FROM kosten_be)" : "";
 	let _ks = _b == ""? c.indexOf("tk-KS") > -1? "AND TRUE" : "AND FALSE" : "AND TRUE";
 	let _hs = _b == ""? c.indexOf("tk-HS") > -1? "AND TRUE" : "AND FALSE" : "AND TRUE";
-	let qry = 	"SELECT t2.Y,t2.M,t2.SHOP_ID,SUM(t2.EDIT_TIME) AS EDIT_TIME,COUNT(t2.TICKET_ID) AS CNT,t2.S FROM " + 
-					"(SELECT YEAR(DATE(RECEIVE_DATE)) AS Y,MONTH(DATE(RECEIVE_DATE)) AS M,SHOP_ID,EDIT_TIME_IN_MS AS EDIT_TIME, 'KS' AS S, TICKET_ID " + 
-					"FROM ks_eingang " + 
-					"WHERE (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "') " + 
+	let qry = 	"SELECT tJ1.Y,tJ1.M,tJ1.SHOP_ID,tJ2.SHOP_NAME,tJ1.EDIT_TIME_SUM,tJ1.EDIT_TIME_KS,tJ1.EDIT_TIME_HS,tJ1.CNT_SUM,tJ1.CNT_KS,tJ1.CNT_HS,tJ2.NET_PROFIT FROM " +
+				"(SELECT t2.Y,t2.M,t2.SHOP_ID,SUM(t2.EDIT_TIME) AS EDIT_TIME_SUM,SUM(IF(S='KS',t2.EDIT_TIME,0)) AS EDIT_TIME_KS, SUM(IF(S='HS',t2.EDIT_TIME,0)) AS EDIT_TIME_HS,COUNT(t2.TICKET_ID) AS CNT_SUM, SUM(IF(S='KS',1,0)) AS CNT_KS, SUM(IF(S='HS',1,0)) AS CNT_HS FROM " +
+					"(SELECT YEAR(DATE(RECEIVE_DATE)) AS Y,MONTH(DATE(RECEIVE_DATE)) AS M,SHOP_ID,EDIT_TIME_IN_MS AS EDIT_TIME, 'KS' AS S, TICKET_ID " +
+					"FROM ks_eingang " +
+					"WHERE (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "') " +
 					"AND SHOP_ID <> 0 AND SHOP_ID IS NOT NULL " + _b + " " + _ks + " " + 
-					"UNION ALL " + 
-					"SELECT YEAR(DATE(RECEIVE_DATE)) AS Y,MONTH(DATE(RECEIVE_DATE)) AS M,SHOP_ID,EDIT_TIME_IN_MS AS EDIT_TIME, 'HS' AS S, TICKET_ID " + 
-					"FROM hs_reporting " + 
-					"WHERE (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "') " + 
-					"AND SHOP_ID <> 0 AND SHOP_ID IS NOT NULL " + _b + " " + _hs + ") t2 " + 
-				"GROUP BY t2.Y, t2.M, t2.S, t2.SHOP_ID;";
-	let qryE = 	"SELECT YEAR(datum) AS Y,MONTH(datum) AS M,shopid AS SHOP_ID,haendlername,sum(ertrag) AS ertrag FROM kunden_bestellungen " + 
-				"WHERE (datum BETWEEN '" + b + "' AND '" + e + "') " +
-				"GROUP BY YEAR(datum),MONTH(datum),shopid;";
+					"UNION ALL  " +
+					"SELECT YEAR(DATE(RECEIVE_DATE)) AS Y,MONTH(DATE(RECEIVE_DATE)) AS M,SHOP_ID,EDIT_TIME_IN_MS AS EDIT_TIME, 'HS' AS S, TICKET_ID  " +
+					"FROM hs_reporting  " +
+					"WHERE (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "')  " +
+					"AND SHOP_ID <> 0 AND SHOP_ID IS NOT NULL " + _b + " " + _ks + ") t2  " +
+				"GROUP BY t2.Y, t2.M, t2.SHOP_ID) tJ1 " +
+				"INNER JOIN  " +
+					"(SELECT YEAR(datum) AS Y,MONTH(datum) AS M,shopid AS SHOP_ID,haendlername AS SHOP_NAME,sum(ertrag) AS NET_PROFIT FROM kunden_bestellungen " +
+					"WHERE (datum BETWEEN '" + b + "' AND '" + e + "') " +
+					"GROUP BY YEAR(datum),MONTH(datum),shopid) tJ2 " +
+				"ON tJ1.Y = tJ2.Y AND tJ1.M = tJ2.M AND tJ1.SHOP_ID = tJ2.SHOP_ID " + 
+				"ORDER BY tJ1.Y ASC, tJ1.M ASC, tJ1.CNT_SUM DESC;";
 	let qryC = 	"SELECT jahr AS Y, monat AS M, kosten AS C, service AS S, tickets AS T, edit_time AS E FROM kosten WHERE (jahr BETWEEN YEAR('" + b + "') AND YEAR('" + e + "'))";
 	con.query(qry,function(err,res) {
 		if(err) {
@@ -651,25 +655,17 @@ module.exports.tk = function(b,e,c,cb) {
 			return
 		}
 		let _l = res;
-		con.query(qryE,function(err,res) {
+		con.query(qryC,function(err,res) {
 			if(err) {
 				cb(err);
 				return
 			}
-			let _e = res;
-			con.query(qryC,function(err,res) {
-				if(err) {
-					cb(err);
-					return
-				}
-				let _c = res;
-				let _o = {
-					l: _l,
-					e: _e,
-					c: _c
-				}
-				cb(null,[_o,_templates._tk_f()])
-			})
+			let _c = res;
+			let _o = {
+				l: _l,
+				c: _c
+			}
+			cb(null,[_o,_templates._tk_f()])
 		})
 	})
 }

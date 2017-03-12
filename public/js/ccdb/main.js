@@ -196,12 +196,14 @@ var h = (function(_hC) {
 	}
 
 	function bootMode(http,g) {
-		var dB = document.getElementById("unit-dynamic");
+		var dB = document.getElementById("unit-dynamic"),
+			uS = document.querySelector("#unit-sources"),
+			uG = document.querySelector(".unit-granularity");
 		function cleardB() {
 			dB.innerHTML = "";
 		}
 		function __init() {
-			cleardB();
+			cleardB();uS.style.display = "block";uG.style.display = "block";
 			g.__d.__clearListener();
 			for(var x in g.__src) {g.__src[x].__removeListener();}
 		}
@@ -213,12 +215,13 @@ var h = (function(_hC) {
 			}
 			return l[match];
 		}
-		function unitPlus(w,gr,t,ch) {
+		function unitPlus(w,gr,t,ch,nS) {
 			var lbl = gr + "-" + t,
-				c;
+				c,_nS;
 			c = lbl == g.__tt? "checked" : "";
+			_nS = nS? "" : "idontwantnobordabelow";
 			ch? c = "checked" : "";
-			return "<div class='unit unit-gran relative idontwantnobordabelow' style='width:" + w + "%;'>" +
+			return "<div class='unit unit-gran relative " + _nS + "' style='width:" + w + "%;'>" +
 						"<div class='unit-label absolute'>" +
 							"<div class='inline-block unit-checkbox-gran relative'>" +
 								"<div class='unit-inner-checkbox absolute " + c + "' id='" + gr + "-" + t + "'></div>" +
@@ -232,7 +235,7 @@ var h = (function(_hC) {
 		return {
 			__mode: "kq",
 			__changeMode: function(v) {
-				function _initBuilder(a,t) {
+				function _initBuilder(a,t,nS,excl,r) {
 					function _init() {
 						function _col() {
 							var _a = [];
@@ -241,8 +244,18 @@ var h = (function(_hC) {
 							})
 							return _a
 						}
+						function _colE(__this) {
+							console.log(__this);
+							var _a = [];
+							kA.forEach(function(l) {
+								if(l != this) {
+									l.classList.remove("checked");	
+								} else _a.push(l.id);
+							})
+							return _a
+						}
 						var kA = a.map(function(l) {
-							return document.getElementById(t + "-" + l)	
+							return document.getElementById(t.replace(/ /g,"-") + "-" + l)	
 						});
 						var fun = function() {
 							function _plaus(_this) {
@@ -257,8 +270,9 @@ var h = (function(_hC) {
 							if(this.classList.contains("checked")) {
 								if(!_plaus(this)) return;
 							}
+							console.log(this.classList);
 							this.classList.contains("checked")? this.classList.remove("checked") : this.classList.add("checked");
-							g["__" + t] = _col();
+							g["__" + t] = !excl? _col() : _colE(this);
 						}
 						kA.forEach(function(l) {
 							evtClick(l,fun.bind(l));
@@ -270,8 +284,9 @@ var h = (function(_hC) {
 							"</div>",
 						_u = "",
 						_l = parseFloat(parseFloat(100/a.length).toFixed(2));
-					a.forEach(function(l) {
-						_u += unitPlus(_l,t,l,!0);
+					a.forEach(function(l,i) {
+						var _r = r? r[i] : !0; 
+						_u += unitPlus(_l,t.replace(/ /g,"-"),l,_r,nS);
 					})
 					dB.innerHTML = _t.replace(/###UNITS###/,_u);
 					_init();
@@ -379,6 +394,7 @@ var h = (function(_hC) {
 						break;
 					case "mv": 
 						__init();
+						uG.style.display = "none";
 						break;
 					case "ab":
 					case "kat": 
@@ -387,7 +403,9 @@ var h = (function(_hC) {
 						break;
 					case "tk": 
 						__init();
-						_initBuilder(["KS","HS","Beschwerde"],"tk");
+						uS.style.display = "none";
+						_initBuilder(["KS","HS","Beschwerde"],"tk",!0);
+						_initBuilder(["Kosten pro Ticket","Kosten pro Zeiteinheit"],"tk-z",!0,!0,[0,!0]);
 						break;
 					//add new cases for side-menu manipulation
 					//default just restores the initial menu
@@ -403,6 +421,15 @@ var h = (function(_hC) {
 		/**
 		***	initial block for setting UI events
 		**/
+		// Window Handler
+		window.addEventListener("dragover",function(e) {
+			var e = e || event;
+			e.preventDefault();
+		},false);
+		window.addEventListener("drop",function(e) {
+			var e = e || event;
+			e.preventDefault();
+		},false);
 		// Method Menu Events
 		var mCont = Array.prototype.slice.call(document.querySelectorAll(".mContainer li>a"),0);
 		var fun = function(a) {
@@ -1198,9 +1225,90 @@ var h = (function(_hC) {
 	function tk() {
 		var _this = this;
 		var _g = _this.__g.interpret();
+		_this.showLoading();
 		http("/ccdb/api/tk?b=" + _g[2].b + "&e=" + _g[2].e + "&tk=" + _g[5].toString()).then(function(res) {
 			var _p = JSON.parse(res);
-			_worker("postMessage(" + _p[1] + ");",_p[0],function(r){console.log(r.data)});
+			var _fun = function(d) {
+				function sum(o) {
+					for(var i in o) {
+						if(i != "SHOP_ID" && i != "Y" && i != "M") _o[o.SHOP_ID][i] += o[i];
+					}
+				}
+				function cr(o) {
+					_o[o.SHOP_ID] = {};
+					for(var i in o) {
+						if(i != "SHOP_ID") _o[o.SHOP_ID][i] = o[i];
+					}
+				}
+				var _o = {};
+				for(var i in d) {
+					for(var j in d[i]) {
+						for(var k in d[i][j]) {
+							!_o[d[i][j][k].SHOP_ID]? cr(d[i][j][k]) : sum(d[i][j][k]);
+						}
+					}
+				}
+				var _a = [];
+				for(var i in _o) {
+					_a.push([_o[i].CNT_HS,_o[i].CNT_KS,_o[i].CNT_SUM,_o[i].C_TICKET_HS,
+							 _o[i].C_TICKET_KS,_o[i].C_TICKET_TIME_HS,_o[i].C_TICKET_TIME_KS,
+							 _o[i].EDIT_TIME_HS,_o[i].EDIT_TIME_KS,_o[i].EDIT_TIME_SUM,_o[i].NET_PROFIT,
+							 _o[i].SHOP_NAME]);
+				}
+				_a.sort(function(a,b) {
+					return b[2] - a[2]
+				});
+				var _x = [],
+					_cKS = [],
+					_cHS = [];
+					
+				for(var i = 0;i<10;i++) {
+					_x.push(_a[i][11]);
+					_cKS.push(_a[i][1]);
+					_cHS.push(_a[i][0]);
+				}
+				_this.__clear();
+				_this.setTitle({text: "Händler-Ranking nach verursachten Kontakten"},{text: ""});
+				_this.yAxis[0].update({
+					title: {
+						text: "Kontakte"
+					},
+					labels: {
+						formatter: function() {
+							return this.value
+						}
+					},
+					floor: 0,
+					min: 0,
+					ceiling: null
+				})
+				_this.options.plotOptions.series = {
+					borderWidth: 0,
+					dataLabels: {
+						enabled: true
+					},
+					cursor: "default"
+				}
+				_this.xAxis[0].setCategories(_x);
+				_this.addSeries({
+					type: "column",
+					data: _cKS,
+					name: "KS-Tickets",
+					color: "#F45B5B",
+					stacking: "normal",
+					stack: 0
+				})
+				_this.addSeries({
+					type: "column",
+					data: _cHS,
+					name: "HS-Tickets",
+					color: "#F45B5B",
+					stacking: "normal",
+					stack: 0
+				})
+				_this.hideLoading();
+			}
+			_worker("postMessage(" + _p[1] + ");",_p[0],_fun);
 		})
 	}
 
@@ -1242,7 +1350,7 @@ var h = (function(_hC) {
 			worker = new Worker(URL.createObjectURL(_blob));
 		// @return {array r.data} - returned data
 		worker.onmessage = function(r) {
-			cb(r)
+			cb(r.data)
 		}
 		worker.postMessage(d);
 	}
