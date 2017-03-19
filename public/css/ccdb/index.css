@@ -163,7 +163,7 @@ a {
 
 #chart-menu-content {
 	display: none;
-	min-width: 400px;
+	width: 400px;
 	height: 100%;
 }
 
@@ -302,6 +302,11 @@ a {
 
 .unit::last {
 	border-right: none;
+}
+
+.unit-tk {
+	height: 50%;
+	width: 100%;
 }
 
 .unit-label {
@@ -588,4 +593,12 @@ a {
 
 .drag-act {
 	background-color: rgba(66,169,150,.13);	
+}
+
+.unselectable {
+   -moz-user-select: -moz-none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+   -ms-user-select: none;
+   user-select: none;
 }

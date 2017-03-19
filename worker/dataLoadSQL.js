@@ -1,8 +1,8 @@
 const path = require('path');
 const __dir = path.dirname(module.filename);
-var _p = __dir.match(/.*\\/)[0] + "private\\ccdb\\Datenexport\\csv\\";
-var __p = _p.replace(/\\/g,"/");
-
+const __parent = path.join(__dir,"../","/");
+var _p = __parent.match(/.*\\/)? __parent.match(/.*\\/)[0] + "private\\ccdb\\Datenexport\\csv\\" : __parent + "private/ccdb/Datenexport/csv/";
+var __p = _p.match(/\\/g)? _p.replace(/\\/g,"/") : _p;
 function _loader(t,q) {
 	switch(t) {
 		case "ayn_bestellungen": 
@@ -186,9 +186,10 @@ function _loader(t,q) {
 				  "@DURATION_REVIEW, " +
 				  "@TRANSACTIONCODE) " +
 				"SET " +
+				  "ID = @ID," +
 				  "CATEGORY = @CATEGORY, " +
-				  "CHAT_START = DATE(@CHAT_START), " +
-				  "CHAT_END = DATE(@CHAT_END), " +
+				  "CHAT_START = @CHAT_START, " +
+				  "CHAT_END = @CHAT_END, " +
 				  "DURATION_ROUTING = @DURATION_ROUTING, " +
 				  "DURATION_REVIEW = @DURATION_REVIEW, " +
 				  "TRANSACTIONCODE = @TRANSACTIONCODE;";

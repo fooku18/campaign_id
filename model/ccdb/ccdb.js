@@ -19,16 +19,16 @@ function qryBuilder(t,b,e) {
 		case "kq":
 			return "(SELECT tA.d,tA.ayn as tAYN,SUM(tA.ppde) as tPPDE,SUM(tA.ppaut) as tPPAUT,SUM(tA.hs) as tHS,SUM(tB.ayn) as oAYN,SUM(tB.pp) as oPP FROM " +
 						"(SELECT t1.d,SUM(IF(t1.service=\"ayn\",1,0)) as ayn,SUM(IF(t1.service=\"ppde\",1,0)) as ppde,SUM(IF(t1.service=\"ppaut\",1,0)) as ppaut,SUM(IF(t1.service=\"hs\",1,0)) as hs FROM ( " +
-							"(SELECT DATE(RECEIVE_DATE) as d,CASE WHEN category COLLATE latin1_general_cs like \"%AYN%\" THEN \"ayn\" " +
+							"(SELECT DATE(RECEIVE_DATE) as d,CASE WHEN category like \"%AYN%\" THEN \"ayn\" " +
 								 "WHEN incoming_address = \"austria@postpay.de\" then \"ppaut\" " +
-								 "WHEN category COLLATE latin1_general_cs like \"%PP%\" THEN \"ppde\" " +
+								 "WHEN category like \"%PP%\" THEN \"ppde\" " +
 								 "WHEN incoming_address like \"%allyouneed%\" THEN \"ayn\" " +
 								 "WHEN incoming_address like \"%meinpaket%\" THEN \"ayn\" " +
 								 "ELSE \"ppde\" END as service " +
 							"FROM ks_eingang WHERE (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "')) " +
 							"UNION ALL " +
-							"(SELECT DATE(CHAT_START),CASE WHEN category COLLATE latin1_general_cs like \"%AYN%\" THEN \"ayn\" " +
-								   "WHEN category COLLATE latin1_general_cs like \"%PP%\" THEN \"ppde\" " +
+							"(SELECT DATE(CHAT_START),CASE WHEN category like \"%AYN%\" THEN \"ayn\" " +
+								   "WHEN category like \"%PP%\" THEN \"ppde\" " +
 								   "END as service " +
 							"FROM ks_chat WHERE (DATE(CHAT_START) BETWEEN '" + b + "' AND '" + e + "')) " +
 							"UNION ALL " +
@@ -626,11 +626,22 @@ module.exports.set_be_s = function(l,cb) {
 	})
 }
 
+module.exports.tk_list = function(cb) {
+	let qry = "SELECT DISTINCT(SHOPID) FROM kunden_bestellungen;";
+	con.query(qry,function(err,res) {
+		if(err) {
+			cb(err);
+			return;
+		}
+		cb(null,res);
+	})
+}
+
 module.exports.tk = function(b,e,c,cb) {
 	let _b = c.indexOf("tk-Beschwerde") > -1? "AND CATEGORY IN (SELECT CATEGORY FROM kosten_be)" : "";
 	let _ks = _b == ""? c.indexOf("tk-KS") > -1? "AND TRUE" : "AND FALSE" : "AND TRUE";
 	let _hs = _b == ""? c.indexOf("tk-HS") > -1? "AND TRUE" : "AND FALSE" : "AND TRUE";
-	let qry = 	"SELECT tJ1.Y,tJ1.M,tJ1.SHOP_ID,tJ2.SHOP_NAME,tJ1.EDIT_TIME_SUM,tJ1.EDIT_TIME_KS,tJ1.EDIT_TIME_HS,tJ1.CNT_SUM,tJ1.CNT_KS,tJ1.CNT_HS,tJ2.NET_PROFIT FROM " +
+	let qry = 	"SELECT tJ1.Y,tJ1.M,tJ1.SHOP_ID,tJ2.SHOP_NAME,tJ1.EDIT_TIME_SUM,tJ1.EDIT_TIME_KS,tJ1.EDIT_TIME_HS,tJ1.CNT_SUM,tJ1.CNT_KS,tJ1.CNT_HS,IFNULL(tJ2.NET_PROFIT,0) AS NET_PROFIT,IFNULL(tJ2.ORDERS,0) AS ORDERS FROM " +
 				"(SELECT t2.Y,t2.M,t2.SHOP_ID,SUM(t2.EDIT_TIME) AS EDIT_TIME_SUM,SUM(IF(S='KS',t2.EDIT_TIME,0)) AS EDIT_TIME_KS, SUM(IF(S='HS',t2.EDIT_TIME,0)) AS EDIT_TIME_HS,COUNT(t2.TICKET_ID) AS CNT_SUM, SUM(IF(S='KS',1,0)) AS CNT_KS, SUM(IF(S='HS',1,0)) AS CNT_HS FROM " +
 					"(SELECT YEAR(DATE(RECEIVE_DATE)) AS Y,MONTH(DATE(RECEIVE_DATE)) AS M,SHOP_ID,EDIT_TIME_IN_MS AS EDIT_TIME, 'KS' AS S, TICKET_ID " +
 					"FROM ks_eingang " +
@@ -642,8 +653,8 @@ module.exports.tk = function(b,e,c,cb) {
 					"WHERE (DATE(RECEIVE_DATE) BETWEEN '" + b + "' AND '" + e + "')  " +
 					"AND SHOP_ID <> 0 AND SHOP_ID IS NOT NULL " + _b + " " + _ks + ") t2  " +
 				"GROUP BY t2.Y, t2.M, t2.SHOP_ID) tJ1 " +
-				"INNER JOIN  " +
-					"(SELECT YEAR(datum) AS Y,MONTH(datum) AS M,shopid AS SHOP_ID,haendlername AS SHOP_NAME,sum(ertrag) AS NET_PROFIT FROM kunden_bestellungen " +
+				"LEFT JOIN  " +
+					"(SELECT YEAR(datum) AS Y,MONTH(datum) AS M,shopid AS SHOP_ID,haendlername AS SHOP_NAME,sum(ertrag) AS NET_PROFIT,count(ertrag) AS ORDERS FROM kunden_bestellungen " +
 					"WHERE (datum BETWEEN '" + b + "' AND '" + e + "') " +
 					"GROUP BY YEAR(datum),MONTH(datum),shopid) tJ2 " +
 				"ON tJ1.Y = tJ2.Y AND tJ1.M = tJ2.M AND tJ1.SHOP_ID = tJ2.SHOP_ID " + 

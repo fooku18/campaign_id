@@ -28,7 +28,7 @@ function _qNI(tN) {
 					"SELECT " + tN + "_temp.* FROM " + tN + " " +  
 					"RIGHT OUTER JOIN " + tN + "_temp " +
 					"ON " + tN + "." + _i + " = " + tN + "_temp." + _i + " " + 
-					"WHERE " + tN + "." + _i + " IS NULL " +
+					"WHERE " + tN + "." + _i + " IS NULL AND " + tN + "_temp." + _i + " <> 0 AND " + tN + "_temp." + _i + " IS NOT NULL " +
 				") AS tN;";
 	}
 }

@@ -14,6 +14,9 @@ const _mL = require("./dataLoadSQL.js");
 const _crud = require("./crudSQL.js");
 const xlsx2 = require("xlsx");
 
+xlsx2csv("/home/jakob/node/private/ccdb/Datenexport/KS_Chat.xlsx","KS_Chat");
+return;
+
 function twoDigits(val) {
 	if(val.toString().length < 2) {
 		return "0" + val;

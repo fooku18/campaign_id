@@ -107,6 +107,13 @@ router.get("/api/ab",function(req,res,next) {
 	})
 })
 
+router.get("/api/tk_list",function(req,res,next) {
+	model.tk_list(function(err,data) {
+		if(err) return res.status(400).send("fail")
+			else res.status(200).send(data);
+	})
+})
+
 router.get("/api/tk",function(req,res,next) {
 	model.tk(req.query.b,req.query.e,req.query.tk,function(err,data) {
 		if(err) {

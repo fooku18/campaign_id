@@ -245,18 +245,14 @@ var h = (function(_hC) {
 							return _a
 						}
 						function _colE(__this) {
-							console.log(__this);
 							var _a = [];
 							kA.forEach(function(l) {
-								if(l != this) {
+								if(l != __this) {
 									l.classList.remove("checked");	
 								} else _a.push(l.id);
 							})
 							return _a
 						}
-						var kA = a.map(function(l) {
-							return document.getElementById(t.replace(/ /g,"-") + "-" + l)	
-						});
 						var fun = function() {
 							function _plaus(_this) {
 								var _b = 0;
@@ -270,25 +266,27 @@ var h = (function(_hC) {
 							if(this.classList.contains("checked")) {
 								if(!_plaus(this)) return;
 							}
-							console.log(this.classList);
 							this.classList.contains("checked")? this.classList.remove("checked") : this.classList.add("checked");
 							g["__" + t] = !excl? _col() : _colE(this);
 						}
+						var kA = a.map(function(l) {
+							return document.getElementById(t.replace(/ /g,"-") + "-" + l)	
+						})
 						kA.forEach(function(l) {
 							evtClick(l,fun.bind(l));
 						})
 						g["__" + t] = _col();
 					}
-					var _t = "<div id='" + t + "-gran' class='unit-granularity'>" +
-								"###UNITS###" + 
-							"</div>",
+					var _t = document.createElement("div"),
 						_u = "",
 						_l = parseFloat(parseFloat(100/a.length).toFixed(2));
+					_t.id = t + "-gran";_t.classList.add("unit-granularity");
 					a.forEach(function(l,i) {
-						var _r = r? r[i] : !0; 
+						var _r = r? r[i] : 0; 
 						_u += unitPlus(_l,t.replace(/ /g,"-"),l,_r,nS);
 					})
-					dB.innerHTML = _t.replace(/###UNITS###/,_u);
+					_t.innerHTML = _u;
+					dB.appendChild(_t);
 					_init();
 				}
 				var __mBox = document.getElementById("chart-menu-content");
@@ -404,8 +402,54 @@ var h = (function(_hC) {
 					case "tk": 
 						__init();
 						uS.style.display = "none";
-						_initBuilder(["KS","HS","Beschwerde"],"tk",!0);
-						_initBuilder(["Kosten pro Ticket","Kosten pro Zeiteinheit"],"tk-z",!0,!0,[0,!0]);
+						_initBuilder(["KS","HS","Beschwerde"],"tk",0,0,[!0,!0,!0]);
+						_initBuilder(["Ranking nach Tickets","Ranking nach Zeit"],"tk-z",!0,!0,[0,!0]);
+						// Build Shop Menu
+						var _d = document.createElement("div");_d.classList.add("unit","unit-gran","relative","idontwantnobordabelow","unit-tk");
+						_d.innerHTML = 	"<div>" + 
+											"<div style='height:20%;width:100%;'>" +
+												"<div style='padding:2px;'>" +
+													"<input id='tk-search' type='text' style='width:100%;border-style:solid;border-color:rgba(236, 229, 224, 0.69);' />" +
+												"</div>" +
+											"</div>" +
+											"<div style='height:80%;width:100%;position:relative;'>" +
+												"<div style='padding:2px 0 0 2px;'>" +
+													"<div id='tk-shops' style='height:100%;overflow-y:auto;'>" + 
+													"</div>" +
+												"</div>" +
+											"</div>" +
+										"</div>";
+						dB.insertBefore(_d,dB.firstChild);
+						http("/ccdb/api/tk_list").then(function(res) {
+							var _if = document.getElementById("tk-shops"),
+								_is = document.getElementById("tk-search");
+							_is.addEventListener("change",function() {
+								for(var i=0; i<_if.length;i++) {
+									//console.log(_if[i].querySelector("span").textContent);
+									console.log(_if[i]);
+								}
+							},false)
+							function _cr(id) {
+								function _cE(l) {
+									return document.createElement(l);
+								} 
+								var _l = _cE("label"),
+									_d1 = _cE("div"),_d2 = _cE("div"),_d3 = _cE("div"),_d4 = _cE("div"),
+									_i = _cE("input"),_s = _cE("span");
+								_l.style = "width:100%;";_d2.classList.add("unselectable");_d2.style = "float:left;width:90%;padding-left:5px;font-size:12px;font-weight:normal;";
+								_s.textContent = id;
+								_d3.style = "float:left;width:10%;text-align:center;";
+								_d4.classList.add("clear");
+								_i.type = "checkbox";_i.value = id;_i.style = "margin:0;";
+								_d3.appendChild(_i);_d2.appendChild(_s);_d1.appendChild(_d2);_d1.appendChild(_d3);_d1.appendChild(_d4);
+								_l.appendChild(_d1);
+								return _l
+							}
+							var _a = JSON.parse(res);
+							_a.forEach(function(l,i) {
+								_if.appendChild(_cr(l.SHOPID));
+							})
+						})
 						break;
 					//add new cases for side-menu manipulation
 					//default just restores the initial menu
@@ -623,6 +667,12 @@ var h = (function(_hC) {
 				}
 				while(this.yAxis[1]) {
 					this.yAxis[1].remove();
+				}
+				if(this.__custom_renderer) {
+					this.__custom_renderer.list.forEach(function(l,i) {
+						l.destroy();
+					})
+					this.__custom_renderer.list = [];
 				}
 			}
 			//bind __g to chart
@@ -1231,7 +1281,7 @@ var h = (function(_hC) {
 			var _fun = function(d) {
 				function sum(o) {
 					for(var i in o) {
-						if(i != "SHOP_ID" && i != "Y" && i != "M") _o[o.SHOP_ID][i] += o[i];
+						if(i != "SHOP_ID" && i != "Y" && i != "M" && i != "SHOP_NAME") _o[o.SHOP_ID][i] += o[i];
 					}
 				}
 				function cr(o) {
@@ -1250,63 +1300,193 @@ var h = (function(_hC) {
 				}
 				var _a = [];
 				for(var i in _o) {
-					_a.push([_o[i].CNT_HS,_o[i].CNT_KS,_o[i].CNT_SUM,_o[i].C_TICKET_HS,
-							 _o[i].C_TICKET_KS,_o[i].C_TICKET_TIME_HS,_o[i].C_TICKET_TIME_KS,
-							 _o[i].EDIT_TIME_HS,_o[i].EDIT_TIME_KS,_o[i].EDIT_TIME_SUM,_o[i].NET_PROFIT,
-							 _o[i].SHOP_NAME]);
+					_a.push([_o[i].CNT_HS,  			/** 0 **/
+							 _o[i].CNT_KS,				/** 1 **/
+							 _o[i].CNT_SUM,				/** 2 **/
+							 _o[i].C_TICKET_HS,			/** 3 **/
+							 _o[i].C_TICKET_KS,			/** 4 **/
+							 _o[i].C_TICKET_TIME_HS,	/** 5 **/
+							 _o[i].C_TICKET_TIME_KS,	/** 6 **/
+							 _o[i].EDIT_TIME_HS,		/** 7 **/
+							 _o[i].EDIT_TIME_KS,		/** 8 **/
+							 _o[i].EDIT_TIME_SUM,		/** 9 **/
+							 _o[i].NET_PROFIT,			/** 10 **/
+							 i,							/** 11 **/
+							 _o[i].ORDERS]);			/** 12 **/
+				}
+				var _type = {
+					m: !_this.__g["__tk-z"][0].match(/zeit/i)? ["t",2] : ["e",9],
+					o: !_this.__g["__tk-z"][0].match(/zeit/i)? ["t",2] : ["e",9],
+					c: function() {
+						this.m = this.m[0] == "t"? ["e",9] : ["t",2];
+						return this;
+					}
 				}
 				_a.sort(function(a,b) {
-					return b[2] - a[2]
+					return b[_type.m[1]] - a[_type.m[1]]
 				});
 				var _x = [],
-					_cKS = [],
-					_cHS = [];
-					
+					_cKS = [],_eKS = [],_cCOSTKS = [],_eCOSTKS = [],
+					_cHS = [],_eHS = [],_cCOSTHS = [],_eCOSTHS = [],
+					_kq = [],_kerT = [],_kerE = [],
+					_profit = [], _orders = [];
 				for(var i = 0;i<10;i++) {
 					_x.push(_a[i][11]);
-					_cKS.push(_a[i][1]);
-					_cHS.push(_a[i][0]);
+					_cKS.push(_a[i][1]);_eKS.push(parseInt((_a[i][8]/(1000*60)).toFixed(2)));_cCOSTKS.push(parseInt((_a[i][4]).toFixed(2)));_eCOSTKS.push(parseInt((_a[i][6]).toFixed(2)));
+					_cHS.push(_a[i][0]);_eHS.push(parseInt((_a[i][7]/(1000*60)).toFixed(2)));_cCOSTHS.push(parseInt((_a[i][3]).toFixed(2)));_eCOSTHS.push(parseInt((_a[i][5]).toFixed(2)));
+					_kq.push(_a[i][12] != 0? parseFloat((100*(_a[i][2]/_a[i][12])).toFixed(2)) : 100);
+					_kerT.push(_a[i][10] != 0? parseFloat((100*((_a[i][3]+_a[i][4])/_a[i][10])).toFixed(2)): 100);
+					_kerE.push(_a[i][10] != 0? parseFloat((100*((_a[i][5]+_a[i][6])/_a[i][10])).toFixed(2)): 100);
+					_profit.push(parseInt(_a[i][10]));
+					_orders.push(_a[i][12]);
 				}
-				_this.__clear();
-				_this.setTitle({text: "Händler-Ranking nach verursachten Kontakten"},{text: ""});
-				_this.yAxis[0].update({
-					title: {
-						text: "Kontakte"
-					},
-					labels: {
-						formatter: function() {
-							return this.value
+				var _switcher = function(_type,o) {
+					_this.showLoading();
+					_this.__clear();
+					_this.setTitle({
+						text: "Händler-Ranking nach verursachten Kontakten"
+					},{
+						text: !o? _type.m[0] == "t"? "Rankfolge der Händler auf Grundlage der abolut verursachten Tickets" : "Rankfolge der Händler auf Grundlage der verursachten Bearbeitungsdauer im Service" : _type.o[0] == "t"? "Rankfolge der Händler auf Grundlage der abolut verursachten Tickets" : "Rankfolge der Händler auf Grundlage der verursachten Bearbeitungsdauer im Service"
+					});
+					_this.yAxis[0].update({
+						title: {
+							text: _type.m[0] == "t"? "Kontakte" : "Bearbeitungsdauer [min]"
+						},
+						labels: {
+							formatter: function() {
+								return this.value
+							}
+						},
+						floor: 0,
+						min: 0,
+						ceiling: null,
+						stackLabels: {
+							enabled: true
 						}
-					},
-					floor: 0,
-					min: 0,
-					ceiling: null
-				})
-				_this.options.plotOptions.series = {
-					borderWidth: 0,
-					dataLabels: {
-						enabled: true
-					},
-					cursor: "default"
+					})
+					_this.addAxis({
+						opposite: true,
+						title: {
+							text: "Kosten"
+						},
+						floor: 0,
+						min: 0,
+						ceiling: null,
+						stackLabels: {
+							enabled: true,
+							format: "{total}€"
+						}
+					})
+					_this.addAxis({
+						opposite: true,
+						title: {
+							text: ""
+						},
+						labels: {
+							formatter: function() {
+								return this.value + "%"
+							}
+						},
+						floor: 0,
+						min: 0,
+						max: 100
+					})
+					_this.xAxis[0].setCategories(_x);
+					_this.addSeries({
+						type: "column",
+						data: _type.m[0] == "t"? _cKS : _eKS,
+						name: _type.m[0] == "t"? "KS-Tickets" : "KS-Bearbeitungsdauer",
+						color: "#90C3D4",
+						stacking: "normal",
+						stack: 0,
+						yAxis: 0
+					})
+					_this.addSeries({
+						type: "column",
+						data: _type.m[0] == "t"? _cCOSTKS : _eCOSTKS,
+						dataLabels: {
+							format: "{y}€"
+						},
+						name: _type.m[0] == "t"? "KS-Ticketkosten" : "KS-Bearbeitungszeitkosten",
+						color: "#90C3D4",
+						stacking: "normal",
+						stack: 1,
+						yAxis: 1
+					})
+					_this.addSeries({
+						type: "column",
+						data: _type.m[0] == "t"? _cHS : _eHS,
+						name: _type.m[0] == "t"? "HS-Tickets" : "HS-Bearbeitungsdauer",
+						color: "#D4A190",
+						stacking: "normal",
+						stack: 0,
+						yAxis: 0
+					})
+					_this.addSeries({
+						type: "column",
+						data: _type.m[0] == "t"? _cCOSTHS : _eCOSTHS,
+						dataLabels: {
+							format: "{y}€"
+						},
+						name: _type.m[0] == "t"? "HS-Ticketkosten" : "HS-Bearbeitungszeitkosten",
+						color: "#D4A190",
+						stacking: "normal",
+						stack: 1,
+						yAxis: 1
+					})
+					_this.addSeries({
+						type: "column",
+						data: _profit,
+						dataLabels: {
+							format: "{y}€"
+						},
+						name: "Erlöse",
+						color: "#4FE374",
+						yAxis: 1,
+						visible: false
+					})
+					_this.addSeries({
+						type: "column",
+						data: _orders,
+						name: "Bestellungen",
+						color: "#8ADFE3",
+						yAxis: 0,
+						visible: false
+					})
+					_this.addSeries({
+						type: "line",
+						data: _kq,
+						dataLabels: {
+							format: "{y}%"
+						},
+						name: "Kontaktquote",
+						color: "#C390D4",
+						yAxis: 2,
+						visible: false
+					})
+					_this.addSeries({
+						type: "line",
+						data: _type.m[0] == "t"? _kerT : _kerE,
+						dataLabels: {
+							format: "{y}%"
+						},
+						name: "Kosten-Erlös-Relation",
+						color: "#90D4A1",
+						yAxis: 2,
+						visible: false
+					})
+					var _b = _this.renderer.button("<button>Ansicht wechseln</button>",10,0,function() {
+					var a = _type.c();
+						_switcher(a,1);
+					}).add();
+					if(_this.__custom_renderer) {
+						_this.__custom_renderer.list.push(_b);
+					} else _this.__custom_renderer = {
+						list: [_b]
+					}
+					_this.hideLoading();
 				}
-				_this.xAxis[0].setCategories(_x);
-				_this.addSeries({
-					type: "column",
-					data: _cKS,
-					name: "KS-Tickets",
-					color: "#F45B5B",
-					stacking: "normal",
-					stack: 0
-				})
-				_this.addSeries({
-					type: "column",
-					data: _cHS,
-					name: "HS-Tickets",
-					color: "#F45B5B",
-					stacking: "normal",
-					stack: 0
-				})
-				_this.hideLoading();
+				_switcher(_type,0);
 			}
 			_worker("postMessage(" + _p[1] + ");",_p[0],_fun);
 		})
