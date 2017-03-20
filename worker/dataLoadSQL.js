@@ -8,6 +8,7 @@ function _loader(t,q) {
 		case "ayn_bestellungen": 
 			return "USE ccdb;" + 
 				"LOAD DATA LOCAL INFILE '" + __p + "AYN_Bestellungen.csv' INTO TABLE ayn_bestellungen_temp " + 
+				"CHARACTER SET UTF8 " + 
 				"FIELDS TERMINATED BY '" + q + "' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\n' " +
 				"IGNORE 1 LINES " +
 				"(@tag, " +
@@ -39,6 +40,7 @@ function _loader(t,q) {
 		case "pp_bestellungen":
 			return "USE ccdb;" + 
 				"LOAD DATA LOCAL INFILE '" + __p + "PP_Bestellungen.csv' INTO TABLE pp_bestellungen_temp " + 
+				"CHARACTER SET UTF8 " + 
 				"FIELDS TERMINATED BY '" + q + "' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\n' " +
 				"IGNORE 1 LINES " +
 				"(@tag, " +
@@ -70,6 +72,7 @@ function _loader(t,q) {
 		case "ks_eingang": 
 			return "USE ccdb;" + 
 				"LOAD DATA LOCAL INFILE '" + __p + "KS_Eingang.csv' INTO TABLE ks_eingang_temp " + 
+				"CHARACTER SET UTF8 " + 
 				"FIELDS TERMINATED BY '" + q + "' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\n' " +
 				"IGNORE 1 LINES " +
 				"(@TICKET_ID, " +
@@ -123,6 +126,7 @@ function _loader(t,q) {
 		case "hs_reporting": 
 			return "USE ccdb;" + 
 				"LOAD DATA LOCAL INFILE '" + __p + "HS_Reporting.csv' INTO TABLE hs_reporting_temp " + 
+				"CHARACTER SET UTF8 " + 
 				"FIELDS TERMINATED BY '" + q + "' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\n' " +
 				"IGNORE 1 LINES " +
 				"(@TICKET_ID, " +
@@ -176,6 +180,7 @@ function _loader(t,q) {
 		case "ks_chat": 
 			return "USE ccdb;" + 
 				"LOAD DATA LOCAL INFILE '" + __p + "KS_Chat.csv' INTO TABLE ks_chat_temp " + 
+				"CHARACTER SET UTF8 " + 
 				"FIELDS TERMINATED BY '" + q + "' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\n' " +
 				"IGNORE 1 LINES " +
 				"(@ID, " +
@@ -197,6 +202,7 @@ function _loader(t,q) {
 		case "kunden_bestellungen": 
 			return "USE ccdb; " + 
 				"LOAD DATA LOCAL INFILE '" + __p + "kunden_bestellungen.csv' INTO TABLE kunden_bestellungen_temp_f " + 
+				"CHARACTER SET UTF8 " + 
 				"FIELDS TERMINATED BY '" + q + "' OPTIONALLY ENCLOSED BY '\"' " +
 				"LINES TERMINATED BY '\n' " +
 				"IGNORE 1 LINES " +
